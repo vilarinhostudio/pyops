@@ -1298,6 +1298,38 @@ def set_status(ifc_file, element, status):
     return set_pset(ifc_file, element, "Pset_ElementStatus", {"Status": status})
 
 
+# --- STRING TABLE (VERTEX GROUPS) ---
+
+
+def vgroup_string(obj, index):
+    """String pintável: nome do vertex group na posição `index`.
+
+    Blender não tem atributo string, mas o nome de um vertex group é string e
+    sua posição na lista é int. Pintar um índice inteiro (face, aresta, ...) e
+    resolver aqui é como um campo de texto vira pintável em vez de digitado.
+
+    Só é chamada quando o caller optou explicitamente por essa fonte (ex.:
+    enum "Choose Material" em vez de "Auto"), então a ausência de vertex
+    groups é erro do usuário, não estado a tolerar silenciosamente. Índice
+    fora do intervalo clampa pro último grupo, mesma convenção de
+    storey_by_index — útil quando o atributo foi pintado antes de um grupo
+    ser removido.
+    """
+    groups = getattr(obj, "vertex_groups", None) if obj else None
+    if not groups or len(groups) == 0:
+        raise ValueError(
+            f"'{obj.name if obj else '?'}' não tem nenhum vertex group; "
+            "crie ao menos um antes de usar esta fonte de material."
+        )
+    clamped = max(0, min(int(index), len(groups) - 1))
+    if clamped != index:
+        print(
+            f"[refops.bim] vertex group {index} não existe em "
+            f"'{obj.name}' ({len(groups)} grupo(s)); usando o último."
+        )
+    return groups[clamped].name
+
+
 # --- MATERIALS ---
 
 
