@@ -1,0 +1,85 @@
+/* --- TEMA ATIVO: ... ... --- */
+
+
+/* ==========================================================================
+   CONFIGURAÇÕES GERAIS, TIPOGRAFIA E ESTRUTURA BASE
+   ========================================================================== */
+
+* { stroke-linecap: round; stroke-linejoin: round; }
+
+text, tspan { 
+    fill: var(--color-principal, #000000); 
+    stroke: none; 
+    font-family: 'OpenGost Type B TT', 'DejaVu Sans Condensed', 'Liberation Sans', 'Arial Narrow', 'Arial'; 
+    font-size: 4.13px; 
+}
+
+a text, a tspan { fill: var(--color-accent, blue) !important; text-decoration: underline; }
+a:hover { cursor: pointer; }
+
+.cut { fill: var(--color-principal, black); stroke: var(--color-principal, black); stroke-width: 0.35; fill-rule: evenodd; }
+.projection { fill: var(--color-bg, white); stroke: var(--color-principal, black); stroke-width: 0.25; }
+
+path.outline  { stroke: var(--color-principal, black); stroke-width: 0.35; stroke-opacity: 1; }
+path.boundary { stroke: var(--color-principal, black); stroke-width: 0.3; stroke-opacity: 0.9; }
+path.crease   { stroke: var(--color-principal, black); stroke-width: 0.25; stroke-opacity: 0.85; }
+path.sharp    { stroke: var(--color-principal, black); stroke-width: 0.18; stroke-opacity: 0.7; }
+path.flush    { stroke: var(--color-principal, black); stroke-width: 0.1; stroke-opacity: 0.4; }
+
+.surface { fill: var(--color-bg, white); stroke-width: 0.1; }
+.annotation, .IfcAnnotation { fill: none; stroke: var(--color-principal, black); stroke-width: 0.3; }
+
+/* Marcadores e Linhas Especiais */
+.PredefinedType-LINEWORK { stroke: var(--color-principal, black); stroke-width: 0.25; }
+.PredefinedType-GRID { marker-start: url(#grid-marker); marker-end: url(#grid-marker); }
+.PredefinedType-DIMENSION { marker-start: url(#dimension-marker-start); marker-end: url(#dimension-marker-end); }
+.PredefinedType-TEXT { fill: var(--color-principal, black); stroke: none; }
+
+/* Hachuras de Materiais */
+[class*="material-concrete"] { fill: url(#concrete); }
+[class*="material-brick"]    { fill: url(#brick); }
+[class*="material-wood"]     { fill: url(#wood); }
+[class*="material-steel"]    { fill: url(#steel); }
+[class*="material-sand"]     { fill: url(#sand); }
+[class*="material-earth"]    { fill: url(#earth); }
+[class*="material-glass"]    { fill: url(#glass); }
+
+/* Espessuras de Linha (Pen) */
+[class*="pen005"], [class*="lineultrathin"] { stroke-width: 0.05px !important; }
+[class*="pen013"], [class*="lineextrathin"] { stroke-width: 0.13px !important; }
+[class*="pen018"], [class*="linethin"]      { stroke-width: 0.18px !important; }
+[class*="pen025"], [class*="linemediumthin"]{ stroke-width: 0.25px !important; }
+[class*="pen035"], [class*="linemedium"]    { stroke-width: 0.35px !important; }
+[class*="pen050"], [class*="linethick"]     { stroke-width: 0.50px !important; }
+[class*="pen070"], [class*="lineextrathick"]{ stroke-width: 0.70px !important; }
+[class*="pen100"], [class*="lineultrathick"]{ stroke-width: 1.00px !important; }
+
+/* Classes Semânticas de Cor */
+[class*="strokeprincipal"] { stroke: var(--color-principal) !important; }
+[class*="strokesecondary"] { stroke: var(--color-secondary) !important; }
+[class*="strokeaccent"]    { stroke: var(--color-accent) !important; }
+[class*="strokebg"]        { stroke: var(--color-bg) !important; }
+[class*="strokesurface"]   { stroke: var(--color-surface) !important; }
+[class*="strokewarning"]   { stroke: var(--color-warning) !important; }
+[class*="strokesuccess"]   { stroke: var(--color-success) !important; }
+[class*="strokeinfo"]      { stroke: var(--color-info) !important; }
+
+[class*="fillprincipal"] { fill: var(--color-principal) !important; }
+[class*="fillsecondary"] { fill: var(--color-secondary) !important; }
+[class*="fillaccent"]    { fill: var(--color-accent) !important; }
+[class*="fillbg"]        { fill: var(--color-bg) !important; }
+[class*="fillsurface"]   { fill: var(--color-surface) !important; }
+[class*="fillwarning"]   { fill: var(--color-warning) !important; }
+[class*="fillsuccess"]   { fill: var(--color-success) !important; }
+[class*="fillinfo"]      { fill: var(--color-info) !important; }
+
+/* Opacidade */
+[class*="fillopacity10"] { fill-opacity: 0.10 !important; }
+[class*="fillopacity25"] { fill-opacity: 0.25 !important; }
+[class*="fillopacity50"] { fill-opacity: 0.50 !important; }
+[class*="fillopacity75"] { fill-opacity: 0.75 !important; }
+
+[class*="opacity10"]     { opacity: 0.10 !important; }
+[class*="opacity25"]     { opacity: 0.25 !important; }
+[class*="opacity50"]     { opacity: 0.50 !important; }
+[class*="opacity75"]     { opacity: 0.75 !important; }

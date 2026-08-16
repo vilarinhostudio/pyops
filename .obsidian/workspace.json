@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "STATUS.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "STATUS"
             }
           }
         ]
@@ -176,8 +176,8 @@
             "state": {
               "type": "calendar",
               "state": {},
-              "icon": "calendar-with-checkmark",
-              "title": "Calendar"
+              "icon": "lucide-ghost",
+              "title": "calendar"
             }
           }
         ]
@@ -198,8 +198,13 @@
       "bases:Criar nova base": false
     }
   },
-  "active": "b729dc3bdc90ae5e",
+  "active": "3aa4a27bf4054c1c",
   "lastOpenFiles": [
+    "GOTCHAS.md",
+    "README.md",
+    "STATUS.md",
+    "CLAUDE.md",
+    "files.zip",
     "days",
     "assets"
   ]
