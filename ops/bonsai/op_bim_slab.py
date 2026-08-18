@@ -131,43 +131,6 @@ class BonsaiSlab:
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },
         ),
-        "enum_renov_source": (
-            "Enum",
-            {
-                "name": "Status From",
-                "items": [
-                    ("FIXED", "Fixed", "One status for the whole run"),
-                    (
-                        "ATTRIBUTE",
-                        "Attribute",
-                        "0 not set, 1 existing, 2 demolish, 3 new",
-                    ),
-                ],
-                "default": "FIXED",
-            },
-        ),
-        "renov_attr": (
-            "String",
-            {
-                "name": "Status Attr (face int)",
-                "search": "attribute",
-                "show_if": ("enum_renov_source", {"ATTRIBUTE"}),
-            },
-        ),
-        "enum_renov": (
-            "Enum",
-            {
-                "name": "Renovation Status",
-                "items": [
-                    ("N", "Not Set", "Leave the status out of the file"),
-                    ("A", "Existing", "Existing element"),
-                    ("B", "Demolish", "Element to be demolished"),
-                    ("C", "Construct", "New construction"),
-                ],
-                "default": "C",
-                "show_if": ("enum_renov_source", {"FIXED"}),
-            },
-        ),
         "precision": ("Int", {"name": "Rounding Decimals", "default": 3}),
     }
 
@@ -246,7 +209,6 @@ class BonsaiSlab:
             return bm.faces.layers.int.get(name) if name else None
 
         storey_layer = int_layer(data_holder.storey_attr)
-        renov_layer = int_layer(data_holder.renov_attr)
         material_layer = int_layer(data_holder.material_attr)
 
         split_layer = (
@@ -328,7 +290,6 @@ class BonsaiSlab:
                         ifc_file, slab_face, storey_layer, storey_pointer, data_holder
                     ),
                     body_context=body_context,
-                    renov_code=cls._face_status(slab_face, renov_layer, data_holder),
                     key=key,
                 )
                 if obj:
@@ -378,7 +339,6 @@ class BonsaiSlab:
         predefined_type,
         storey,
         body_context,
-        renov_code,
         key,
     ):
         measured = cls._measure_slab_face(slab_face, matrix_world)
@@ -411,10 +371,6 @@ class BonsaiSlab:
         bim.assign_type(ifc_file, element, slab_type)
         bim.assign_usage(ifc_file, element, "IfcMaterialLayerSetUsage")
         bim.assign_container(ifc_file, element, storey)
-        # "Not Set" leaves the status out of the file entirely.
-        status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(renov_code)
-        if status:
-            bim.set_status(ifc_file, element, status)
 
         representation = bim.swept_solid_representation(
             ifc_file, body_context, points_2d, thickness
@@ -481,15 +437,6 @@ class BonsaiSlab:
             return bim.storey_by_index(int(face[layer]), ifc_file)
         except Exception:
             return pointer
-
-    @classmethod
-    def _face_status(cls, face, layer, data_holder):
-        if data_holder.enum_renov_source != "ATTRIBUTE" or layer is None:
-            return data_holder.enum_renov
-        try:
-            return bim.STATUS_TO_CODE.get(bim.status_from_index(int(face[layer])), "N")
-        except Exception:
-            return data_holder.enum_renov
 
     @classmethod
     def _split_by_barrier(cls, faces, split_layer):

@@ -64,18 +64,6 @@ class BonsaiComponent:
             },
         ),
         "story_pointer": ("Object", {"name": "Building Story"}),
-        "enum_renov": (
-            "Enum",
-            {
-                "name": "Renovation Status",
-                "items": [
-                    ("A", "Existing", "Existing element"),
-                    ("B", "Demolish", "Element to be demolished"),
-                    ("C", "Construct", "New construction"),
-                ],
-                "default": "C",
-            },
-        ),
         "sep1": ("Separator", {}),
         "lbl_proxy": ("Label", {"text": "Render Proxy", "icon": "LINKED"}),
         "enum_proxy": (
@@ -155,7 +143,6 @@ class BonsaiComponent:
             "ifc_file": ifc_file,
             "ifc_class": ifc_class,
             "storey": bim.entity(data_holder.story_pointer),
-            "renov_code": data_holder.enum_renov,
             "body_context": body_context,
             "sync_styles": data_holder.sync_styles,
             "cut_material": cut_material,
@@ -284,7 +271,7 @@ class BonsaiComponent:
 
     @classmethod
     def _build_element(cls, ifc_file, mesh, matrix, type_name, ifc_class, storey,
-                       renov_code, body_context, sync_styles, cut_material,
+                       body_context, sync_styles, cut_material,
                        cutter_object, proxy_object, proxy_collection, types, key):
         obj = bpy.data.objects.new(type_name, mesh)
         bpy.context.scene.collection.objects.link(obj)
@@ -307,11 +294,6 @@ class BonsaiComponent:
             body_context,
         )
         bim.assign_container(ifc_file, element, storey)
-        bim.set_status(
-            ifc_file,
-            element,
-            {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(renov_code, "NEW"),
-        )
         bim.tag_family(ifc_file, element, key)
         bim.file_object(obj)
 

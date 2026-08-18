@@ -3,6 +3,20 @@ import refops_api
 EdgeComponent = refops_api.bim_profiles.EdgeComponent
 
 
+def with_ifc_class(props, default):
+    """The shared edge-component props plus a free IFC Class field, inserted
+    under the BIM Properties header so it reads next to the storey.
+
+    Lives here rather than in bim_profiles because this is the only component
+    whose class is an input."""
+    out = {}
+    for key, value in props.items():
+        out[key] = value
+        if key == "lbl_bim":
+            out["ifc_class"] = ("String", {"name": "IFC Class", "default": default})
+    return out
+
+
 class BonsaiProfileComponent(EdgeComponent):
     """Bonsai IFC Profile Component.
 
@@ -24,6 +38,4 @@ class BonsaiProfileComponent(EdgeComponent):
     PREFIX = "PRF"
     VERTICAL_ONLY = False
 
-    props_definition = refops_api.bim_profiles.with_ifc_class(
-        EdgeComponent.props_definition, default=IFC_CLASS
-    )
+    props_definition = with_ifc_class(EdgeComponent.props_definition, IFC_CLASS)

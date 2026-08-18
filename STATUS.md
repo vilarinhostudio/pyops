@@ -6,30 +6,39 @@ Estados: `ok` testado e funcionando · `parcial` funciona com ressalva anotada �
 
 ## Motor
 
-| Item                                | Estado | Nota                                                     |
-| ----------------------------------- | ------ | -------------------------------------------------------- |
-| Loader (descoberta de operações)    | ok     |                                                          |
-| Duplicação não-destrutiva / refresh | ok     |                                                          |
-| Ordem por profundidade de cadeia    | ok     |                                                          |
-| Ordem manual (desempate de irmãos)  | ok     |                                                          |
-| Refresh on Frame Change             | ok     |                                                          |
-| Limpeza por pset de família         | ok     |                                                          |
-| Profiling (`profiling.py`)          | ok     | instrumentado, sem `step()` marcado nos operadores ainda |
+| Item                                | Estado | Nota                  |
+| ----------------------------------- | ------ | --------------------- |
+| Loader (descoberta de operações)    | ok     | anteriormente testado |
+| Duplicação não-destrutiva / refresh | ok     | anteriormente testado |
+| Ordem por profundidade de cadeia    | ok     | anteriormente testado |
+| Ordem manual (desempate de irmãos)  | ok     | anteriormente testado |
+| Refresh on Frame Change             | ok     | anteriormente testado |
+| Limpeza por pset de família         | ok     | anteriormente testado |
+| Profiling (`profiling.py`)          | ok     | anteriormente testado |
 
 ## ops/bonsai
 
-| Operador                      | Estado | Nota                                         |
-| ----------------------------- | ------ | -------------------------------------------- |
-| `op_bim_wall.py`              | ok     | trim CORNER/T corrigido e validado           |
-| `op_bim_slab.py`              | ok     | split por atributo de aresta testado         |
-| `op_bim_face_component.py`    | ok     |                                              |
-| `op_bim_panel.py`             | ok     |                                              |
-| `op_bim_component.py`         | ok     |                                              |
-| `op_bim_distribute.py`        | ok     | door/window com abertura automática validado |
-| `op_bim_column.py`            | ok     |                                              |
-| `op_bim_beam.py`              | ok     |                                              |
-| `op_bim_profile_component.py` | ok     |                                              |
-| `op_bim_space.py`             | ok     |                                              |
+| Operador                      | Estado           | Nota                                                       |
+| ----------------------------- | ---------------- | ---------------------------------------------------------- |
+| `op_bim_wall.py`              | ==requer teste== | ok em 18-08-2026; Renovation Status removido depois disso  |
+| `op_bim_slab.py`              | ==requer teste== | ok em 18-08-2026; Renovation Status removido depois disso  |
+| `op_bim_face_component.py`    | ==requer teste== | sem cutter; material com um atributo só; storey por atributo |
+| `op_bim_panel.py`             | ==requer teste== | sem cutter; material com um atributo só                    |
+| `op_bim_component.py`         | ==requer teste== | reescrita pendente; ainda tem cutter, único que sobrou      |
+| `op_bim_distribute.py`        | ==requer teste== | reescrito: ver nota abaixo                                 |
+| `op_bim_column.py`            | ==requer teste== | via `bim_profiles.py`, sem cutter                          |
+| `op_bim_beam.py`              | ==requer teste== | via `bim_profiles.py`, sem cutter                          |
+| `op_bim_profile_component.py` | ==requer teste== | não carregava (`with_ifc_class` inexistente); sem cutter    |
+| `op_bim_space.py`             | ==requer teste== | Renovation Status removido                                 |
+
+`op_bim_distribute.py`, 18-08-2026 — três mudanças, nenhuma rodada no Blender:
+
+- saíram `cut_material`, `cutter_object` e o par `_apply_cutters`/`_finish`; o
+  operador não toca mais em material, o type do Bonsai manda
+- `Distribute As` virou um enum só de três opções (`IFC Door / Window`,
+  `IFC Component`, `Blender Objects`); `enum_kind` deixou de existir
+- o caminho `Blender Objects` nunca tinha rodado — exigia projeto IFC aberto e
+  o laço só chamava o construtor IFC. **É o primeiro a testar.**
 
 ## ops/ladybug
 

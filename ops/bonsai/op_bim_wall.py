@@ -114,44 +114,7 @@ class BonsaiWall:
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },
         ),
-        "enum_renov_source": (
-            "Enum",
-            {
-                "name": "Status From",
-                "items": [
-                    ("FIXED", "Fixed", "One status for the whole run"),
-                    (
-                        "ATTRIBUTE",
-                        "Attribute",
-                        "0 not set, 1 existing, 2 demolish, 3 new",
-                    ),
-                ],
-                "default": "FIXED",
-            },
-        ),
-        "renov_attr": (
-            "String",
-            {
-                "name": "Status Attr (face int)",
-                "search": "attribute",
-                "show_if": ("enum_renov_source", {"ATTRIBUTE"}),
-            },
-        ),
         "do_trim": ("Bool", {"name": "Trim Corners", "default": True}),
-        "enum_renov": (
-            "Enum",
-            {
-                "name": "Renovation Status",
-                "items": [
-                    ("N", "Not Set", "Leave the status out of the file"),
-                    ("A", "Existing", "Existing element"),
-                    ("B", "Demolish", "Element to be demolished"),
-                    ("C", "Construct", "New construction"),
-                ],
-                "default": "C",
-                "show_if": ("enum_renov_source", {"FIXED"}),
-            },
-        ),
         "precision": ("Int", {"name": "Rounding Decimals", "default": 3}),
     }
 
@@ -224,7 +187,6 @@ class BonsaiWall:
             return bm.faces.layers.int.get(name) if name else None
 
         storey_layer = int_layer(data_holder.storey_attr)
-        renov_layer = int_layer(data_holder.renov_attr)
         material_layer = int_layer(data_holder.material_attr)
 
         split_layer = (
@@ -320,7 +282,6 @@ class BonsaiWall:
                         ifc_file, run, storey_layer, storey_pointer, data_holder
                     ),
                     body_context=body_context,
-                    renov_code=cls._run_status(run, renov_layer, data_holder),
                     key=key,
                 )
                 if obj:
@@ -383,7 +344,6 @@ class BonsaiWall:
         thickness,
         storey,
         body_context,
-        renov_code,
         key,
     ):
         measured = cls._measure_wall_group(faces, matrix_world)
@@ -407,10 +367,6 @@ class BonsaiWall:
         # parametric wall — without it TAB falls back to plain mesh editing.
         bim.assign_usage(ifc_file, element, "IfcMaterialLayerSetUsage")
         bim.assign_container(ifc_file, element, storey)
-        # "Not Set" leaves the status out of the file entirely.
-        status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(renov_code)
-        if status:
-            bim.set_status(ifc_file, element, status)
 
         # TODO: clipping planes from non-wall adjacent faces. _find_clip_planes
         # still computes them (world space; convert with transform.inverted()
@@ -659,20 +615,6 @@ class BonsaiWall:
         if not values:
             return pointer
         return bim.storey_by_index(min(values), ifc_file)
-
-    @classmethod
-    def _run_status(cls, faces, layer, data_holder):
-        """Renovation status by area-weighted majority over the wall."""
-        if data_holder.enum_renov_source != "ATTRIBUTE" or layer is None:
-            return data_holder.enum_renov
-        weights = {}
-        for face in faces:
-            value = int(face[layer])
-            weights[value] = weights.get(value, 0.0) + face.calc_area()
-        if not weights:
-            return data_holder.enum_renov
-        winner = max(weights.items(), key=lambda item: item[1])[0]
-        return bim.STATUS_TO_CODE.get(bim.status_from_index(winner), "N")
 
     @classmethod
     def _split_runs(cls, faces, matrix_world, split_layer):

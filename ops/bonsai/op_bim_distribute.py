@@ -9,12 +9,16 @@ Bonsai and scatter it over points.
     -> placement from the point and its attributes
     -> optionally cut into the wall it sits on
 
-Two families, because they need different things:
+Three outputs on ONE enum, not two enums crossed: half the combinations were
+never real. A door that is not an IFC element cannot fill anything, so
+"Blender" and "Door / Window" together was a state the UI could reach and the
+code had no answer for.
 
-* DOOR_WINDOW keeps Z up always, positions itself against the wall plane and can
+* FILLING keeps Z up always, positions itself against the wall plane and can
   void the wall it lands on.
-* BIM_ELEMENT is anything else — furniture, equipment — and only needs to know
-  which way is up.
+* ELEMENT is any other IFC occurrence — furniture, equipment — and only needs
+  to know which way is up.
+* BLENDER places exactly like ELEMENT and stops there: a plain copy, no IFC.
 """
 
 import math
@@ -45,24 +49,18 @@ class BonsaiDistributeOnPoints:
                 "name": "Distribute As",
                 "items": [
                     (
-                        "BIM",
-                        "BIM Elements",
-                        "Real IFC occurrences, counted in schedules",
+                        "FILLING",
+                        "IFC Door / Window",
+                        "Real occurrence that fills an opening in a host",
+                    ),
+                    (
+                        "ELEMENT",
+                        "IFC Component",
+                        "Real occurrence placed freely, counted in schedules",
                     ),
                     ("BLENDER", "Blender Objects", "Plain objects, no IFC data"),
                 ],
-                "default": "BIM",
-            },
-        ),
-        "enum_kind": (
-            "Enum",
-            {
-                "name": "Element",
-                "items": [
-                    ("DOOR_WINDOW", "Door / Window", "Fills an opening in a host"),
-                    ("BIM_ELEMENT", "Component", "Anything placed freely"),
-                ],
-                "default": "DOOR_WINDOW",
+                "default": "FILLING",
             },
         ),
         "target_collection": (
@@ -130,7 +128,7 @@ class BonsaiDistributeOnPoints:
             {
                 "text": "Placement",
                 "icon": "MOD_BUILD",
-                "show_if": ("enum_kind", {"DOOR_WINDOW"}),
+                "show_if": ("enum_output", {"FILLING"}),
             },
         ),
         "enum_align_mode": (
@@ -150,7 +148,7 @@ class BonsaiDistributeOnPoints:
                     ),
                 ],
                 "default": "ORIGIN",
-                "show_if": ("enum_kind", {"DOOR_WINDOW"}),
+                "show_if": ("enum_output", {"FILLING"}),
             },
         ),
         "align_attr": (
@@ -163,7 +161,7 @@ class BonsaiDistributeOnPoints:
                     "is placed on the vertex. 2 its bottom centre, 8 its top"
                 ),
                 "show_if": [
-                    ("enum_kind", {"DOOR_WINDOW"}),
+                    ("enum_output", {"FILLING"}),
                     ("enum_align_mode", {"BOUNDING_BOX"}),
                 ],
             },
@@ -178,7 +176,7 @@ class BonsaiDistributeOnPoints:
                     "edges through the point. Use only where those cannot "
                     "settle it, such as a point shared by two walls"
                 ),
-                "show_if": ("enum_kind", {"DOOR_WINDOW"}),
+                "show_if": ("enum_output", {"FILLING"}),
             },
         ),
         "direction_attr": (
@@ -186,7 +184,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Direction Attr (vert bool)",
                 "search": "attribute",
-                "show_if": ("enum_kind", {"DOOR_WINDOW"}),
+                "show_if": ("enum_output", {"FILLING"}),
             },
         ),
         "flip_attr": (
@@ -194,7 +192,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Flip Attr (vert bool)",
                 "search": "attribute",
-                "show_if": ("enum_kind", {"DOOR_WINDOW"}),
+                "show_if": ("enum_output", {"FILLING"}),
             },
         ),
         "apply_to_wall": (
@@ -202,7 +200,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Cut Into Host",
                 "default": True,
-                "show_if": [("enum_output", {"BIM"}), ("enum_kind", {"DOOR_WINDOW"})],
+                "show_if": ("enum_output", {"FILLING"}),
             },
         ),
         "host_class": (
@@ -211,8 +209,7 @@ class BonsaiDistributeOnPoints:
                 "name": "Host Class",
                 "default": "IfcWall",
                 "show_if": [
-                    ("enum_output", {"BIM"}),
-                    ("enum_kind", {"DOOR_WINDOW"}),
+                    ("enum_output", {"FILLING"}),
                     ("apply_to_wall", {True}),
                 ],
             },
@@ -223,7 +220,7 @@ class BonsaiDistributeOnPoints:
             {
                 "text": "Orientation",
                 "icon": "ORIENTATION_GIMBAL",
-                "show_if": ("enum_kind", {"BIM_ELEMENT"}),
+                "show_if": ("enum_output", {"ELEMENT", "BLENDER"}),
             },
         ),
         "enum_orientation": (
@@ -241,7 +238,7 @@ class BonsaiDistributeOnPoints:
                     ("VECTOR", "Vector Attr", "Float-vector attribute on the vertex"),
                 ],
                 "default": "Z_UP",
-                "show_if": ("enum_kind", {"BIM_ELEMENT"}),
+                "show_if": ("enum_output", {"ELEMENT", "BLENDER"}),
             },
         ),
         "angle_attr": (
@@ -251,7 +248,7 @@ class BonsaiDistributeOnPoints:
                 "search": "attribute",
                 "description": "Rotation about the up axis, in degrees",
                 "show_if": [
-                    ("enum_kind", {"BIM_ELEMENT"}),
+                    ("enum_output", {"ELEMENT", "BLENDER"}),
                     ("enum_orientation", {"ANGLE"}),
                 ],
             },
@@ -262,7 +259,7 @@ class BonsaiDistributeOnPoints:
                 "name": "Vector Attr (vert vector)",
                 "search": "attribute",
                 "show_if": [
-                    ("enum_kind", {"BIM_ELEMENT"}),
+                    ("enum_output", {"ELEMENT", "BLENDER"}),
                     ("enum_orientation", {"VECTOR"}),
                 ],
             },
@@ -277,14 +274,17 @@ class BonsaiDistributeOnPoints:
                     ("ATTRIBUTE", "Attribute", "An index per point, 0 at the ground"),
                 ],
                 "default": "POINTER",
-                "show_if": ("enum_output", {"BIM"}),
+                "show_if": ("enum_output", {"FILLING", "ELEMENT"}),
             },
         ),
         "story_pointer": (
             "Object",
             {
                 "name": "Building Story",
-                "show_if": [("enum_output", {"BIM"}), ("enum_storey", {"POINTER"})],
+                "show_if": [
+                    ("enum_output", {"FILLING", "ELEMENT"}),
+                    ("enum_storey", {"POINTER"}),
+                ],
             },
         ),
         "storey_attr": (
@@ -293,52 +293,12 @@ class BonsaiDistributeOnPoints:
                 "name": "Storey Attr (vert int)",
                 "search": "attribute",
                 "description": "Index into the storeys ordered by height, 0 at the ground",
-                "show_if": [("enum_output", {"BIM"}), ("enum_storey", {"ATTRIBUTE"})],
-            },
-        ),
-        "enum_renov_source": (
-            "Enum",
-            {
-                "name": "Status From",
-                "items": [
-                    ("FIXED", "Fixed", "One status for every point"),
-                    (
-                        "ATTRIBUTE",
-                        "Attribute",
-                        "0 not set, 1 existing, 2 demolish, 3 new",
-                    ),
-                ],
-                "default": "FIXED",
-                "show_if": ("enum_output", {"BIM"}),
-            },
-        ),
-        "renov_attr": (
-            "String",
-            {
-                "name": "Status Attr (vert int)",
-                "search": "attribute",
                 "show_if": [
-                    ("enum_output", {"BIM"}),
-                    ("enum_renov_source", {"ATTRIBUTE"}),
+                    ("enum_output", {"FILLING", "ELEMENT"}),
+                    ("enum_storey", {"ATTRIBUTE"}),
                 ],
             },
         ),
-        "enum_renov": (
-            "Enum",
-            {
-                "name": "Renovation Status",
-                "items": [
-                    ("N", "Not Set", "Leave the status out of the file"),
-                    ("A", "Existing", "Existing element"),
-                    ("B", "Demolish", "Element to be demolished"),
-                    ("C", "Construct", "New construction"),
-                ],
-                "default": "C",
-                "show_if": [("enum_output", {"BIM"}), ("enum_renov_source", {"FIXED"})],
-            },
-        ),
-        "cut_material": ("String", {"name": "Cut Material", "search": "material"}),
-        "cutter_object": ("Object", {"name": "Cutter Object"}),
         "precision": ("Int", {"name": "Rounding Decimals", "default": 3}),
     }
 
@@ -346,29 +306,40 @@ class BonsaiDistributeOnPoints:
 
     @classmethod
     def execute(cls, container_obj, data_holder):
-        if not bim.ensure():
-            print("[RefOps] Bonsai indisponível:")
-            print(bim.IMPORT_ERROR)
-            return False
-
         parent_obj = bpy.data.objects.get(
             getattr(container_obj, "proc_parent_name", "")
         )
         if not parent_obj or parent_obj.type != "MESH":
             return False
 
-        ifc_file = bim.get_file()
-        if not ifc_file:
-            print("[RefOps] Nenhum projeto IFC ativo.")
-            return False
+        # Bonsai and an open project are demanded by the BIM path ONLY.
+        # Scattering plain objects is pure Blender, and asking for an IFC file
+        # to do it is what kept that half of the operator from ever running.
+        to_ifc = data_holder.enum_output in {"FILLING", "ELEMENT"}
+        ifc_file = None
+        if to_ifc:
+            if not bim.ensure():
+                print("[RefOps] Bonsai indisponível:")
+                print(bim.IMPORT_ERROR)
+                return False
+            ifc_file = bim.get_file()
+            if not ifc_file:
+                print("[RefOps] Nenhum projeto IFC ativo.")
+                return False
 
         container_obj.display_type = "WIRE"
         container_obj.hide_render = True
         container_obj.name = f"POINTS_CONTAINER_{parent_obj.name}"
 
-        storey = bim.entity(data_holder.story_pointer)
         key = bim.family_key(container_obj, data_holder.point_attr)
-        bim.cleanup_family(ifc_file, "IfcElement", key)
+        storey = None
+        if to_ifc:
+            storey = bim.entity(data_holder.story_pointer)
+            bim.cleanup_family(ifc_file, "IfcElement", key)
+        else:
+            # A copy carries no pset, so the key written onto the object is the
+            # only thing the next refresh can collect it by.
+            bim.cleanup_tagged_objects(key)
 
         source = container_obj
         bm = bmesh.new()
@@ -394,18 +365,28 @@ class BonsaiDistributeOnPoints:
 
         created = []
         for vert in points:
-            element = cls._place(
-                ifc_file,
-                vert=vert,
-                layers=layers,
-                weight_range=weight_range,
-                source=source,
-                data_holder=data_holder,
-                storey=storey,
-                key=key,
-            )
-            if element:
-                created.append(element)
+            if to_ifc:
+                placed = cls._place(
+                    ifc_file,
+                    vert=vert,
+                    layers=layers,
+                    weight_range=weight_range,
+                    source=source,
+                    data_holder=data_holder,
+                    storey=storey,
+                    key=key,
+                )
+            else:
+                placed = cls._place_plain(
+                    vert=vert,
+                    layers=layers,
+                    weight_range=weight_range,
+                    source=source,
+                    data_holder=data_holder,
+                    key=key,
+                )
+            if placed:
+                created.append(placed)
 
         bm.free()
         print(f"[RefOps] {len(created)} de {len(points)} pontos preenchidos.")
@@ -440,7 +421,6 @@ class BonsaiDistributeOnPoints:
             "weight": vert_float(data_holder.weight_attr),
             "angle": vert_float(data_holder.angle_attr),
             "storey": vert_int(data_holder.storey_attr),
-            "renov": vert_int(data_holder.renov_attr),
             "vector": (
                 bm.verts.layers.float_vector.get(data_holder.vector_attr)
                 if data_holder.vector_attr
@@ -502,22 +482,19 @@ class BonsaiDistributeOnPoints:
         if data_holder.enum_storey == "ATTRIBUTE" and layers["storey"]:
             storey = bim.storey_by_index(int(vert[layers["storey"]]), ifc_file)
         bim.assign_container(ifc_file, element, storey)
-        # "Not Set" leaves the status out of the file entirely.
-        if data_holder.enum_renov_source == "ATTRIBUTE" and layers["renov"]:
-            status = bim.status_from_index(int(vert[layers["renov"]]))
-        else:
-            status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(
-                data_holder.enum_renov
-            )
-        if status:
-            bim.set_status(ifc_file, element, status)
         bim.tag_family(ifc_file, element, key)
 
         # Everything that changes the element happens BEFORE the void is cut.
         # Bonsai sizes the opening from the filling as it stands, so a door
         # moved or re-swung afterwards leaves its void behind at the old place —
         # which is exactly what the openings were doing.
-        if data_holder.enum_align_mode == "BOUNDING_BOX":
+        # Gated on FILLING, not on the align mode alone: the field is only
+        # drawn for a filling, so a value left over from an earlier setting
+        # would otherwise shift a component that never asked to be aligned.
+        if (
+            data_holder.enum_output == "FILLING"
+            and data_holder.enum_align_mode == "BOUNDING_BOX"
+        ):
             cardinal = int(vert[layers["align"]]) if layers["align"] else 5
             cls._apply_cardinal(obj, cardinal)
 
@@ -531,7 +508,7 @@ class BonsaiDistributeOnPoints:
         # parametric toggle: that one mirrored the leaf vertically and its
         # direction change was discarded by the editor cancel.
 
-        if data_holder.enum_kind == "DOOR_WINDOW" and data_holder.apply_to_wall:
+        if data_holder.enum_output == "FILLING" and data_holder.apply_to_wall:
             host = cls._find_host(
                 ifc_file, obj.matrix_world.translation, data_holder.host_class
             )
@@ -556,10 +533,6 @@ class BonsaiDistributeOnPoints:
                     bim.tag_family(ifc_file, opening, key)
                     bim.restore_finish(bim.object_for(host), host_finish)
 
-        # Cutters LAST: adding the void rebuilds the filling's mesh as well, so
-        # anything applied before this point was discarded — which is why the
-        # cut material and the boolean never appeared.
-        cls._apply_cutters(bim.object_for(element) or obj, data_holder)
         return element
 
     @classmethod
@@ -568,11 +541,14 @@ class BonsaiDistributeOnPoints:
         matrix_world = source.matrix_world
         position = matrix_world @ vert.co
 
-        if data_holder.enum_kind == "BIM_ELEMENT":
-            return cls._free_matrix(
-                vert, layers, matrix_world, position, data_holder
-            ), None
-        return cls._wall_matrix(vert, layers, matrix_world, position, entity), None
+        # Only a filling reads the wall plane. Everything else — IFC component
+        # or plain copy — is placed free, which is why the Blender path can
+        # share this function instead of carrying its own.
+        if data_holder.enum_output == "FILLING":
+            return cls._wall_matrix(vert, layers, matrix_world, position, entity), None
+        return cls._free_matrix(
+            vert, layers, matrix_world, position, data_holder
+        ), None
 
     @classmethod
     def _wall_matrix(cls, vert, layers, matrix_world, position, entity):
@@ -700,46 +676,26 @@ class BonsaiDistributeOnPoints:
         return obj
 
     @classmethod
-    def _finish(cls, obj, data_holder, vert, layers):
-        """Cardinal shift and cutters — the parts that are geometry, not IFC."""
-        if (
-            data_holder.enum_kind == "DOOR_WINDOW"
-            and data_holder.enum_align_mode == "BOUNDING_BOX"
-        ):
-            cardinal = int(vert[layers["align"]]) if layers["align"] else 5
-            cls._apply_cardinal(obj, cardinal)
-        cls._apply_cutters(obj, data_holder)
+    def _place_plain(cls, vert, layers, weight_range, source, data_holder, key):
+        """One plain Blender duplicate on the point.
 
-    @classmethod
-    def _apply_cutters(cls, obj, data_holder):
-        """Slot 0 cut material, slot 1 body, plus a live boolean — the same
-        contract every other operator writes."""
-        cutter = data_holder.cutter_object
-        cut_material = (
-            bpy.data.materials.get(data_holder.cut_material)
-            if data_holder.cut_material
-            else None
-        )
-        if cut_material is not None and obj.data is not None:
-            mesh = obj.data
-            existing = mesh.materials[0] if mesh.materials else None
-            mesh.materials.clear()
-            mesh.materials.append(cut_material)
-            mesh.materials.append(existing)
-            for slot in obj.material_slots:
-                if slot.link != "DATA":
-                    slot.link = "DATA"
-            for polygon in mesh.polygons:
-                polygon.material_index = 1
-            mesh.update()
+        The placement maths is shared with the BIM path — a matrix does not care
+        whether an occurrence or a copy lands on it. What is skipped is every
+        IFC step: no type, no storey, no void cut into the host."""
+        template = cls._pick_source(vert, layers, weight_range, data_holder)
+        if template is None:
+            print("[RefOps] Nenhum objeto de origem para este ponto.")
+            return None
 
-        if cutter and cutter is not obj:
-            modifier = obj.modifiers.new(name="RefOps Cut", type="BOOLEAN")
-            modifier.operation = "DIFFERENCE"
-            modifier.object = cutter
-            modifier.solver = "EXACT"
-            if hasattr(modifier, "material_mode"):
-                modifier.material_mode = "INDEX"
+        matrix, _host = cls._matrix_for(vert, layers, source, data_holder, None)
+        if matrix is None:
+            return None
+
+        obj = cls._plain_copy(template, matrix, data_holder)
+        # Tagged like the IFC elements are, so the next refresh removes these
+        # copies instead of piling a new set on top of them.
+        bim.tag_object(obj, key)
+        return obj
 
     @classmethod
     def _apply_cardinal(cls, obj, cardinal):

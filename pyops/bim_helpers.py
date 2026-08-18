@@ -1187,11 +1187,15 @@ def tag_family(ifc_file, element, key):
 
 # --- STOREY AND STATUS BY ATTRIBUTE ---
 
+# NOT USED: no operator writes a renovation status any more — it is set in
+# Bonsai. The three status helpers below stay here, unreferenced, only so the
+# mapping does not have to be worked out again if it comes back.
+
 # 0 is deliberately "leave it out": an unpainted attribute reads as zero, and a
 # default of Existing would silently label an entire model.
 STATUS_BY_INDEX = {0: None, 1: "EXISTING", 2: "DEMOLISH", 3: "NEW"}
 
-# The reverse, for operators that still carry the letter code internally.
+# The reverse, for the letter codes the operators used to carry internally.
 STATUS_TO_CODE = {"EXISTING": "A", "DEMOLISH": "B", "NEW": "C", None: "N"}
 
 _DOMAIN_LAYERS = {
@@ -1289,12 +1293,16 @@ def resolve_storey(pointer_entity, index=None, ifc_file=None):
 
 
 def status_from_index(index):
-    """Renovation status from an integer attribute, None when unset."""
+    """NOT USED — see the note above STATUS_BY_INDEX.
+
+    Renovation status from an integer attribute, None when unset."""
     return STATUS_BY_INDEX.get(int(index)) if index is not None else None
 
 
 def set_status(ifc_file, element, status):
-    """status: EXISTING | DEMOLISH | NEW"""
+    """NOT USED — see the note above STATUS_BY_INDEX.
+
+    status: EXISTING | DEMOLISH | NEW"""
     return set_pset(ifc_file, element, "Pset_ElementStatus", {"Status": status})
 
 
@@ -1359,16 +1367,6 @@ MATERIAL_NAME_MODES_READ = [
         "Rename",
         "Rename the type's set after the vertex group — every element of "
         "the type follows",
-    ),
-]
-
-MATERIAL_NAME_MODES_MINT = [
-    ("AS_FOUND", "As Found", "Name the new set after the type"),
-    (
-        "USE_OR_CREATE",
-        "Use or Create",
-        "Name the new set after a vertex group, joining a set that already "
-        "answers to that name",
     ),
 ]
 
@@ -1573,9 +1571,9 @@ def material_props(domain="face", mints_type=False):
     carried a second attribute here and it was pure duplication.
 
     mints_type=True -- the operator CREATES the type and its constituent set.
-    Here the two names really are different things: `material_attr` names the
-    material/constituent and feeds the type name, `mat_name_attr` names the set
-    itself. Two fields, and the first is always needed."""
+    The same single attribute names the material AND, through the type name,
+    the set: a second field asking for another vertex group index read as a
+    duplicate of the first in the UI, and nothing needed the two to differ."""
     header = {
         "sep_material": ("Separator", {}),
         "lbl_material": ("Label", {"text": "Material", "icon": "MATERIAL"}),
@@ -1615,26 +1613,6 @@ def material_props(domain="face", mints_type=False):
                     "Index into the reference object's vertex groups; the "
                     "group's name becomes the material of the new type"
                 ),
-            },
-        ),
-        "enum_mat_name": (
-            "Enum",
-            {
-                "name": "Set Name",
-                "items": MATERIAL_NAME_MODES_MINT,
-                "default": "AS_FOUND",
-            },
-        ),
-        "mat_name_attr": (
-            "String",
-            {
-                "name": f"Set Name Attr ({domain} int)",
-                "search": "attribute",
-                "description": (
-                    "Index into the vertex groups, naming the constituent set "
-                    "the new type will carry"
-                ),
-                "show_if": ("enum_mat_name", {"USE_OR_CREATE"}),
             },
         ),
     }

@@ -121,9 +121,8 @@ class BonsaiFaceComponent:
             },
         ),
         # mints_type=True: this operator BUILDS its own type and its
-        # constituent set, so there is no prior name to rename — the two
-        # attributes here name the material and the set, not the same thing
-        # twice.
+        # constituent set, so there is no prior name to rename — the attribute
+        # is always read, not gated behind a Rename mode.
         **bim.material_props("face", mints_type=True),
         "sep2": ("Separator", {}),
         "lbl_ifc": ("Label", {"text": "IFC Class", "icon": "FILE_3D"}),
@@ -135,25 +134,31 @@ class BonsaiFaceComponent:
                 "description": "Any IFC element class, e.g. IfcSlab, IfcCovering, IfcRoof",
             },
         ),
-        "story_pointer": ("Object", {"name": "Building Story"}),
-        "sep3": ("Separator", {}),
-        "enum_renov": (
+        "enum_storey": (
             "Enum",
             {
-                "name": "Renovation Status",
+                "name": "Storey From",
                 "items": [
-                    ("N", "Not Set", "Leave the status out of the file"),
-                    ("A", "Existing", "Existing element"),
-                    ("B", "Demolish", "Element to be demolished"),
-                    ("C", "Construct", "New construction"),
+                    ("POINTER", "Object", "One storey for the whole run"),
+                    ("ATTRIBUTE", "Attribute", "An index per element, 0 at the ground"),
                 ],
-                "default": "C",
+                "default": "POINTER",
             },
         ),
-        "sep4": ("Separator", {}),
-        "cut_material": ("String", {"name": "Cut Material", "search": "material"}),
-        "cutter_object": ("Object", {"name": "Cutter Object"}),
-        "sep5": ("Separator", {}),
+        "story_pointer": (
+            "Object",
+            {"name": "Building Story", "show_if": ("enum_storey", {"POINTER"})},
+        ),
+        "storey_attr": (
+            "String",
+            {
+                "name": "Storey Attr (face int)",
+                "search": "attribute",
+                "description": "Index into the storeys ordered by height, 0 at the ground",
+                "show_if": ("enum_storey", {"ATTRIBUTE"}),
+            },
+        ),
+        "sep3": ("Separator", {}),
         "apply_solidify": ("Bool", {"name": "Bake Solidify into IFC", "default": True}),
         "sync_styles": ("Bool", {"name": "Sync Materials", "default": True}),
         "precision": ("Int", {"name": "Rounding Decimals", "default": 3}),
@@ -188,7 +193,7 @@ class BonsaiFaceComponent:
         type_class = f"{ifc_class}Type"
         prefix = ifc_class[3:]
 
-        storey = bim.entity(data_holder.story_pointer)
+        storey_pointer = bim.entity(data_holder.story_pointer)
 
         key = bim.family_key(container_obj, data_holder.bool_attr)
         bim.cleanup_family(ifc_file, SWEEP_CLASS, key)
@@ -232,7 +237,7 @@ class BonsaiFaceComponent:
             return bm.faces.layers.int.get(name) if name else None
 
         material_layer = int_layer(data_holder.material_attr)
-        mat_name_layer = int_layer(data_holder.mat_name_attr)
+        storey_layer = int_layer(data_holder.storey_attr)
 
         def constituent_name(face):
             return cls._constituent_name(face, source, parent_obj, material_layer)
@@ -249,22 +254,12 @@ class BonsaiFaceComponent:
             mat_name = group["material_name"]
             blender_mat = bim.get_or_create_blender_material(mat_name)
 
-            # The set name: the second attribute in Use or Create, otherwise the
-            # type's own name — there is no set to inherit a name from, since
-            # this operator creates it.
-            set_name = None
-            if data_holder.enum_mat_name == "USE_OR_CREATE":
-                set_name = bim.vgroup_name_from_faces(
-                    parent_obj, group["faces"], mat_name_layer
-                )
-
             comp_type = cls._resolve_type(
                 ifc_file,
                 type_class,
                 prefix,
                 group["nominal"],
                 mat_name,
-                set_name,
                 blender_mat if data_holder.sync_styles else None,
                 body_context,
             )
@@ -285,8 +280,9 @@ class BonsaiFaceComponent:
                     pos=data_holder.pos,
                     ifc_class=ifc_class,
                     comp_type=comp_type,
-                    storey=storey,
-                    renov_code=data_holder.enum_renov,
+                    storey=cls._island_storey(
+                        ifc_file, island, storey_layer, storey_pointer, data_holder
+                    ),
                     apply_solidify=data_holder.apply_solidify,
                     body_context=body_context,
                     extrude_mode=data_holder.enum_extrude,
@@ -296,15 +292,9 @@ class BonsaiFaceComponent:
                 if obj:
                     created.append((obj, blender_mat, types.index(comp_type)))
 
-        cut_material = (
-            bpy.data.materials.get(data_holder.cut_material)
-            if data_holder.cut_material
-            else None
-        )
         for obj, blender_mat, type_index in created:
-            cls._apply_material_slots(obj, cut_material, blender_mat)
+            cls._apply_material_slots(obj, blender_mat)
             bim.set_type_index(obj, type_index)
-            cls._add_boolean_cut(obj, data_holder.cutter_object)
 
         bm.free()
         return bool(created)
@@ -433,6 +423,18 @@ class BonsaiFaceComponent:
     # --- BUILD ---
 
     @classmethod
+    def _island_storey(cls, ifc_file, faces, layer, pointer, data_holder):
+        """The storey of one element, from the faces that make it up. Lowest
+        index wins, as in the wall generator: an element crossing a floor line
+        belongs to the storey it rises from."""
+        if data_holder.enum_storey != "ATTRIBUTE" or layer is None:
+            return pointer
+        values = [int(face[layer]) for face in faces]
+        if not values:
+            return pointer
+        return bim.storey_by_index(min(values), ifc_file)
+
+    @classmethod
     def _split_islands(cls, faces, split_layer=None):
         """Connected face groups, stopping at the marked edges.
 
@@ -461,7 +463,7 @@ class BonsaiFaceComponent:
 
     @classmethod
     def _build_component(cls, ifc_file, source, faces, weight_of, thickness,
-                         vgroup, pos, ifc_class, comp_type, storey, renov_code,
+                         vgroup, pos, ifc_class, comp_type, storey,
                          apply_solidify, body_context, extrude_mode, extrude_vector,
                          key):
         obj = cls._extract_faces(source, faces, weight_of, vgroup)
@@ -516,10 +518,6 @@ class BonsaiFaceComponent:
             # exists on this type.
             bim.assign_type(ifc_file, element, comp_type)
         bim.assign_container(ifc_file, element, storey)
-        # "Not Set" leaves the status out of the file entirely.
-        status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(renov_code)
-        if status:
-            bim.set_status(ifc_file, element, status)
         bim.tag_family(ifc_file, element, key)
         bim.file_object(obj)
         return obj
@@ -634,7 +632,7 @@ class BonsaiFaceComponent:
 
     @classmethod
     def _resolve_type(cls, ifc_file, type_class, prefix, thickness, mat_name,
-                      set_name, blender_mat, body_context):
+                      blender_mat, body_context):
         """The type, reused by name or built fresh with its constituent set.
 
         Matched by NAME rather than by layer signature: the type now carries an
@@ -656,23 +654,19 @@ class BonsaiFaceComponent:
         ifc_mat = bim.get_or_create_material(ifc_file, mat_name)
         if blender_mat:
             bim.sync_material_style(ifc_file, ifc_mat, blender_mat, body_context)
-        bim.assign_constituent_set(
-            ifc_file, comp_type, set_name or type_name, mat_name
-        )
+        bim.assign_constituent_set(ifc_file, comp_type, type_name, mat_name)
         return comp_type
 
     # --- FINISHING ---
 
     @classmethod
-    def _apply_material_slots(cls, obj, cut_material, inherited_material):
-        """Fixed slot contract, same as the wall and slab generators:
-            slot 0 -> cut material
-            slot 1 -> material inherited from the reference face"""
+    def _apply_material_slots(cls, obj, inherited_material):
+        """One slot, the material inherited from the reference face. The second
+        slot only ever existed to give the boolean cutter an index."""
         mesh = obj.data
         if not mesh:
             return
         mesh.materials.clear()
-        mesh.materials.append(cut_material)
         mesh.materials.append(inherited_material)
         # A slot linked to the OBJECT overrides the mesh's material, so writing
         # mesh.materials would change nothing visible. Bonsai leaves slots that
@@ -681,16 +675,5 @@ class BonsaiFaceComponent:
             if slot.link != "DATA":
                 slot.link = "DATA"
         for poly in mesh.polygons:
-            poly.material_index = 1
+            poly.material_index = 0
         mesh.update()
-
-    @classmethod
-    def _add_boolean_cut(cls, obj, cutter):
-        if not cutter or cutter is obj:
-            return
-        mod = obj.modifiers.new(name="RefOps Cut", type="BOOLEAN")
-        mod.operation = "DIFFERENCE"
-        mod.object = cutter
-        mod.solver = "EXACT"
-        if hasattr(mod, "material_mode"):
-            mod.material_mode = "INDEX"

@@ -80,9 +80,8 @@ class BonsaiPanel:
             },
         ),
         # mints_type=True: this operator BUILDS its own type and its
-        # constituent set, so there is no prior name to rename — the two
-        # attributes here name the material and the set, not the same thing
-        # twice.
+        # constituent set, so there is no prior name to rename — the attribute
+        # is always read, not gated behind a Rename mode.
         **bim.material_props("face", mints_type=True),
         "sep3": ("Separator", {}),
         "lbl_bim": ("Label", {"text": "BIM Properties", "icon": "OUTLINER_OB_GROUP_INSTANCE"}),
@@ -110,43 +109,8 @@ class BonsaiPanel:
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },
         ),
-        "enum_renov_source": (
-            "Enum",
-            {
-                "name": "Status From",
-                "items": [
-                    ("FIXED", "Fixed", "One status for the whole run"),
-                    ("ATTRIBUTE", "Attribute", "0 not set, 1 existing, 2 demolish, 3 new"),
-                ],
-                "default": "FIXED",
-            },
-        ),
-        "renov_attr": (
-            "String",
-            {
-                "name": "Status Attr (face int)",
-                "search": "attribute",
-                "show_if": ("enum_renov_source", {"ATTRIBUTE"}),
-            },
-        ),
         "story_pointer": ("Object", {"name": "Building Story", "show_if": ("enum_storey", {"POINTER"})}),
-        "enum_renov": (
-            "Enum",
-            {
-                "name": "Renovation Status",
-                "items": [
-                    ("N", "Not Set", "Leave the status out of the file"),
-                    ("A", "Existing", "Existing element"),
-                    ("B", "Demolish", "Element to be demolished"),
-                    ("C", "Construct", "New construction"),
-                ],
-                "default": "C",
-                "show_if": ("enum_renov_source", {"FIXED"}),
-            },
-        ),
         "sep4": ("Separator", {}),
-        "cut_material": ("String", {"name": "Cut Material", "search": "material"}),
-        "cutter_object": ("Object", {"name": "Cutter Object"}),
         "precision": ("Int", {"name": "Rounding Decimals", "default": 3}),
     }
 
@@ -179,12 +143,6 @@ class BonsaiPanel:
         container_obj.name = f"PANEL_CONTAINER_{parent_obj.name}"
 
         storey_pointer = bim.entity(data_holder.story_pointer)
-        cutter_object = data_holder.cutter_object
-        cut_material = (
-            bpy.data.materials.get(data_holder.cut_material)
-            if data_holder.cut_material
-            else None
-        )
 
         key = bim.family_key(container_obj, data_holder.bool_attr)
         bim.cleanup_family(ifc_file, "IfcElement", key)
@@ -221,9 +179,7 @@ class BonsaiPanel:
             return bm.faces.layers.int.get(name) if name else None
 
         storey_layer = int_layer(data_holder.storey_attr)
-        renov_layer = int_layer(data_holder.renov_attr)
         material_layer = int_layer(data_holder.material_attr)
-        mat_name_layer = int_layer(data_holder.mat_name_attr)
 
         faces = [f for f in bm.faces if f[select]]
         if not faces:
@@ -261,12 +217,6 @@ class BonsaiPanel:
                 bim.vgroup_name_from_faces(parent_obj, [face], material_layer)
                 or "Default_Material"
             )
-            set_name = (
-                bim.vgroup_name_from_faces(parent_obj, [face], mat_name_layer)
-                if data_holder.enum_mat_name == "USE_OR_CREATE"
-                else None
-            )
-
             result = cls._build_panel(
                 ifc_file,
                 face=face,
@@ -280,18 +230,10 @@ class BonsaiPanel:
                 ifc_class=ifc_class,
                 type_class=type_class,
                 mat_name=mat_name,
-                set_name=set_name,
                 storey=(
                     bim.storey_by_index(int(face[storey_layer]), ifc_file)
                     if data_holder.enum_storey == "ATTRIBUTE" and storey_layer
                     else storey_pointer
-                ),
-                renov_code=(
-                    bim.STATUS_TO_CODE.get(
-                        bim.status_from_index(int(face[renov_layer]))
-                    )
-                    if data_holder.enum_renov_source == "ATTRIBUTE" and renov_layer
-                    else data_holder.enum_renov
                 ),
                 body_context=body_context,
                 precision=precision,
@@ -306,8 +248,7 @@ class BonsaiPanel:
             obj = bim.object_for(element)
             if not obj:
                 continue
-            cls._apply_material_slots(obj, cut_material, resolved_mat)
-            cls._add_boolean_cut(obj, cutter_object)
+            cls._apply_material_slots(obj, resolved_mat)
             bim.set_type_index(obj, type_index)
 
         bm.free()
@@ -333,7 +274,7 @@ class BonsaiPanel:
     @classmethod
     def _build_panel(cls, ifc_file, face, matrix_world, inset, thickness, offset,
                      profile_obj, wants_panel, wants_profile, ifc_class, type_class,
-                     mat_name, set_name, storey, renov_code, body_context, precision,
+                     mat_name, storey, body_context, precision,
                      types, key):
         frame = cls._face_frame(face, matrix_world)
         if not frame:
@@ -404,16 +345,12 @@ class BonsaiPanel:
                 # "Profile Only" — which has none — now gets a material too
                 # instead of coming out bare.
                 bim.assign_constituent_set(
-                    ifc_file, comp_type, set_name or type_name, mat_name
+                    ifc_file, comp_type, type_name, mat_name
                 )
         if comp_type:
             bim.assign_type(ifc_file, element, comp_type)
 
         bim.assign_container(ifc_file, element, storey)
-        # "Not Set" leaves the status out of the file entirely.
-        status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(renov_code)
-        if status:
-            bim.set_status(ifc_file, element, status)
         bim.tag_family(ifc_file, element, key)
         bim.file_object(obj)
         return element, types.index(comp_type)
@@ -627,30 +564,20 @@ class BonsaiPanel:
     # --- FINISHING ---
 
     @classmethod
-    def _apply_material_slots(cls, obj, cut_material, body_material):
+    def _apply_material_slots(cls, obj, body_material):
+        """One slot, the body material. The second slot only ever existed to
+        give the boolean cutter an index to write into."""
         mesh = obj.data
         if not mesh:
             return
         mesh.materials.clear()
-        mesh.materials.append(cut_material)
         mesh.materials.append(body_material)
         for slot in obj.material_slots:
             if slot.link != "DATA":
                 slot.link = "DATA"
         for poly in mesh.polygons:
-            poly.material_index = 1
+            poly.material_index = 0
         mesh.update()
-
-    @classmethod
-    def _add_boolean_cut(cls, obj, cutter):
-        if not cutter or cutter is obj:
-            return
-        mod = obj.modifiers.new(name="RefOps Cut", type="BOOLEAN")
-        mod.operation = "DIFFERENCE"
-        mod.object = cutter
-        mod.solver = "EXACT"
-        if hasattr(mod, "material_mode"):
-            mod.material_mode = "INDEX"
 
 
 def f_value(face, layer):

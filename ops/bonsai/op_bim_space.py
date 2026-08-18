@@ -136,39 +136,6 @@ class BonsaiSpace:
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },
         ),
-        "enum_renov_source": (
-            "Enum",
-            {
-                "name": "Status From",
-                "items": [
-                    ("FIXED", "Fixed", "One status for every space"),
-                    ("ATTRIBUTE", "Attribute", "0 not set, 1 existing, 2 demolish, 3 new"),
-                ],
-                "default": "FIXED",
-            },
-        ),
-        "renov_attr": (
-            "String",
-            {
-                "name": "Status Attr (face int)",
-                "search": "attribute",
-                "show_if": ("enum_renov_source", {"ATTRIBUTE"}),
-            },
-        ),
-        "enum_renov": (
-            "Enum",
-            {
-                "name": "Renovation Status",
-                "items": [
-                    ("N", "Not Set", "Leave the status out of the file"),
-                    ("A", "Existing", "Existing element"),
-                    ("B", "Demolish", "Element to be demolished"),
-                    ("C", "Construct", "New construction"),
-                ],
-                "default": "N",
-                "show_if": ("enum_renov_source", {"FIXED"}),
-            },
-        ),
         "precision": ("Int", {"name": "Rounding Decimals", "default": 3}),
     }
 
@@ -228,12 +195,6 @@ class BonsaiSpace:
             if data_holder.storey_attr
             else None
         )
-        renov_layer = (
-            bm.faces.layers.int.get(data_holder.renov_attr)
-            if data_holder.renov_attr
-            else None
-        )
-
         names = cls._room_names(bm, rooms, data_holder)
         body_context = bim.get_body_context(ifc_file)
 
@@ -248,7 +209,6 @@ class BonsaiSpace:
                 storey=cls._room_storey(
                     ifc_file, bm, room, storey_layer, storey_pointer, data_holder
                 ),
-                renov_code=cls._room_status(bm, room, renov_layer, data_holder),
                 body_context=body_context,
                 data_holder=data_holder,
                 key=key,
@@ -534,7 +494,7 @@ class BonsaiSpace:
 
     @classmethod
     def _build_space(cls, ifc_file, room, name, room_index, matrix_world, storey,
-                     body_context, data_holder, key, renov_code="N"):
+                     body_context, data_holder, key):
         """One IfcSpace: the floor outline extruded to the room height."""
         origin = mathutils.Vector(
             (
@@ -571,11 +531,6 @@ class BonsaiSpace:
                 print(f"[RefOps] aggregate.assign_object: {e}")
                 bim.assign_container(ifc_file, element, storey)
 
-        # "Not Set" leaves the status out of the file entirely.
-        status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(renov_code)
-        if status:
-            bim.set_status(ifc_file, element, status)
-
         precision = data_holder.precision
         bim.set_pset(
             ifc_file,
@@ -606,20 +561,6 @@ class BonsaiSpace:
         if not values:
             return pointer
         return bim.storey_by_index(min(values), ifc_file)
-
-    @classmethod
-    def _room_status(cls, bm, room, layer, data_holder):
-        """Renovation status, by majority across the space's faces."""
-        if data_holder.enum_renov_source != "ATTRIBUTE" or layer is None:
-            return data_holder.enum_renov
-        counts = {}
-        for index in room["faces"]:
-            value = int(bm.faces[index][layer])
-            counts[value] = counts.get(value, 0) + 1
-        if not counts:
-            return data_holder.enum_renov
-        winner = max(counts.items(), key=lambda item: item[1])[0]
-        return bim.STATUS_TO_CODE.get(bim.status_from_index(winner), "N")
 
     @classmethod
     def _write_attributes(cls, obj, room_index):

@@ -351,46 +351,7 @@ class EdgeComponent:
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },
         ),
-        "enum_renov_source": (
-            "Enum",
-            {
-                "name": "Status From",
-                "items": [
-                    ("FIXED", "Fixed", "One status for the whole run"),
-                    (
-                        "ATTRIBUTE",
-                        "Attribute",
-                        "0 not set, 1 existing, 2 demolish, 3 new",
-                    ),
-                ],
-                "default": "FIXED",
-            },
-        ),
-        "renov_attr": (
-            "String",
-            {
-                "name": "Status Attr (edge int)",
-                "search": "attribute",
-                "show_if": ("enum_renov_source", {"ATTRIBUTE"}),
-            },
-        ),
-        "enum_renov": (
-            "Enum",
-            {
-                "name": "Renovation Status",
-                "items": [
-                    ("N", "Not Set", "Leave the status out of the file"),
-                    ("A", "Existing", "Existing element"),
-                    ("B", "Demolish", "Element to be demolished"),
-                    ("C", "Construct", "New construction"),
-                ],
-                "default": "C",
-                "show_if": ("enum_renov_source", {"FIXED"}),
-            },
-        ),
         "sep6": ("Separator", {}),
-        "cut_material": ("String", {"name": "Cut Material", "search": "material"}),
-        "cutter_object": ("Object", {"name": "Cutter Object"}),
         "precision": ("Int", {"name": "Rounding Decimals", "default": 3}),
     }
 
@@ -509,18 +470,11 @@ class EdgeComponent:
                 max(tally.items(), key=lambda item: item[1])[0],
             )
 
-        cut_material = (
-            bpy.data.materials.get(data_holder.cut_material)
-            if data_holder.cut_material
-            else None
-        )
         for element, type_index in created:
             obj = bim.object_for(element)
             if not obj:
                 continue
-            cls._apply_material_slots(obj, cut_material)
             bim.set_type_index(obj, type_index)
-            cls._add_boolean_cut(obj, data_holder.cutter_object)
 
         bm.free()
         return bool(created)
@@ -622,7 +576,6 @@ class EdgeComponent:
             "cardinal": edge_int(data_holder.cardinal_attr),
             "material": edge_int(data_holder.material_attr),
             "storey": edge_int(data_holder.storey_attr),
-            "renov": edge_int(data_holder.renov_attr),
             "vertex_split": (
                 bm.verts.layers.bool.get(data_holder.vertex_split_attr)
                 if data_holder.vertex_split_attr
@@ -862,15 +815,6 @@ class EdgeComponent:
                 cls._edge_int(edge, layers["storey"]), ifc_file
             )
         bim.assign_container(ifc_file, element, storey)
-        # "Not Set" leaves the status out of the file entirely.
-        if data_holder.enum_renov_source == "ATTRIBUTE":
-            status = bim.status_from_index(cls._edge_int(edge, layers["renov"]))
-        else:
-            status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(
-                data_holder.enum_renov
-            )
-        if status:
-            bim.set_status(ifc_file, element, status)
         bim.tag_family(ifc_file, element, key)
         return (
             element,
@@ -906,43 +850,3 @@ class EdgeComponent:
                 usage.CardinalPoint = int(cardinal)
         except Exception as e:
             print(f"[RefOps] CardinalPoint: {e}")
-
-    # --- FINISHING ---
-
-    @classmethod
-    def _apply_material_slots(cls, obj, cut_material):
-        """Two slots, because the boolean cut runs on INDEX:
-            slot 0 -> cut material
-            slot 1 -> body
-
-        Nothing is resolved for the body any more — it keeps whatever Bonsai put
-        on the object for the IFC surface style, which is read back BEFORE the
-        clear so rebuilding the slots doesn't throw the style away."""
-        mesh = obj.data
-        if not mesh:
-            return
-        if cut_material is None:
-            # Nothing to insert at slot 0, and clearing would only cost the
-            # style material.
-            return
-        body_material = mesh.materials[0] if mesh.materials else None
-        mesh.materials.clear()
-        mesh.materials.append(cut_material)
-        mesh.materials.append(body_material)
-        for slot in obj.material_slots:
-            if slot.link != "DATA":
-                slot.link = "DATA"
-        for poly in mesh.polygons:
-            poly.material_index = 1
-        mesh.update()
-
-    @classmethod
-    def _add_boolean_cut(cls, obj, cutter):
-        if not cutter or cutter is obj:
-            return
-        mod = obj.modifiers.new(name="RefOps Cut", type="BOOLEAN")
-        mod.operation = "DIFFERENCE"
-        mod.object = cutter
-        mod.solver = "EXACT"
-        if hasattr(mod, "material_mode"):
-            mod.material_mode = "INDEX"
