@@ -30,6 +30,7 @@ prof = refops_api.bim_profiles
 
 TOL = bim.TOL
 
+
 class BonsaiDistributeOnPoints:
     id = "BIM_DISTRIBUTE_ON_POINTS"
     label = "Bonsai Distribute on Points"
@@ -38,26 +39,30 @@ class BonsaiDistributeOnPoints:
     execution_mode = "OBJECT"
 
     props_definition = {
+        "enum_output": (
+            "Enum",
+            {
+                "name": "Distribute As",
+                "items": [
+                    (
+                        "BIM",
+                        "BIM Elements",
+                        "Real IFC occurrences, counted in schedules",
+                    ),
+                    ("BLENDER", "Blender Objects", "Plain objects, no IFC data"),
+                ],
+                "default": "BIM",
+            },
+        ),
         "enum_kind": (
             "Enum",
             {
                 "name": "Element",
                 "items": [
                     ("DOOR_WINDOW", "Door / Window", "Fills an opening in a host"),
-                    ("BIM_ELEMENT", "BIM Element", "Anything placed freely"),
+                    ("BIM_ELEMENT", "Component", "Anything placed freely"),
                 ],
                 "default": "DOOR_WINDOW",
-            },
-        ),
-        "enum_output": (
-            "Enum",
-            {
-                "name": "Distribute As",
-                "items": [
-                    ("BIM", "BIM Elements", "Real IFC occurrences, counted in schedules"),
-                    ("BLENDER", "Blender Objects", "Plain objects, no IFC data"),
-                ],
-                "default": "BIM",
             },
         ),
         "target_collection": (
@@ -87,7 +92,10 @@ class BonsaiDistributeOnPoints:
             {"name": "Point Attr (vert bool)", "search": "attribute"},
         ),
         "sep1": ("Separator", {}),
-        "lbl_source": ("Label", {"text": "What to Distribute", "icon": "OUTLINER_OB_GROUP_INSTANCE"}),
+        "lbl_source": (
+            "Label",
+            {"text": "What to Distribute", "icon": "OUTLINER_OB_GROUP_INSTANCE"},
+        ),
         "enum_source": (
             "Enum",
             {
@@ -116,19 +124,30 @@ class BonsaiDistributeOnPoints:
             },
         ),
         "sep2": ("Separator", {}),
-
         # --- door / window ---
         "lbl_dw": (
             "Label",
-            {"text": "Placement", "icon": "MOD_BUILD", "show_if": ("enum_kind", {"DOOR_WINDOW"})},
+            {
+                "text": "Placement",
+                "icon": "MOD_BUILD",
+                "show_if": ("enum_kind", {"DOOR_WINDOW"}),
+            },
         ),
         "enum_align_mode": (
             "Enum",
             {
                 "name": "Align From",
                 "items": [
-                    ("ORIGIN", "Object Origin", "The element's own origin lands on the point"),
-                    ("BOUNDING_BOX", "Bounding Box", "The cardinal corner lands on the point"),
+                    (
+                        "ORIGIN",
+                        "Object Origin",
+                        "The element's own origin lands on the point",
+                    ),
+                    (
+                        "BOUNDING_BOX",
+                        "Bounding Box",
+                        "The cardinal corner lands on the point",
+                    ),
                 ],
                 "default": "ORIGIN",
                 "show_if": ("enum_kind", {"DOOR_WINDOW"}),
@@ -143,8 +162,10 @@ class BonsaiDistributeOnPoints:
                     "Numpad layout: which point of the element's bounding box "
                     "is placed on the vertex. 2 its bottom centre, 8 its top"
                 ),
-                "show_if": [("enum_kind", {"DOOR_WINDOW"}),
-                            ("enum_align_mode", {"BOUNDING_BOX"})],
+                "show_if": [
+                    ("enum_kind", {"DOOR_WINDOW"}),
+                    ("enum_align_mode", {"BOUNDING_BOX"}),
+                ],
             },
         ),
         "face_align_attr": (
@@ -189,17 +210,21 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Host Class",
                 "default": "IfcWall",
-                "show_if": [("enum_output", {"BIM"}),
-                            ("enum_kind", {"DOOR_WINDOW"}),
-                            ("apply_to_wall", {True})],
+                "show_if": [
+                    ("enum_output", {"BIM"}),
+                    ("enum_kind", {"DOOR_WINDOW"}),
+                    ("apply_to_wall", {True}),
+                ],
             },
         ),
-
         # --- free elements ---
         "lbl_free": (
             "Label",
-            {"text": "Orientation", "icon": "ORIENTATION_GIMBAL",
-             "show_if": ("enum_kind", {"BIM_ELEMENT"})},
+            {
+                "text": "Orientation",
+                "icon": "ORIENTATION_GIMBAL",
+                "show_if": ("enum_kind", {"BIM_ELEMENT"}),
+            },
         ),
         "enum_orientation": (
             "Enum",
@@ -207,7 +232,11 @@ class BonsaiDistributeOnPoints:
                 "name": "Up / Rotation",
                 "items": [
                     ("Z_UP", "Z Up", "World up, no rotation"),
-                    ("ANGLE", "Z Up + Angle Attr", "World up, turned by a float attribute"),
+                    (
+                        "ANGLE",
+                        "Z Up + Angle Attr",
+                        "World up, turned by a float attribute",
+                    ),
                     ("NORMAL", "Vertex Normal", "Average of the faces at the point"),
                     ("VECTOR", "Vector Attr", "Float-vector attribute on the vertex"),
                 ],
@@ -221,7 +250,10 @@ class BonsaiDistributeOnPoints:
                 "name": "Angle Attr (vert float, degrees)",
                 "search": "attribute",
                 "description": "Rotation about the up axis, in degrees",
-                "show_if": [("enum_kind", {"BIM_ELEMENT"}), ("enum_orientation", {"ANGLE"})],
+                "show_if": [
+                    ("enum_kind", {"BIM_ELEMENT"}),
+                    ("enum_orientation", {"ANGLE"}),
+                ],
             },
         ),
         "vector_attr": (
@@ -229,7 +261,10 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Vector Attr (vert vector)",
                 "search": "attribute",
-                "show_if": [("enum_kind", {"BIM_ELEMENT"}), ("enum_orientation", {"VECTOR"})],
+                "show_if": [
+                    ("enum_kind", {"BIM_ELEMENT"}),
+                    ("enum_orientation", {"VECTOR"}),
+                ],
             },
         ),
         "sep3": ("Separator", {}),
@@ -267,7 +302,11 @@ class BonsaiDistributeOnPoints:
                 "name": "Status From",
                 "items": [
                     ("FIXED", "Fixed", "One status for every point"),
-                    ("ATTRIBUTE", "Attribute", "0 not set, 1 existing, 2 demolish, 3 new"),
+                    (
+                        "ATTRIBUTE",
+                        "Attribute",
+                        "0 not set, 1 existing, 2 demolish, 3 new",
+                    ),
                 ],
                 "default": "FIXED",
                 "show_if": ("enum_output", {"BIM"}),
@@ -278,8 +317,10 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Status Attr (vert int)",
                 "search": "attribute",
-                "show_if": [("enum_output", {"BIM"}),
-                            ("enum_renov_source", {"ATTRIBUTE"})],
+                "show_if": [
+                    ("enum_output", {"BIM"}),
+                    ("enum_renov_source", {"ATTRIBUTE"}),
+                ],
             },
         ),
         "enum_renov": (
@@ -293,8 +334,7 @@ class BonsaiDistributeOnPoints:
                     ("C", "Construct", "New construction"),
                 ],
                 "default": "C",
-                "show_if": [("enum_output", {"BIM"}),
-                            ("enum_renov_source", {"FIXED"})],
+                "show_if": [("enum_output", {"BIM"}), ("enum_renov_source", {"FIXED"})],
             },
         ),
         "cut_material": ("String", {"name": "Cut Material", "search": "material"}),
@@ -311,7 +351,9 @@ class BonsaiDistributeOnPoints:
             print(bim.IMPORT_ERROR)
             return False
 
-        parent_obj = bpy.data.objects.get(getattr(container_obj, "proc_parent_name", ""))
+        parent_obj = bpy.data.objects.get(
+            getattr(container_obj, "proc_parent_name", "")
+        )
         if not parent_obj or parent_obj.type != "MESH":
             return False
 
@@ -423,16 +465,15 @@ class BonsaiDistributeOnPoints:
         if not layers["weight"] or not weight_range:
             return objects[0]
         low, high = weight_range
-        index = prof.weight_to_index(
-            vert[layers["weight"]], low, high, len(objects)
-        )
+        index = prof.weight_to_index(vert[layers["weight"]], low, high, len(objects))
         return objects[index] if index is not None else None
 
     # --- PLACEMENT ---
 
     @classmethod
-    def _place(cls, ifc_file, vert, layers, weight_range, source, data_holder,
-               storey, key):
+    def _place(
+        cls, ifc_file, vert, layers, weight_range, source, data_holder, storey, key
+    ):
         template = cls._pick_source(vert, layers, weight_range, data_holder)
         if template is None:
             print("[RefOps] Nenhum objeto de origem para este ponto.")
@@ -528,7 +569,9 @@ class BonsaiDistributeOnPoints:
         position = matrix_world @ vert.co
 
         if data_holder.enum_kind == "BIM_ELEMENT":
-            return cls._free_matrix(vert, layers, matrix_world, position, data_holder), None
+            return cls._free_matrix(
+                vert, layers, matrix_world, position, data_holder
+            ), None
         return cls._wall_matrix(vert, layers, matrix_world, position, entity), None
 
     @classmethod
@@ -596,9 +639,7 @@ class BonsaiDistributeOnPoints:
         rotation = matrix_world.to_3x3()
 
         if layers["face_align"] is not None:
-            marked = [
-                face for face in vert.link_faces if face[layers["face_align"]]
-            ]
+            marked = [face for face in vert.link_faces if face[layers["face_align"]]]
             if marked:
                 normal = mathutils.Vector((0.0, 0.0, 0.0))
                 for face in marked:
@@ -621,9 +662,7 @@ class BonsaiDistributeOnPoints:
                     run["edges"].append(edge)
                     break
             else:
-                runs.append(
-                    {"direction": direction, "length": span, "edges": [edge]}
-                )
+                runs.append({"direction": direction, "length": span, "edges": [edge]})
 
         if not runs:
             print("[RefOps] Ponto sem aresta horizontal — não dá para achar a parede.")
@@ -726,8 +765,8 @@ class BonsaiDistributeOnPoints:
         min_z = min(c.z for c in corners)
         max_z = max(c.z for c in corners)
 
-        column = (cardinal - 1) % 3   # 0 left, 1 centre, 2 right
-        row = (cardinal - 1) // 3     # 0 bottom, 1 middle, 2 top
+        column = (cardinal - 1) % 3  # 0 left, 1 centre, 2 right
+        row = (cardinal - 1) // 3  # 0 bottom, 1 middle, 2 top
         target_x = (min_x, (min_x + max_x) / 2.0, max_x)[column]
         target_z = (min_z, (min_z + max_z) / 2.0, max_z)[row]
 
@@ -753,7 +792,9 @@ class BonsaiDistributeOnPoints:
             if normal.length > TOL:
                 up = normal.normalized()
         elif mode == "VECTOR" and layers["vector"]:
-            raw = matrix_world.to_3x3() @ mathutils.Vector(tuple(vert[layers["vector"]]))
+            raw = matrix_world.to_3x3() @ mathutils.Vector(
+                tuple(vert[layers["vector"]])
+            )
             if raw.length > TOL:
                 up = raw.normalized()
 
@@ -804,10 +845,18 @@ class BonsaiDistributeOnPoints:
             local = obj.matrix_world.inverted() @ point
             corners = [mathutils.Vector(corner) for corner in obj.bound_box]
             low = mathutils.Vector(
-                (min(c.x for c in corners), min(c.y for c in corners), min(c.z for c in corners))
+                (
+                    min(c.x for c in corners),
+                    min(c.y for c in corners),
+                    min(c.z for c in corners),
+                )
             )
             high = mathutils.Vector(
-                (max(c.x for c in corners), max(c.y for c in corners), max(c.z for c in corners))
+                (
+                    max(c.x for c in corners),
+                    max(c.y for c in corners),
+                    max(c.z for c in corners),
+                )
             )
             signature = bim.layer_set_signature(element)
             thickness = sum(v for v, _m in signature) if signature else 0.0

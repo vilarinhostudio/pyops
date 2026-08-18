@@ -120,6 +120,11 @@ class BonsaiFaceComponent:
                 "show_if": ("enum_extrude", {"VECTOR"}),
             },
         ),
+        # mints_type=True: this operator BUILDS its own type and its
+        # constituent set, so there is no prior name to rename — the two
+        # attributes here name the material and the set, not the same thing
+        # twice.
+        **bim.material_props("face", mints_type=True),
         "sep2": ("Separator", {}),
         "lbl_ifc": ("Label", {"text": "IFC Class", "icon": "FILE_3D"}),
         "ifc_class": (
@@ -223,7 +228,16 @@ class BonsaiFaceComponent:
                 "não encontrado — nada será dividido."
             )
 
-        plan = cls._plan_thickness(bm, faces, data_holder)
+        def int_layer(name):
+            return bm.faces.layers.int.get(name) if name else None
+
+        material_layer = int_layer(data_holder.material_attr)
+        mat_name_layer = int_layer(data_holder.mat_name_attr)
+
+        def constituent_name(face):
+            return cls._constituent_name(face, source, parent_obj, material_layer)
+
+        plan = cls._plan_thickness(bm, faces, data_holder, constituent_name)
         if plan is None:
             bm.free()
             return False
@@ -232,11 +246,17 @@ class BonsaiFaceComponent:
         created = []
         types = bim.TypeIndexer()
         for group in plan:
-            blender_mat = None
-            mat_index = group["faces"][0].material_index
-            if mat_index < len(source.data.materials):
-                blender_mat = source.data.materials[mat_index]
-            mat_name = blender_mat.name if blender_mat else "Default_Material"
+            mat_name = group["material_name"]
+            blender_mat = bim.get_or_create_blender_material(mat_name)
+
+            # The set name: the second attribute in Use or Create, otherwise the
+            # type's own name — there is no set to inherit a name from, since
+            # this operator creates it.
+            set_name = None
+            if data_holder.enum_mat_name == "USE_OR_CREATE":
+                set_name = bim.vgroup_name_from_faces(
+                    parent_obj, group["faces"], mat_name_layer
+                )
 
             comp_type = cls._resolve_type(
                 ifc_file,
@@ -244,6 +264,7 @@ class BonsaiFaceComponent:
                 prefix,
                 group["nominal"],
                 mat_name,
+                set_name,
                 blender_mat if data_holder.sync_styles else None,
                 body_context,
             )
@@ -291,7 +312,7 @@ class BonsaiFaceComponent:
     # --- THICKNESS PLANNING ---
 
     @classmethod
-    def _plan_thickness(cls, bm, faces, data_holder):
+    def _plan_thickness(cls, bm, faces, data_holder, name_of):
         """Resolves the thickness source into groups, each of which becomes one
         Solidify setup. Returns a list of dicts, or None on a bad input.
 
@@ -301,7 +322,12 @@ class BonsaiFaceComponent:
         per-face source can't use a vertex group at all: a weight lives on a
         vertex shared by faces that may want different thicknesses. Faces are
         split by value instead, one uniform Solidify each, which also matches
-        what IFC wants — a distinct thickness is a distinct type."""
+        what IFC wants — a distinct thickness is a distinct type.
+
+        Grouping is by the CONSTITUENT NAME, not by the Blender material slot:
+        the material now comes from the vertex group table, and keying on the
+        slot would let two faces wanting different constituents share a type
+        and silently take whichever material was resolved first."""
         source = data_holder.enum_source
         precision = data_holder.precision
 
@@ -315,16 +341,17 @@ class BonsaiFaceComponent:
                 value = round(f[layer], precision)
                 if value <= 0:
                     continue
-                buckets.setdefault((value, f.material_index), []).append(f)
+                buckets.setdefault((value, name_of(f)), []).append(f)
             return [
                 {
                     "faces": group,
                     "thickness": value,
                     "nominal": value,
+                    "material_name": material_name,
                     "vgroup": None,
                     "weight_of": None,
                 }
-                for (value, _), group in sorted(buckets.items())
+                for (value, material_name), group in sorted(buckets.items())
             ]
 
         if source == "VERTEX":
@@ -346,6 +373,7 @@ class BonsaiFaceComponent:
                 nominal=peak,
                 vgroup="RefOps Thickness",
                 weight_of=lambda v: max(0.0, min(1.0, v[layer] / peak)),
+                name_of=name_of,
             )
 
         if source == "VGROUP":
@@ -367,6 +395,7 @@ class BonsaiFaceComponent:
                 nominal=base,
                 vgroup=name,
                 weight_of=lambda v: v[deform].get(group_index, 0.0),
+                name_of=name_of,
             )
 
         return None
@@ -385,19 +414,20 @@ class BonsaiFaceComponent:
         return parent.vertex_groups[name].index
 
     @classmethod
-    def _by_material(cls, faces, thickness, nominal, vgroup, weight_of):
+    def _by_material(cls, faces, thickness, nominal, vgroup, weight_of, name_of):
         buckets = {}
         for f in faces:
-            buckets.setdefault(f.material_index, []).append(f)
+            buckets.setdefault(name_of(f), []).append(f)
         return [
             {
                 "faces": group,
                 "thickness": thickness,
                 "nominal": nominal,
+                "material_name": material_name,
                 "vgroup": vgroup,
                 "weight_of": weight_of,
             }
-            for group in buckets.values()
+            for material_name, group in buckets.items()
         ]
 
     # --- BUILD ---
@@ -479,8 +509,12 @@ class BonsaiFaceComponent:
             return None
 
         if comp_type:
+            # No assign_usage here: IfcMaterialConstituentSet has no usage
+            # entity in the schema, so the occurrence inherits the set through
+            # the type association alone. Asking for an IfcMaterialLayerSetUsage
+            # would have built a usage pointing at a layer set that no longer
+            # exists on this type.
             bim.assign_type(ifc_file, element, comp_type)
-            bim.assign_usage(ifc_file, element, "IfcMaterialLayerSetUsage")
         bim.assign_container(ifc_file, element, storey)
         # "Not Set" leaves the status out of the file entirely.
         status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(renov_code)
@@ -580,18 +614,41 @@ class BonsaiFaceComponent:
     # --- TYPE ---
 
     @classmethod
+    def _constituent_name(cls, face, source, parent_obj, material_layer):
+        """The constituent name for one face.
+
+        With the attribute painted, the vertex group table decides. Without it
+        the Blender material slot still does — an operation set up before the
+        attribute existed keeps producing the same names."""
+        if material_layer is not None:
+            try:
+                return bim.vgroup_string(parent_obj, int(face[material_layer]))
+            except ValueError as e:
+                print(f"[RefOps] {e}")
+                return "Default_Material"
+        materials = source.data.materials
+        index = face.material_index
+        if index < len(materials) and materials[index]:
+            return materials[index].name
+        return "Default_Material"
+
+    @classmethod
     def _resolve_type(cls, ifc_file, type_class, prefix, thickness, mat_name,
-                      blender_mat, body_context):
+                      set_name, blender_mat, body_context):
+        """The type, reused by name or built fresh with its constituent set.
+
+        Matched by NAME rather than by layer signature: the type now carries an
+        IfcMaterialConstituentSet, which has no thicknesses to compare, so
+        find_type_by_layers had nothing left to match on. The name already
+        encodes thickness and constituent, so it separates the same cases."""
+        type_name = f"{prefix}_{int(round(thickness * 1000))}mm_{mat_name}"
         try:
-            existing = bim.find_type_by_layers(
-                ifc_file, type_class, [(thickness, mat_name)]
-            )
+            existing = bim.find_type_by_name(ifc_file, type_class, type_name)
         except Exception:
             return None  # no such type class in this schema
         if existing:
             return existing
 
-        type_name = f"{prefix}_{int(round(thickness * 1000))}mm_{mat_name}"
         type_obj, comp_type = bim.create_type(ifc_file, type_class, type_name)
         if not comp_type:
             return None
@@ -599,7 +656,9 @@ class BonsaiFaceComponent:
         ifc_mat = bim.get_or_create_material(ifc_file, mat_name)
         if blender_mat:
             bim.sync_material_style(ifc_file, ifc_mat, blender_mat, body_context)
-        bim.assign_layer_set(ifc_file, comp_type, type_name, [(ifc_mat, thickness)])
+        bim.assign_constituent_set(
+            ifc_file, comp_type, set_name or type_name, mat_name
+        )
         return comp_type
 
     # --- FINISHING ---

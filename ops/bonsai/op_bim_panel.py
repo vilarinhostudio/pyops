@@ -79,6 +79,11 @@ class BonsaiPanel:
                 "show_if": ("enum_profile_source", {"COLLECTION"}),
             },
         ),
+        # mints_type=True: this operator BUILDS its own type and its
+        # constituent set, so there is no prior name to rename — the two
+        # attributes here name the material and the set, not the same thing
+        # twice.
+        **bim.material_props("face", mints_type=True),
         "sep3": ("Separator", {}),
         "lbl_bim": ("Label", {"text": "BIM Properties", "icon": "OUTLINER_OB_GROUP_INSTANCE"}),
         "ifc_class": (
@@ -125,7 +130,6 @@ class BonsaiPanel:
             },
         ),
         "story_pointer": ("Object", {"name": "Building Story", "show_if": ("enum_storey", {"POINTER"})}),
-        "body_material": ("Material", {"name": "Body Material (slot 1)"}),
         "enum_renov": (
             "Enum",
             {
@@ -175,7 +179,6 @@ class BonsaiPanel:
         container_obj.name = f"PANEL_CONTAINER_{parent_obj.name}"
 
         storey_pointer = bim.entity(data_holder.story_pointer)
-        body_material = data_holder.body_material
         cutter_object = data_holder.cutter_object
         cut_material = (
             bpy.data.materials.get(data_holder.cut_material)
@@ -219,6 +222,8 @@ class BonsaiPanel:
 
         storey_layer = int_layer(data_holder.storey_attr)
         renov_layer = int_layer(data_holder.renov_attr)
+        material_layer = int_layer(data_holder.material_attr)
+        mat_name_layer = int_layer(data_holder.mat_name_attr)
 
         faces = [f for f in bm.faces if f[select]]
         if not faces:
@@ -250,6 +255,18 @@ class BonsaiPanel:
                     print("[RefOps] Nenhum perfil resolvido para esta face.")
                     continue
 
+            # One face is one panel here — nothing is ever merged — so the
+            # vertex group table is read straight off it.
+            mat_name = (
+                bim.vgroup_name_from_faces(parent_obj, [face], material_layer)
+                or "Default_Material"
+            )
+            set_name = (
+                bim.vgroup_name_from_faces(parent_obj, [face], mat_name_layer)
+                if data_holder.enum_mat_name == "USE_OR_CREATE"
+                else None
+            )
+
             result = cls._build_panel(
                 ifc_file,
                 face=face,
@@ -262,7 +279,8 @@ class BonsaiPanel:
                 wants_profile=wants_profile,
                 ifc_class=ifc_class,
                 type_class=type_class,
-                material=body_material,
+                mat_name=mat_name,
+                set_name=set_name,
                 storey=(
                     bim.storey_by_index(int(face[storey_layer]), ifc_file)
                     if data_holder.enum_storey == "ATTRIBUTE" and storey_layer
@@ -281,13 +299,14 @@ class BonsaiPanel:
                 key=key,
             )
             if result:
-                created.append(result)  # (element, type index)
+                # (element, type index, resolved Blender material)
+                created.append(result + (bim.get_or_create_blender_material(mat_name),))
 
-        for element, type_index in created:
+        for element, type_index, resolved_mat in created:
             obj = bim.object_for(element)
             if not obj:
                 continue
-            cls._apply_material_slots(obj, cut_material, body_material)
+            cls._apply_material_slots(obj, cut_material, resolved_mat)
             cls._add_boolean_cut(obj, cutter_object)
             bim.set_type_index(obj, type_index)
 
@@ -314,7 +333,8 @@ class BonsaiPanel:
     @classmethod
     def _build_panel(cls, ifc_file, face, matrix_world, inset, thickness, offset,
                      profile_obj, wants_panel, wants_profile, ifc_class, type_class,
-                     material, storey, renov_code, body_context, precision, types, key):
+                     mat_name, set_name, storey, renov_code, body_context, precision,
+                     types, key):
         frame = cls._face_frame(face, matrix_world)
         if not frame:
             return None
@@ -338,7 +358,7 @@ class BonsaiPanel:
 
         signature = cls._shape_signature(outline, precision)
         type_name = cls._type_name(
-            signature, len(outline), thickness, material, profile_obj
+            signature, len(outline), thickness, mat_name, profile_obj
         )
 
         matrix = mathutils.Matrix(
@@ -370,17 +390,22 @@ class BonsaiPanel:
 
         comp_type = bim.find_type_by_name(ifc_file, type_class, type_name)
         if comp_type is None:
-            ifc_mat = bim.get_or_create_material(
-                ifc_file, material.name if material else "Default_Material"
-            )
             _obj, comp_type = bim.create_type(ifc_file, type_class, type_name)
             if comp_type:
-                if material:
-                    bim.sync_material_style(ifc_file, ifc_mat, material, body_context)
-                if thickness > TOL:
-                    bim.assign_layer_set(
-                        ifc_file, comp_type, type_name, [(ifc_mat, thickness)]
-                    )
+                ifc_mat = bim.get_or_create_material(ifc_file, mat_name)
+                bim.sync_material_style(
+                    ifc_file,
+                    ifc_mat,
+                    bim.get_or_create_blender_material(mat_name),
+                    body_context,
+                )
+                # Unconditional, where the layer set was guarded by
+                # `thickness > TOL`: a constituent set carries no thickness, so
+                # "Profile Only" — which has none — now gets a material too
+                # instead of coming out bare.
+                bim.assign_constituent_set(
+                    ifc_file, comp_type, set_name or type_name, mat_name
+                )
         if comp_type:
             bim.assign_type(ifc_file, element, comp_type)
 
@@ -591,10 +616,10 @@ class BonsaiPanel:
         return min(candidates)
 
     @classmethod
-    def _type_name(cls, signature, point_count, thickness, material, profile_obj):
+    def _type_name(cls, signature, point_count, thickness, mat_name, profile_obj):
         digest = hashlib.blake2b(repr(signature).encode(), digest_size=2).hexdigest()
         name = f"PNL-{point_count}pt-{digest}-{int(round(thickness * 1000))}mm"
-        name += f"_{material.name if material else 'Default_Material'}"
+        name += f"_{mat_name}"
         if profile_obj:
             name += f"_{profile_obj.name}"
         return name

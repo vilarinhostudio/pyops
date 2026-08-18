@@ -13,7 +13,7 @@ TOL = bim.TOL
 # quiet now that the mapping is right, and switching it back on is one line when
 # a joint comes out wrong.
 DEBUG_JUNCTIONS = False
-ALIGN_MAP = {0: "CENTER", 1: "EXTERIOR", 2: "INTERIOR"}
+ALIGN_MAP = {0: "INTERIOR", 1: "CENTER", 2: "EXTERIOR"}
 
 
 class BonsaiWall:
@@ -30,8 +30,20 @@ class BonsaiWall:
     execution_mode = "OBJECT"
 
     props_definition = {
-        "lbl_filter": ("Label", {"text": "Face Selection", "icon": "RESTRICT_SELECT_OFF"}),
+        "lbl_filter": ("Label", {"text": "Principal", "icon": "RESTRICT_SELECT_OFF"}),
         "bool_attr": ("String", {"name": "Wall Select Attr", "search": "attribute"}),
+        "align_attr": ("String", {"name": "Align Attr (int)", "search": "attribute"}),
+        "split_edge_attr": (
+            "String",
+            {
+                "name": "Split Attr (edge bool) — optional",
+                "search": "attribute",
+                "description": (
+                    "Edges a wall may not cross. Mark the slab lines and each "
+                    "storey becomes its own wall"
+                ),
+            },
+        ),
         "sep1": ("Separator", {}),
         "lbl_type": ("Label", {"text": "Type Definition", "icon": "MOD_BUILD"}),
         "enum_wall_mode": (
@@ -39,19 +51,10 @@ class BonsaiWall:
             {
                 "name": "Type Mode",
                 "items": [
-                    ("S", "Simple (Attribute)", "Match/create type from thickness attribute"),
-                    ("C", "Complex (Pointer)", "Use wall type object pointer"),
+                    ("C", "Object Type (Pointer)", "Use wall type object pointer"),
                     ("W", "Collection (Weighted)", "Pick a type per element by weight"),
                 ],
-                "default": "S",
-            },
-        ),
-        "thick_attr": (
-            "String",
-            {
-                "name": "Thickness Attr",
-                "search": "attribute",
-                "show_if": ("enum_wall_mode", {"S"}),
+                "default": "C",
             },
         ),
         "wall_type_pointer": (
@@ -70,17 +73,6 @@ class BonsaiWall:
                 "show_if": ("enum_wall_mode", {"W"}),
             },
         ),
-        "split_edge_attr": (
-            "String",
-            {
-                "name": "Split Attr (edge bool) — optional",
-                "search": "attribute",
-                "description": (
-                    "Edges a wall may not cross. Mark the slab lines and each "
-                    "storey becomes its own wall"
-                ),
-            },
-        ),
         "sep_void": ("Separator", {}),
         "void_object": (
             "Object",
@@ -92,6 +84,7 @@ class BonsaiWall:
                 ),
             },
         ),
+        **bim.material_props("face"),
         "sep2": ("Separator", {}),
         "lbl_bim_props": (
             "Label",
@@ -127,7 +120,11 @@ class BonsaiWall:
                 "name": "Status From",
                 "items": [
                     ("FIXED", "Fixed", "One status for the whole run"),
-                    ("ATTRIBUTE", "Attribute", "0 not set, 1 existing, 2 demolish, 3 new"),
+                    (
+                        "ATTRIBUTE",
+                        "Attribute",
+                        "0 not set, 1 existing, 2 demolish, 3 new",
+                    ),
                 ],
                 "default": "FIXED",
             },
@@ -140,11 +137,7 @@ class BonsaiWall:
                 "show_if": ("enum_renov_source", {"ATTRIBUTE"}),
             },
         ),
-        "cut_material": ("String", {"name": "Cut Material", "search": "material"}),
-        "cutter_object": ("Object", {"name": "Cutter Object"}),
-        "align_attr": ("String", {"name": "Align Attr (int)", "search": "attribute"}),
         "do_trim": ("Bool", {"name": "Trim Corners", "default": True}),
-        "sync_styles": ("Bool", {"name": "Sync Materials", "default": True}),
         "enum_renov": (
             "Enum",
             {
@@ -169,7 +162,9 @@ class BonsaiWall:
             print(bim.IMPORT_ERROR)
             return False
 
-        parent_obj = bpy.data.objects.get(getattr(container_obj, "proc_parent_name", ""))
+        parent_obj = bpy.data.objects.get(
+            getattr(container_obj, "proc_parent_name", "")
+        )
         if not parent_obj or parent_obj.type != "MESH":
             return False
 
@@ -185,9 +180,10 @@ class BonsaiWall:
         bim.cleanup_family(ifc_file, "IfcWall", key)
         bim.cleanup_orphan_objects("WAL_")
 
-        storey = None
-        if data_holder.story_pointer:
-            storey_pointer = bim.entity(data_holder.story_pointer)
+        # Unconditional: guarding this behind `if data_holder.story_pointer`
+        # left storey_pointer unbound whenever no pointer was set, and
+        # _run_storey then raised on a name that never existed.
+        storey_pointer = bim.entity(data_holder.story_pointer)
 
         # Read the CONTAINER's mesh, not the parent's. The container is the
         # duplicate the engine made with the parent's viewport modifiers baked
@@ -203,12 +199,11 @@ class BonsaiWall:
         bool_layer = bm.faces.layers.bool.get(data_holder.bool_attr)
         if not bool_layer:
             bm.free()
-            print(f"[RefOps] Atributo booleano '{data_holder.bool_attr}' não encontrado.")
+            print(
+                f"[RefOps] Atributo booleano '{data_holder.bool_attr}' não encontrado."
+            )
             return False
 
-        thick_layer = None
-        if data_holder.enum_wall_mode == "S":
-            thick_layer = bm.faces.layers.float.get(data_holder.thick_attr)
         align_layer = (
             bm.faces.layers.int.get(data_holder.align_attr)
             if data_holder.align_attr
@@ -230,6 +225,7 @@ class BonsaiWall:
 
         storey_layer = int_layer(data_holder.storey_attr)
         renov_layer = int_layer(data_holder.renov_attr)
+        material_layer = int_layer(data_holder.material_attr)
 
         split_layer = (
             bm.edges.layers.bool.get(data_holder.split_edge_attr)
@@ -258,56 +254,57 @@ class BonsaiWall:
         )
         body_context = bim.get_body_context(ifc_file)
 
-        island_of_obj = {}   # object name -> the faces it was built from
+        island_of_obj = {}  # object name -> the faces it was built from
         align_groups = {}
         # Keyed by IFC entity, not by object: offset_walls and
         # join_walls_intersection can replace the Blender object, leaving any
         # reference taken before them pointing at something that is gone.
-        created = []  # (IFC element, inherited Blender material, type index)
+        created = []  # (IFC element, type index)
+        # Faces per type, so 'Rename' can vote ONCE for the whole type instead
+        # of once per wall — see rename_type_material_set.
+        faces_by_type = {}
         types = bim.TypeIndexer()
         # A coplanar group can hold several disconnected runs of wall, and each
         # run is its own element.
         islands = [island for group in groups for island in bim.split_islands(group)]
 
         for group in islands:
-            thickness, mixed_thickness = bim.dominant(
-                group, thick_layer, data_holder.precision, default=0.15
-            )
-            if thickness <= 0:
-                thickness = 0.15
-            if mixed_thickness:
-                print(
-                    f"[RefOps] Espessuras diferentes na mesma parede; "
-                    f"usando {thickness}."
-                )
-
-            blender_mat = None
-            mat_index = group[0].material_index
-            if mat_index < len(source.data.materials):
-                blender_mat = source.data.materials[mat_index]
-            mat_name = blender_mat.name if blender_mat else "Default_Material"
-
             align_value, mixed_align = bim.dominant(
                 group, align_layer, default=0, cast=int
             )
             if mixed_align:
-                print(f"[RefOps] Alinhamentos diferentes na mesma parede; usando {align_value}.")
+                print(
+                    f"[RefOps] Alinhamentos diferentes na mesma parede; usando {align_value}."
+                )
 
-            picked = cls._pick_type(
-                group, type_objects, type_weight_layer, type_range
-            )
+            picked = cls._pick_type(group, type_objects, type_weight_layer, type_range)
             wall_type = cls._resolve_wall_type(
-                ifc_file,
                 data_holder.enum_wall_mode,
                 data_holder.wall_type_pointer,
-                thickness,
-                mat_name,
-                blender_mat if data_holder.sync_styles else None,
-                body_context,
                 picked,
             )
             if not wall_type:
                 continue
+
+            material_set = bim.resolve_type_material(
+                wall_type, "IfcMaterialLayerSet"
+            )
+            # A type without its layer set stops the element outright: the
+            # thickness is READ from that set, so there is nothing to build.
+            if material_set is None:
+                continue
+
+            thickness = bim.layer_set_thickness(material_set)
+            if thickness <= 0:
+                print(
+                    f"[RefOps] O IfcMaterialLayerSet de "
+                    f"'{wall_type.Name}' soma espessura zero — parede ignorada."
+                )
+                continue
+
+            faces_by_type.setdefault(wall_type.id(), (wall_type, []))[1].extend(
+                group
+            )
 
             # One wall per facing. A coplanar group can still hold faces that
             # point different ways, and measuring them together cancels the
@@ -329,7 +326,19 @@ class BonsaiWall:
                 if obj:
                     island_of_obj[obj.name] = run
                     align_groups.setdefault(align_value, []).append(obj)
-                    created.append((element, blender_mat, types.index(wall_type)))
+                    created.append((element, types.index(wall_type)))
+
+        # Renaming runs per TYPE, after every element is built: the set lives on
+        # the type, so one vote over all the faces that used it beats renaming
+        # it again for each wall and letting the last one win.
+        if data_holder.enum_mat_name == "RENAME":
+            for wall_type, faces in faces_by_type.values():
+                bim.rename_type_material_set(
+                    ifc_file,
+                    wall_type,
+                    "IfcMaterialLayerSet",
+                    bim.vgroup_name_from_faces(parent_obj, faces, material_layer),
+                )
 
         # Alignment first: trimming solves the corners against the final body
         # positions, so it has to run after the walls have been offset.
@@ -337,34 +346,27 @@ class BonsaiWall:
         if data_holder.do_trim:
             cls._trim_corners(island_of_obj, source.matrix_world)
 
-        # Slots go LAST. offset_walls and join_walls_intersection both rebuild
-        # the mesh from the IFC representation, which wipes material slots —
-        # assigning them earlier in the loop silently loses them.
-        cut_material = (
-            bpy.data.materials.get(data_holder.cut_material)
-            if data_holder.cut_material
-            else None
-        )
         # One void, cut into every element of the run. A Blender boolean would
         # be invisible to IFC; these are real openings, so they export and can
         # be edited from one source mesh.
         if data_holder.void_object:
             openings = bim.void_elements(
-                data_holder.void_object, [element for element, _mat, _idx in created]
+                data_holder.void_object, [element for element, _idx in created]
             )
             for opening in openings:
                 bim.tag_family(ifc_file, opening, key)
             print(f"[RefOps] Vazio comum aplicado em {len(openings)} elementos.")
 
-        for element, blender_mat, type_index in created:
+        # LAST: offset_walls and join_walls_intersection both rebuild the mesh
+        # from the IFC representation, so anything written on the object earlier
+        # in the loop is silently lost.
+        for element, type_index in created:
             obj = bim.object_for(element)
             if not obj:
                 # Bonsai removed it — a merge during the trim, most likely.
                 print("[RefOps] Uma parede sumiu durante o trim.")
                 continue
-            cls._apply_material_slots(obj, cut_material, blender_mat)
             bim.set_type_index(obj, type_index)
-            cls._add_boolean_cut(obj, data_holder.cutter_object)
 
         bm.free()
         return bool(island_of_obj)
@@ -372,8 +374,18 @@ class BonsaiWall:
     # --- BUILD ---
 
     @classmethod
-    def _build_wall(cls, ifc_file, faces, matrix_world, wall_type, thickness,
-                    storey, body_context, renov_code, key):
+    def _build_wall(
+        cls,
+        ifc_file,
+        faces,
+        matrix_world,
+        wall_type,
+        thickness,
+        storey,
+        body_context,
+        renov_code,
+        key,
+    ):
         measured = cls._measure_wall_group(faces, matrix_world)
         if not measured:
             return None, None
@@ -416,8 +428,13 @@ class BonsaiWall:
         return obj, element
 
     @classmethod
-    def _resolve_wall_type(cls, ifc_file, mode, type_pointer_obj, thickness, mat_name,
-                           blender_mat, body_context, picked=None):
+    def _resolve_wall_type(cls, mode, type_pointer_obj, picked=None):
+        """The type is always chosen, never invented.
+
+        The old "Simple (Attribute)" mode built a type from a thickness
+        attribute; it is gone because the layer set on the type is now the only
+        source of thickness. Nothing here creates a type any more, so a file
+        with no IfcWallType produces no walls — by design."""
         if mode == "W":
             # Picked per element by weight, the same mapping the profile
             # components use. The collection is the catalogue.
@@ -430,74 +447,16 @@ class BonsaiWall:
                 return None
             return entity
 
-        if mode == "C" and type_pointer_obj:
-            wt = bim.entity(type_pointer_obj)
-            return wt if wt and wt.is_a("IfcWallType") else None
-
-        # Match on characteristics, not name — reuses types made by the Bonsai
-        # wall tool or by earlier runs regardless of what they're called.
-        existing = bim.find_type_by_layers(
-            ifc_file, "IfcWallType", [(thickness, mat_name)]
-        )
-        if existing:
-            return existing
-
-        type_name = f"WAL_{int(round(thickness * 1000))}mm_{mat_name}"
-        type_obj, wall_type = bim.create_type(ifc_file, "IfcWallType", type_name)
-        if not wall_type:
+        if not type_pointer_obj:
+            print("[RefOps] Nenhum Wall Type Ref definido.")
             return None
-
-        ifc_mat = bim.get_or_create_material(ifc_file, mat_name)
-        if blender_mat:
-            bim.sync_material_style(ifc_file, ifc_mat, blender_mat, body_context)
-        bim.assign_layer_set(ifc_file, wall_type, type_name, [(ifc_mat, thickness)])
+        wall_type = bim.entity(type_pointer_obj)
+        if wall_type is None or not wall_type.is_a("IfcWallType"):
+            print(f"[RefOps] '{type_pointer_obj.name}' não é um IfcWallType.")
+            return None
         return wall_type
 
     # --- FINISHING ---
-
-    @classmethod
-    def _apply_material_slots(cls, obj, cut_material, inherited_material):
-        """Fixed slot contract on every generated wall:
-            slot 0 -> cut material
-            slot 1 -> material inherited from the reference face
-
-        Both slots are always created, even when a material is missing, because
-        the mesh addresses them by index — an empty slot 0 still has to exist or
-        every face would shift onto the wrong material. Body faces are pinned to
-        slot 1; slot 0 is left for the faces the boolean cutter introduces."""
-        mesh = obj.data
-        if not mesh:
-            return
-        mesh.materials.clear()
-        mesh.materials.append(cut_material)
-        mesh.materials.append(inherited_material)
-        # A slot linked to the OBJECT overrides the mesh's material, so writing
-        # mesh.materials would change nothing visible. Bonsai leaves slots that
-        # way on the elements it manages.
-        for slot in obj.material_slots:
-            if slot.link != "DATA":
-                slot.link = "DATA"
-        for poly in mesh.polygons:
-            poly.material_index = 1
-        mesh.update()
-
-    @classmethod
-    def _add_boolean_cut(cls, obj, cutter):
-        """Left as a live modifier, not applied — the wall stays parametric and
-        the cut follows the cutter when it moves.
-
-        material_mode='INDEX' is what makes the slot contract pay off: faces the
-        cutter creates take the material index they carry on the cutter object,
-        so a cutter whose faces sit at index 0 paints the cut surfaces with the
-        wall's slot 0 (the cut material)."""
-        if not cutter or cutter is obj:
-            return
-        mod = obj.modifiers.new(name="RefOps Cut", type="BOOLEAN")
-        mod.operation = "DIFFERENCE"
-        mod.object = cutter
-        mod.solver = "EXACT"
-        if hasattr(mod, "material_mode"):
-            mod.material_mode = "INDEX"
 
     # --- BONSAI OPERATORS ---
 
@@ -551,10 +510,10 @@ class BonsaiWall:
                 continue
             normal.normalize()
             tangent = mathutils.Vector((normal.y, -normal.x, 0.0))
-            points = [
-                matrix_world @ vert.co for face in faces for vert in face.verts
+            points = [matrix_world @ vert.co for face in faces for vert in face.verts]
+            projections = [
+                point.x * tangent.x + point.y * tangent.y for point in points
             ]
-            projections = [point.x * tangent.x + point.y * tangent.y for point in points]
             spans[name] = {
                 "normal": normal,
                 "tangent": tangent,
@@ -601,7 +560,8 @@ class BonsaiWall:
         # length then moves out from under it — the divider came out cut to the
         # wrong place and the corners looked mangled.
         ordered_junctions = sorted(
-            junctions.items(), key=lambda item: (0 if item[1] == "CORNER" else 1, item[0])
+            junctions.items(),
+            key=lambda item: (0 if item[1] == "CORNER" else 1, item[0]),
         )
 
         if DEBUG_JUNCTIONS:

@@ -1342,6 +1342,304 @@ def get_or_create_material(ifc_file, name):
     return ifcopenshell.api.run("material.add_material", ifc_file, name=name)
 
 
+# --- MATERIAL AGAINST THE TYPE ---
+#
+# The type is the only authority: an element reads its material set from the
+# type and never builds one from a loose scene material, so an input can never
+# disagree with the model. Blender materials left this path on purpose -- the
+# viewport colour comes from the IFC surface style.
+
+# Two families of operator, two sets of modes. One READS the set off a type and
+# can only rename it; the other MINTS its own type, has nothing to rename, and
+# chooses instead the name of the set it is about to create.
+MATERIAL_NAME_MODES_READ = [
+    ("AS_FOUND", "As Found", "Leave the type's material set untouched"),
+    (
+        "RENAME",
+        "Rename",
+        "Rename the type's set after the vertex group — every element of "
+        "the type follows",
+    ),
+]
+
+MATERIAL_NAME_MODES_MINT = [
+    ("AS_FOUND", "As Found", "Name the new set after the type"),
+    (
+        "USE_OR_CREATE",
+        "Use or Create",
+        "Name the new set after a vertex group, joining a set that already "
+        "answers to that name",
+    ),
+]
+
+# IfcMaterialLayerSet is the odd one out: its name lives in LayerSetName, while
+# every other set uses a plain Name.
+_SET_NAME_ATTR = {
+    "IfcMaterialLayerSet": "LayerSetName",
+    "IfcMaterialConstituentSet": "Name",
+    "IfcMaterialProfileSet": "Name",
+}
+
+
+def type_material_set(type_entity, set_class):
+    """The IfcMaterial*Set a type carries, or None when it carries another kind.
+
+    Note the class asked for is the SET, never the Usage: IfcMaterialProfileSetUsage
+    is an occurrence entity — it is what assign_usage puts on the element — so a
+    type would never answer to it and every column would be rejected."""
+    if type_entity is None or not ensure():
+        return None
+    try:
+        material = ifcopenshell.util.element.get_material(type_entity)
+    except Exception:
+        return None
+    if material is None:
+        return None
+    return material if material.is_a(set_class) else None
+
+
+def get_or_create_blender_material(name):
+    """Get-or-create, never bpy.data.materials.new on its own: a refresh runs
+    this once per element, and .new() would pile up Name.001, Name.002, ..."""
+    return bpy.data.materials.get(name) or bpy.data.materials.new(name)
+
+
+def resolve_type_material(type_entity, set_class):
+    """The material set an element must read off its Type, or None.
+
+    None means the caller SKIPS the element: thickness and section are read from
+    this set, so without it there is nothing to build. Refusing beats guessing --
+    a wall built without the layer set its type was supposed to carry is wrong in
+    a way only found later, in the schedule.
+
+    Nothing is resolved down to a single Blender material any more. The element
+    inherits the whole set through IFC and the viewport takes its colour from the
+    surface style, so there is no slot left to disagree with the model."""
+    material_set = type_material_set(type_entity, set_class)
+    if material_set is None:
+        print(
+            f"[RefOps.bim] '{getattr(type_entity, 'Name', None) or '?'}' não "
+            f"carrega um {set_class}. Defina esse set no Type antes de rodar "
+            "esta operação — nada foi criado."
+        )
+    return material_set
+
+
+def vgroup_name_from_faces(obj, faces, layer):
+    """The vertex group name a face group points at, or None when the attribute
+    was left blank.
+
+    Deliberately NOT dominant(): that helper treats zero as "unpainted" and
+    prefers any non-zero value, which is right for a thickness and wrong here —
+    vertex group 0 is the first group in the list, a perfectly ordinary choice.
+    A face group large enough to be one wall would lose to a single stray face
+    painted with index 1."""
+    if layer is None:
+        return None
+    weights = {}
+    for face in faces:
+        index = int(face[layer])
+        weights[index] = weights.get(index, 0.0) + face.calc_area()
+    if not weights:
+        return None
+    winner = max(weights.items(), key=lambda item: item[1])[0]
+    try:
+        return vgroup_string(obj, winner)
+    except ValueError as e:
+        print(f"[RefOps.bim] {e}")
+        return None
+
+
+def layer_set_thickness(material_set):
+    """Total thickness of a layer set.
+
+    Reading it off the type is the point of the whole arrangement: an input and
+    a layer set can disagree, and when they do the model states one thickness
+    and the geometry another."""
+    return sum(
+        float(layer.LayerThickness or 0.0)
+        for layer in (getattr(material_set, "MaterialLayers", None) or [])
+    )
+
+
+def assign_constituent_set(ifc_file, type_entity, set_name, constituent_name):
+    """An IfcMaterialConstituentSet on a type the operator just built.
+
+    The mirror image of resolve_type_material: the face component has no type to
+    read from because it mints its own, so the set is created here instead —
+    but assimilated by name when one already answers to it, which is what lets
+    a second run converge on what the first built instead of minting a
+    near-duplicate.
+
+    A constituent set carries NO thickness. That is the whole difference from a
+    layer set, and the reason the Solidify attribute stays in that operator
+    while it left the wall and the slab."""
+    existing = next(
+        (
+            candidate
+            for candidate in ifc_file.by_type("IfcMaterialConstituentSet")
+            if candidate.Name == set_name
+        ),
+        None,
+    )
+    if existing is None:
+        existing = _create_constituent_set(ifc_file, set_name, constituent_name)
+    if existing is None:
+        return None
+
+    try:
+        ifcopenshell.api.run(
+            "material.assign_material",
+            ifc_file,
+            products=[type_entity],
+            type="IfcMaterialConstituentSet",
+            material=existing,
+        )
+    except Exception as e:
+        print(f"[RefOps.bim] atribuir IfcMaterialConstituentSet ao type: {e}")
+        return None
+    return existing
+
+
+def _create_constituent_set(ifc_file, set_name, constituent_name):
+    """Raw entities rather than material.add_constituent — same reasoning as
+    _copy_material_set: the API name has moved, the entity has not."""
+    material = get_or_create_material(ifc_file, constituent_name)
+    try:
+        constituent = ifc_file.create_entity(
+            "IfcMaterialConstituent", Name=constituent_name, Material=material
+        )
+        return ifc_file.create_entity(
+            "IfcMaterialConstituentSet",
+            Name=set_name,
+            MaterialConstituents=[constituent],
+        )
+    except Exception as e:
+        print(f"[RefOps.bim] criar IfcMaterialConstituentSet '{set_name}': {e}")
+        return None
+
+
+def rename_type_material_set(ifc_file, type_entity, set_class, new_name):
+    """Rename the set a type carries, in place.
+
+    In place is the point: every type and element pointing at this set follows.
+    The set belongs to the type, so there is no per-occurrence copy to make --
+    an occurrence pointing at a private copy of the set was the old 'Use or
+    Create', and it contradicted the rule that the type is the only authority.
+
+    Called ONCE per type, after the element loop. Calling it per element renamed
+    the same set N times in a single refresh and let the last element win, which
+    is not something the user can predict from what they painted."""
+    if not new_name:
+        return True
+    material_set = type_material_set(type_entity, set_class)
+    if material_set is None:
+        return False
+    attribute = _SET_NAME_ATTR[set_class]
+    try:
+        ifcopenshell.api.run(
+            "material.edit_assigned_material",
+            ifc_file,
+            element=material_set,
+            attributes={attribute: new_name},
+        )
+        return True
+    except Exception:
+        pass
+    # The API for editing a material set has moved between IfcOpenShell
+    # versions; the attribute on the entity has not since IFC4.
+    try:
+        setattr(material_set, attribute, new_name)
+        return True
+    except Exception as e:
+        print(f"[RefOps.bim] renomear {set_class}: {e}")
+        return False
+
+
+def material_props(domain="face", mints_type=False):
+    """The Material section, shared by every BIM operator that touches a
+    material set. Kept next to the functions that read these fields so the
+    names can't drift apart.
+
+    `domain` only changes the label: edge-driven components (column, beam,
+    profile) paint the index on edges, face-driven ones on faces.
+
+    Two shapes, because the two families of operator mean different things by
+    "material name":
+
+    mints_type=False -- the operator READS the set off an existing type. The
+    only thing it can do to it is rename it, so ONE attribute is enough and it
+    only shows in Rename; As Found asks for nothing at all. An earlier version
+    carried a second attribute here and it was pure duplication.
+
+    mints_type=True -- the operator CREATES the type and its constituent set.
+    Here the two names really are different things: `material_attr` names the
+    material/constituent and feeds the type name, `mat_name_attr` names the set
+    itself. Two fields, and the first is always needed."""
+    header = {
+        "sep_material": ("Separator", {}),
+        "lbl_material": ("Label", {"text": "Material", "icon": "MATERIAL"}),
+    }
+    if not mints_type:
+        return {
+            **header,
+            "enum_mat_name": (
+                "Enum",
+                {
+                    "name": "Material Name",
+                    "items": MATERIAL_NAME_MODES_READ,
+                    "default": "AS_FOUND",
+                },
+            ),
+            "material_attr": (
+                "String",
+                {
+                    "name": f"Material Attr ({domain} int)",
+                    "search": "attribute",
+                    "description": (
+                        "Index into the reference object's vertex groups; the "
+                        "group's name becomes the name of the type's set"
+                    ),
+                    "show_if": ("enum_mat_name", {"RENAME"}),
+                },
+            ),
+        }
+    return {
+        **header,
+        "material_attr": (
+            "String",
+            {
+                "name": f"Material Attr ({domain} int)",
+                "search": "attribute",
+                "description": (
+                    "Index into the reference object's vertex groups; the "
+                    "group's name becomes the material of the new type"
+                ),
+            },
+        ),
+        "enum_mat_name": (
+            "Enum",
+            {
+                "name": "Set Name",
+                "items": MATERIAL_NAME_MODES_MINT,
+                "default": "AS_FOUND",
+            },
+        ),
+        "mat_name_attr": (
+            "String",
+            {
+                "name": f"Set Name Attr ({domain} int)",
+                "search": "attribute",
+                "description": (
+                    "Index into the vertex groups, naming the constituent set "
+                    "the new type will carry"
+                ),
+                "show_if": ("enum_mat_name", {"USE_OR_CREATE"}),
+            },
+        ),
+    }
+
+
 def sync_material_style(ifc_file, ifc_material, blender_material, context):
     """Elements take their viewport colour from an IfcSurfaceStyle on the
     IfcMaterial, not from the source object's material slots."""
@@ -1636,42 +1934,6 @@ def extruded_representation(ifc_file, context, profile, depth, offset_2d=(0.0, 0
         RepresentationType="SweptSolid",
         Items=[solid],
     )
-
-
-def assign_profile_set(ifc_file, type_entity, name, profile, material):
-    """IfcMaterialProfileSet on a type — the profile equivalent of a layer set.
-    Guarded: the geometry is already correct without it, so a missing API here
-    costs Bonsai's parametric profile editing, not the element itself."""
-    try:
-        profile_set = ifcopenshell.api.run(
-            "material.add_material_set",
-            ifc_file,
-            name=name,
-            set_type="IfcMaterialProfileSet",
-        )
-        material_profile = ifcopenshell.api.run(
-            "material.add_profile",
-            ifc_file,
-            profile_set=profile_set,
-            material=material,
-        )
-        ifcopenshell.api.run(
-            "material.assign_profile",
-            ifc_file,
-            material_profile=material_profile,
-            profile=profile,
-        )
-        ifcopenshell.api.run(
-            "material.assign_material",
-            ifc_file,
-            products=[type_entity],
-            type="IfcMaterialProfileSet",
-            material=profile_set,
-        )
-        return profile_set
-    except Exception as e:
-        print(f"[refops.bim] profile set '{name}': {e}")
-        return None
 
 
 def swept_solid_representation(ifc_file, context, points_2d, depth):

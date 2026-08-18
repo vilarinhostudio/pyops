@@ -17,13 +17,17 @@ Two facts shape the design:
   top-right in exactly the same order, so alignment maps straight onto
   IfcMaterialProfileSetUsage.CardinalPoint instead of needing a translation.
 
-* Adding a start or end mesh takes the element out of the parametric world.
-  A profile extrusion is one swept solid Bonsai can edit; a swept solid with
-  arbitrary meshes welded to its ends is just geometry. The build forks on that,
-  and the fork is the reason PARAMETRIC and MESH exist as separate paths below.
-"""
+* The type is an INPUT, never invented. Section and material both come out of
+  the type's IfcMaterialProfileSet, so neither can disagree with the model —
+  which is why the width/depth/radius attributes and the type-minting code they
+  fed are gone. Note the set class: IfcMaterialProfileSetUsage is an occurrence
+  entity, so the type is checked for IfcMaterialProfileSet instead.
 
-import math
+Every element is one swept solid, so it stays parametric in Bonsai. End
+components used to weld arbitrary meshes onto the ends and forked the build
+into a second, non-parametric path; both are gone, and with them the 'None
+(ends only)' profile mode that existed to serve them.
+"""
 
 import bmesh
 import bpy
@@ -124,12 +128,6 @@ def polygon_from_object(obj):
     return points
 
 
-def bounds_2d(points):
-    xs = [p[0] for p in points]
-    ys = [p[1] for p in points]
-    return (max(xs) - min(xs)) / 2.0, (max(ys) - min(ys)) / 2.0
-
-
 def edge_basis(direction, reference):
     """Orthonormal basis with local Z along the edge and local Y as close to the
     reference direction as it can be. IfcExtrudedAreaSolid runs along +Z, so the
@@ -146,58 +144,6 @@ def edge_basis(direction, reference):
     x_axis = reference.cross(z_axis).normalized()
     y_axis = z_axis.cross(x_axis).normalized()
     return x_axis, y_axis, z_axis
-
-
-def prism_mesh(name, points_2d, length, offset_2d=(0.0, 0.0)):
-    """Closed prism from a 2D outline extruded along +Z — the Blender-side twin
-    of the IFC swept solid, for when end components rule out the IFC path."""
-    dx, dy = offset_2d
-    ring = [(x + dx, y + dy) for x, y in points_2d]
-    bottom = [(x, y, 0.0) for x, y in ring]
-    top = [(x, y, length) for x, y in ring]
-    count = len(ring)
-
-    verts = bottom + top
-    faces = [list(range(count - 1, -1, -1)), list(range(count, 2 * count))]
-    for i in range(count):
-        j = (i + 1) % count
-        faces.append([i, j, j + count, i + count])
-
-    mesh = bpy.data.meshes.new(name)
-    mesh.from_pydata(verts, [], faces)
-    mesh.update()
-    return mesh
-
-
-def append_object_mesh(target_mesh, source_obj, placement):
-    """Weld a copy of source_obj's mesh into target_mesh at `placement`, which is
-    expressed in the target's local space. The source's own origin is the anchor,
-    so an end cap sits where its origin sits."""
-    if not source_obj or source_obj.type != "MESH" or not source_obj.data:
-        return
-    bm = bmesh.new()
-    bm.from_mesh(target_mesh)
-
-    src = bmesh.new()
-    src.from_mesh(source_obj.data)
-    src.transform(placement)
-
-    offset = len(bm.verts)
-    bm.verts.ensure_lookup_table()
-    src.verts.ensure_lookup_table()
-    new_verts = [bm.verts.new(v.co) for v in src.verts]
-    bm.verts.ensure_lookup_table()
-    for face in src.faces:
-        try:
-            bm.faces.new([new_verts[v.index] for v in face.verts])
-        except ValueError:
-            pass  # duplicate face, harmless
-    src.free()
-
-    bm.to_mesh(target_mesh)
-    bm.free()
-    target_mesh.update()
-    return offset
 
 
 class _MergedEdge:
@@ -243,7 +189,10 @@ class EdgeComponent:
 
     props_definition = {
         "lbl_sel": ("Label", {"text": "Edge Selection", "icon": "RESTRICT_SELECT_OFF"}),
-        "bool_attr": ("String", {"name": "Select Attr (edge bool)", "search": "attribute"}),
+        "bool_attr": (
+            "String",
+            {"name": "Select Attr (edge bool)", "search": "attribute"},
+        ),
         "sep1": ("Separator", {}),
         "lbl_profile": ("Label", {"text": "Profile", "icon": "MOD_THICKNESS"}),
         "enum_profile": (
@@ -251,57 +200,52 @@ class EdgeComponent:
             {
                 "name": "Profile",
                 "items": [
-                    ("NONE", "None (ends only)", "No extrusion — only the end components"),
-                    ("RECT", "Rectangle", "Width and depth from float attributes"),
-                    ("CIRCLE", "Circle", "Radius from a float attribute"),
-                    ("TYPE", "Existing Type", "Reuse an IFC type via object pointer"),
-                    ("OBJECT", "Blender Object", "Outline of a mesh object"),
-                    ("COLLECTION", "Collection", "Pick per edge by weight attribute"),
+                    ("TYPE", "Object Type (Pointer)", "Use the type object pointer"),
+                    (
+                        "COLLECTION",
+                        "Collection (Weighted)",
+                        "Pick a type per edge by weight",
+                    ),
                 ],
-                "default": "RECT",
+                "default": "TYPE",
             },
-        ),
-        "width_attr": (
-            "String",
-            {"name": "Width Attr", "search": "attribute", "show_if": ("enum_profile", {"RECT"})},
-        ),
-        "depth_attr": (
-            "String",
-            {"name": "Depth Attr", "search": "attribute", "show_if": ("enum_profile", {"RECT"})},
-        ),
-        "radius_attr": (
-            "String",
-            {"name": "Radius Attr", "search": "attribute", "show_if": ("enum_profile", {"CIRCLE"})},
         ),
         "type_pointer": (
             "Object",
             {"name": "Type Ref", "show_if": ("enum_profile", {"TYPE"})},
         ),
-        "profile_object": (
-            "Object",
-            {"name": "Profile Object", "show_if": ("enum_profile", {"OBJECT"})},
-        ),
-        "profile_collection": (
+        "type_collection": (
             "Collection",
-            {"name": "Profile Collection", "show_if": ("enum_profile", {"COLLECTION"})},
+            {"name": "Type Collection", "show_if": ("enum_profile", {"COLLECTION"})},
         ),
-        "profile_weight_attr": (
+        "type_weight_attr": (
             "String",
             {
-                "name": "Profile Weight Attr",
+                "name": "Type Weight Attr",
                 "search": "attribute",
                 "show_if": ("enum_profile", {"COLLECTION"}),
             },
         ),
         "sep2": ("Separator", {}),
-        "lbl_orient": ("Label", {"text": "Orientation & Alignment", "icon": "ORIENTATION_GIMBAL"}),
+        "lbl_orient": (
+            "Label",
+            {"text": "Orientation & Alignment", "icon": "ORIENTATION_GIMBAL"},
+        ),
         "enum_orientation": (
             "Enum",
             {
                 "name": "Orientation",
                 "items": [
-                    ("AUTO", "Automatic", "World Z up, falling back for vertical edges"),
-                    ("FACE", "Face Normal", "Average normal of the faces sharing the edge"),
+                    (
+                        "AUTO",
+                        "Automatic",
+                        "World Z up, falling back for vertical edges",
+                    ),
+                    (
+                        "FACE",
+                        "Face Normal",
+                        "Average normal of the faces sharing the edge",
+                    ),
                     ("VECTOR", "Vector Attr", "Float-vector attribute on the edge"),
                 ],
                 "default": "AUTO",
@@ -335,17 +279,6 @@ class EdgeComponent:
                 "show_if": ("merge_collinear", {True}),
             },
         ),
-        "material_index_attr": (
-            "String",
-            {
-                "name": "Material Index Attr (edge int)",
-                "search": "attribute",
-                "description": (
-                    "Index into the reference object's material slots; blank "
-                    "uses the first slot"
-                ),
-            },
-        ),
         "cardinal_attr": (
             "String",
             {"name": "Cardinal Attr (edge int 1-9)", "search": "attribute"},
@@ -364,66 +297,34 @@ class EdgeComponent:
         ),
         "offset_start_attr": (
             "String",
-            {"name": "Start Offset Attr", "search": "attribute", "show_if": ("enum_offsets", {"ATTRS"})},
+            {
+                "name": "Start Offset Attr",
+                "search": "attribute",
+                "show_if": ("enum_offsets", {"ATTRS"}),
+            },
         ),
         "offset_end_attr": (
             "String",
-            {"name": "End Offset Attr", "search": "attribute", "show_if": ("enum_offsets", {"ATTRS"})},
+            {
+                "name": "End Offset Attr",
+                "search": "attribute",
+                "show_if": ("enum_offsets", {"ATTRS"}),
+            },
         ),
         "offset_invert_attr": (
             "String",
-            {"name": "Invert Attr (bool)", "search": "attribute", "show_if": ("enum_offsets", {"ATTRS"})},
-        ),
-        "sep4": ("Separator", {}),
-        "lbl_ends": ("Label", {"text": "End Components", "icon": "SNAP_MIDPOINT"}),
-        "enum_start": (
-            "Enum",
             {
-                "name": "Start",
-                "items": [
-                    ("NONE", "None", "Nothing at the start"),
-                    ("OBJECT", "Object", "One mesh object"),
-                    ("COLLECTION", "Collection", "Pick per edge by weight attribute"),
-                ],
-                "default": "NONE",
+                "name": "Invert Attr (bool)",
+                "search": "attribute",
+                "show_if": ("enum_offsets", {"ATTRS"}),
             },
         ),
-        "start_object": ("Object", {"name": "Start Object", "show_if": ("enum_start", {"OBJECT"})}),
-        "start_collection": (
-            "Collection",
-            {"name": "Start Collection", "show_if": ("enum_start", {"COLLECTION"})},
-        ),
-        "start_weight_attr": (
-            "String",
-            {"name": "Start Weight Attr", "search": "attribute", "show_if": ("enum_start", {"COLLECTION"})},
-        ),
-        "enum_end": (
-            "Enum",
-            {
-                "name": "End",
-                "items": [
-                    ("NONE", "None", "Nothing at the end"),
-                    ("OBJECT", "Object", "One mesh object"),
-                    ("COLLECTION", "Collection", "Pick per edge by weight attribute"),
-                ],
-                "default": "NONE",
-            },
-        ),
-        "end_object": ("Object", {"name": "End Object", "show_if": ("enum_end", {"OBJECT"})}),
-        "end_collection": (
-            "Collection",
-            {"name": "End Collection", "show_if": ("enum_end", {"COLLECTION"})},
-        ),
-        "end_weight_attr": (
-            "String",
-            {"name": "End Weight Attr", "search": "attribute", "show_if": ("enum_end", {"COLLECTION"})},
-        ),
-        "ends_invert_attr": (
-            "String",
-            {"name": "Ends Invert Attr (bool)", "search": "attribute"},
-        ),
+        **bim.material_props("edge"),
         "sep5": ("Separator", {}),
-        "lbl_bim": ("Label", {"text": "BIM Properties", "icon": "OUTLINER_OB_GROUP_INSTANCE"}),
+        "lbl_bim": (
+            "Label",
+            {"text": "BIM Properties", "icon": "OUTLINER_OB_GROUP_INSTANCE"},
+        ),
         "enum_storey": (
             "Enum",
             {
@@ -456,7 +357,11 @@ class EdgeComponent:
                 "name": "Status From",
                 "items": [
                     ("FIXED", "Fixed", "One status for the whole run"),
-                    ("ATTRIBUTE", "Attribute", "0 not set, 1 existing, 2 demolish, 3 new"),
+                    (
+                        "ATTRIBUTE",
+                        "Attribute",
+                        "0 not set, 1 existing, 2 demolish, 3 new",
+                    ),
                 ],
                 "default": "FIXED",
             },
@@ -467,13 +372,6 @@ class EdgeComponent:
                 "name": "Status Attr (edge int)",
                 "search": "attribute",
                 "show_if": ("enum_renov_source", {"ATTRIBUTE"}),
-            },
-        ),
-        "body_material": (
-            "Material",
-            {
-                "name": "Fallback Material",
-                "description": "Used when the index attribute is absent or out of range",
             },
         ),
         "enum_renov": (
@@ -505,7 +403,9 @@ class EdgeComponent:
             print(bim.IMPORT_ERROR)
             return False
 
-        parent_obj = bpy.data.objects.get(getattr(container_obj, "proc_parent_name", ""))
+        parent_obj = bpy.data.objects.get(
+            getattr(container_obj, "proc_parent_name", "")
+        )
         if not parent_obj or parent_obj.type != "MESH":
             return False
 
@@ -518,13 +418,24 @@ class EdgeComponent:
         container_obj.hide_render = True
         container_obj.name = f"{cls.PREFIX}_CONTAINER_{parent_obj.name}"
 
+        # Only the generic profile component exposes the field; a column is an
+        # IfcColumn by definition, so it never offers the choice.
+        ifc_class = (getattr(data_holder, "ifc_class", "") or cls.IFC_CLASS).strip()
+        if not ifc_class.startswith("Ifc"):
+            print(f"[RefOps] '{ifc_class}' não parece uma classe IFC.")
+            return False
+        type_class = f"{ifc_class}Type"
+
         # Resolve the pointer inputs BEFORE any cleanup. data_holder lives on
         # the container, so anything that could remove an object has to run
         # after the values are already in local variables.
         storey_pointer = bim.entity(data_holder.story_pointer)
 
         key = bim.family_key(container_obj, data_holder.bool_attr)
-        bim.cleanup_family(ifc_file, cls.IFC_CLASS, key)
+        # Swept as IfcElement rather than the exact class: by_type includes
+        # subclasses, so a refresh still finds the previous run's output after
+        # the class field has been changed.
+        bim.cleanup_family(ifc_file, "IfcElement", key)
         # Type objects are named "<PREFIX>-...", with a dash — "<PREFIX>_"
         # matched nothing except the container itself.
         bim.cleanup_orphan_objects(f"{cls.PREFIX}-", exclude=(container_obj,))
@@ -558,27 +469,45 @@ class EdgeComponent:
                 edges, source.matrix_world, layers["vertex_split"]
             )
 
-        # Which Blender material each element ended up with, so the finishing
-        # pass can put it in slot 1 without recomputing.
-        cls._materials = {}
-        ranges = cls._weight_ranges(edges, layers)
+        weight_range = cls._weight_range(edges, layers)
         created = []  # (IFC element, type index)
+        # type id -> (type, {vertex group name: edge count}). 'Rename' votes
+        # ONCE per type: the set lives on the type, so renaming it per element
+        # only means the last edge wins.
+        name_votes = {}
         types = bim.TypeIndexer()
         for edge in edges:
             result = cls._build_edge(
                 ifc_file,
                 edge=edge,
                 layers=layers,
-                ranges=ranges,
+                weight_range=weight_range,
                 source=source,
+                parent_obj=parent_obj,
                 data_holder=data_holder,
                 storey=storey_pointer,
                 body_context=body_context,
                 types=types,
                 key=key,
+                ifc_class=ifc_class,
+                type_class=type_class,
             )
             if result:
-                created.append(result)  # (element, type index)
+                element, type_index, comp_type, mat_name = result
+                created.append((element, type_index))
+                if mat_name:
+                    tally = name_votes.setdefault(comp_type.id(), (comp_type, {}))[1]
+                    tally[mat_name] = tally.get(mat_name, 0) + 1
+
+        # An edge has no area to weight the vote with, so the most repeated
+        # name wins.
+        for comp_type, tally in name_votes.values():
+            bim.rename_type_material_set(
+                ifc_file,
+                comp_type,
+                "IfcMaterialProfileSet",
+                max(tally.items(), key=lambda item: item[1])[0],
+            )
 
         cut_material = (
             bpy.data.materials.get(data_holder.cut_material)
@@ -589,11 +518,7 @@ class EdgeComponent:
             obj = bim.object_for(element)
             if not obj:
                 continue
-            cls._apply_material_slots(
-                obj,
-                cut_material,
-                cls._materials.get(element.id(), data_holder.body_material),
-            )
+            cls._apply_material_slots(obj, cut_material)
             bim.set_type_index(obj, type_index)
             cls._add_boolean_cut(obj, data_holder.cutter_object)
 
@@ -642,7 +567,8 @@ class EdgeComponent:
             while grew:
                 grew = False
                 open_ends = [
-                    vert for vert, count in degree.items()
+                    vert
+                    for vert, count in degree.items()
                     if count == 1 and not (split_layer and vert[split_layer])
                 ]
                 for vert in open_ends:
@@ -661,9 +587,7 @@ class EdgeComponent:
                     if grew:
                         break
 
-            merged.append(
-                _MergedEdge(chain, matrix_world) if len(chain) > 1 else seed
-            )
+            merged.append(_MergedEdge(chain, matrix_world) if len(chain) > 1 else seed)
 
         return merged
 
@@ -679,7 +603,9 @@ class EdgeComponent:
     def _layers(cls, bm, data_holder):
         select = bm.edges.layers.bool.get(data_holder.bool_attr)
         if not select:
-            print(f"[RefOps] Atributo booleano de edge '{data_holder.bool_attr}' não encontrado.")
+            print(
+                f"[RefOps] Atributo booleano de edge '{data_holder.bool_attr}' não encontrado."
+            )
             return None
 
         def edge_float(name):
@@ -694,7 +620,7 @@ class EdgeComponent:
         return {
             "select": select,
             "cardinal": edge_int(data_holder.cardinal_attr),
-            "material_index": edge_int(data_holder.material_index_attr),
+            "material": edge_int(data_holder.material_attr),
             "storey": edge_int(data_holder.storey_attr),
             "renov": edge_int(data_holder.renov_attr),
             "vertex_split": (
@@ -702,10 +628,7 @@ class EdgeComponent:
                 if data_holder.vertex_split_attr
                 else None
             ),
-            "width": edge_float(data_holder.width_attr),
-            "depth": edge_float(data_holder.depth_attr),
-            "radius": edge_float(data_holder.radius_attr),
-            "profile_weight": edge_float(data_holder.profile_weight_attr),
+            "type_weight": edge_float(data_holder.type_weight_attr),
             "orient": (
                 bm.edges.layers.float_vector.get(data_holder.orient_attr)
                 if data_holder.orient_attr
@@ -714,9 +637,6 @@ class EdgeComponent:
             "offset_start": edge_float(data_holder.offset_start_attr),
             "offset_end": edge_float(data_holder.offset_end_attr),
             "offset_invert": edge_bool(data_holder.offset_invert_attr),
-            "start_weight": edge_float(data_holder.start_weight_attr),
-            "end_weight": edge_float(data_holder.end_weight_attr),
-            "ends_invert": edge_bool(data_holder.ends_invert_attr),
         }
 
     @classmethod
@@ -730,50 +650,38 @@ class EdgeComponent:
             return default
 
     @classmethod
-    def _edge_material(cls, edge, layers, source, data_holder):
-        """The Blender material for one edge, by slot index.
-
-        An integer per edge beats a single material pointer: one operation can
-        then carry a whole run of columns in different materials, and the index
-        is paintable like every other attribute. Out of range falls back rather
-        than failing — an unpainted attribute reads as zero, and zero is a valid
-        slot."""
-        materials = getattr(source.data, "materials", None)
-        if not materials:
-            return data_holder.body_material
-
-        index = bim.read_int(edge, {"EDGE": layers["material_index"]}, "EDGE", 0)
-        if 0 <= index < len(materials) and materials[index] is not None:
-            return materials[index]
-        if index >= len(materials):
-            print(
-                f"[RefOps] Índice de material {index} fora dos "
-                f"{len(materials)} slots; usando o material de reserva."
-            )
-        return data_holder.body_material or (materials[0] if materials else None)
+    def _edge_vgroup_name(cls, edge, layer, parent_obj):
+        """The vertex group name one edge points at, or None when the attribute
+        is blank. The edge equivalent of bim.vgroup_name_from_faces — an edge
+        has no area, so there is nothing to weight and the value is read
+        straight off."""
+        if layer is None:
+            return None
+        try:
+            return bim.vgroup_string(parent_obj, int(edge[layer]))
+        except ValueError as e:
+            print(f"[RefOps] {e}")
+            return None
 
     @classmethod
-    def _weight_ranges(cls, edges, layers):
-        """min/max per weight attribute, computed once across the whole
-        selection — the mapping only means anything relative to the set."""
-        ranges = {}
-        for name in ("profile_weight", "start_weight", "end_weight"):
-            layer = layers[name]
-            if not layer:
-                continue
-            values = [e[layer] for e in edges]
-            ranges[name] = (min(values), max(values)) if values else (0.0, 0.0)
-        return ranges
+    def _weight_range(cls, edges, layers):
+        """min/max of the type weight across the whole selection — the mapping
+        only means anything relative to the set."""
+        layer = layers["type_weight"]
+        if not layer:
+            return None
+        values = [e[layer] for e in edges]
+        return (min(values), max(values)) if values else (0.0, 0.0)
 
     @classmethod
-    def _pick(cls, edge, layers, ranges, weight_name, collection):
+    def _pick(cls, edge, layers, weight_range, collection):
         objects = ordered_objects(collection)
         if not objects:
             return None
-        layer = layers[weight_name]
-        if not layer or weight_name not in ranges:
+        layer = layers["type_weight"]
+        if not layer or weight_range is None:
             return objects[0]
-        low, high = ranges[weight_name]
+        low, high = weight_range
         index = weight_to_index(edge[layer], low, high, len(objects))
         return objects[index] if index is not None else None
 
@@ -789,7 +697,9 @@ class EdgeComponent:
         p0 = matrix_world @ edge.verts[0].co
         p1 = matrix_world @ edge.verts[1].co
 
-        invert = bool(edge[layers["offset_invert"]]) if layers["offset_invert"] else False
+        invert = (
+            bool(edge[layers["offset_invert"]]) if layers["offset_invert"] else False
+        )
         if invert:
             p0, p1 = p1, p0
 
@@ -840,80 +750,66 @@ class EdgeComponent:
     # --- PROFILE ---
 
     @classmethod
-    def _profile(cls, ifc_file, edge, layers, ranges, data_holder):
-        """Returns (ifc_profile, points_2d_or_None, half_x, half_y, name).
+    def _resolve_type(cls, edge, layers, weight_range, data_holder, type_class):
+        """The type for one edge — pointed at, or picked from a collection.
 
-        points_2d is present only for outline-based profiles; the rectangle and
-        circle stay parametric IFC sections, which is what keeps them editable.
-        The half extents are what the cardinal offset needs."""
-        mode = data_holder.enum_profile
-        precision = data_holder.precision
-
-        if mode == "RECT":
-            width = round(edge[layers["width"]], precision) if layers["width"] else 0.0
-            depth = round(edge[layers["depth"]], precision) if layers["depth"] else 0.0
-            if width <= 0 or depth <= 0:
+        Nothing here creates a type any more. The section used to be built from
+        width/depth/radius attributes and a type minted around it; now the type
+        is the input and the section is read out of its IfcMaterialProfileSet,
+        so an attribute can no longer disagree with the model."""
+        if data_holder.enum_profile == "COLLECTION":
+            picked = cls._pick(
+                edge, layers, weight_range, data_holder.type_collection
+            )
+            if picked is None:
+                print("[RefOps] Nenhum tipo na collection para esta aresta.")
                 return None
-            name = f"Rect-{int(width * 1000)}x{int(depth * 1000)}"
-            profile = ifc_file.createIfcRectangleProfileDef(
-                ProfileType="AREA", ProfileName=name, XDim=width, YDim=depth
-            )
-            corners = [
-                (-width / 2, -depth / 2),
-                (width / 2, -depth / 2),
-                (width / 2, depth / 2),
-                (-width / 2, depth / 2),
-            ]
-            return profile, corners, width / 2, depth / 2, name
-
-        if mode == "CIRCLE":
-            radius = round(edge[layers["radius"]], precision) if layers["radius"] else 0.0
-            if radius <= 0:
-                return None
-            name = f"Circ-{int(radius * 2000)}"
-            profile = ifc_file.createIfcCircleProfileDef(
-                ProfileType="AREA", ProfileName=name, Radius=radius
-            )
-            segments = 32
-            circle = [
-                (
-                    radius * math.cos(2 * math.pi * i / segments),
-                    radius * math.sin(2 * math.pi * i / segments),
-                )
-                for i in range(segments)
-            ]
-            return profile, circle, radius, radius, name
-
-        if mode == "OBJECT":
-            source = data_holder.profile_object
-        elif mode == "COLLECTION":
-            source = cls._pick(
-                edge, layers, ranges, "profile_weight", data_holder.profile_collection
-            )
+            source_obj = picked
         else:
-            return None
+            source_obj = data_holder.type_pointer
+            if not source_obj:
+                print("[RefOps] Nenhum Type Ref definido.")
+                return None
 
-        points = polygon_from_object(source)
-        if not points:
+        comp_type = bim.entity(source_obj)
+        if comp_type is None or not comp_type.is_a(type_class):
+            print(f"[RefOps] '{source_obj.name}' não é um {type_class}.")
             return None
-        half_x, half_y = bounds_2d(points)
-        name = source.name
-        polyline = ifc_file.createIfcPolyline(
-            Points=[
-                ifc_file.createIfcCartesianPoint((float(x), float(y)))
-                for x, y in points + [points[0]]
-            ]
-        )
-        profile = ifc_file.createIfcArbitraryClosedProfileDef(
-            ProfileType="AREA", ProfileName=name, OuterCurve=polyline
-        )
-        return profile, points, half_x, half_y, name
+        return comp_type
+
+    @classmethod
+    def _profile_of(cls, comp_type):
+        """(ifc_profile, half_x, half_y) from the type's profile set. The half
+        extents are what the cardinal offset needs."""
+        profile = bim.profile_of_type(comp_type)
+        if profile is None:
+            print(
+                f"[RefOps] '{comp_type.Name}' não tem IfcMaterialProfileSet — "
+                "sem perfil para extrudar."
+            )
+            return None
+        half_x, half_y = bim.profile_half_extents(profile)
+        return profile, half_x, half_y
 
     # --- BUILD ---
 
     @classmethod
-    def _build_edge(cls, ifc_file, edge, layers, ranges, source, data_holder,
-                    storey, body_context, types, key):
+    def _build_edge(
+        cls,
+        ifc_file,
+        edge,
+        layers,
+        weight_range,
+        source,
+        parent_obj,
+        data_holder,
+        storey,
+        body_context,
+        types,
+        key,
+        ifc_class,
+        type_class,
+    ):
         segment = cls._segment(edge, layers, source.matrix_world, data_holder)
         if not segment:
             return None
@@ -922,12 +818,6 @@ class EdgeComponent:
         cardinal = (
             int(edge[layers["cardinal"]]) if layers["cardinal"] else CARDINAL_DEFAULT
         )
-
-        ends_invert = bool(edge[layers["ends_invert"]]) if layers["ends_invert"] else False
-        start_obj = cls._end_object(edge, layers, ranges, data_holder, "start")
-        end_obj = cls._end_object(edge, layers, ranges, data_holder, "end")
-        if ends_invert:
-            start_obj, end_obj = end_obj, start_obj
 
         matrix = mathutils.Matrix(
             (
@@ -938,74 +828,30 @@ class EdgeComponent:
             )
         )
 
-        if data_holder.enum_profile == "TYPE":
-            comp_type = bim.entity(data_holder.type_pointer)
-            if not comp_type or not comp_type.is_a(cls.TYPE_CLASS):
-                print(f"[RefOps] Type Ref não é um {cls.TYPE_CLASS}.")
-                return None
-            # The section has to come from the type's profile set — there is no
-            # attribute to read it from in this mode. No profile set means no
-            # body to sweep.
-            profile = bim.profile_of_type(comp_type)
-            if profile is None:
-                print(
-                    f"[RefOps] '{comp_type.Name}' não tem IfcMaterialProfileSet — "
-                    "sem perfil para extrudar."
-                )
-                return None
-            half_x, half_y = bim.profile_half_extents(profile)
-            profile_data = (
-                profile,
-                None,  # no outline: this path can't build a Blender prism
-                half_x,
-                half_y,
-                profile.ProfileName or comp_type.Name or "Type",
-            )
-        elif data_holder.enum_profile == "NONE":
-            # Ends only — a piston, a fitting, anything where the edge just
-            # positions two pieces and nothing spans between them.
-            if not (start_obj or end_obj):
-                print("[RefOps] Perfil 'None' exige um componente de início ou fim.")
-                return None
-            profile_data = None
-            comp_type = None
-        else:
-            profile_data = cls._profile(ifc_file, edge, layers, ranges, data_holder)
-            if not profile_data:
-                return None
-            comp_type = None
-
-        material = cls._edge_material(edge, layers, source, data_holder)
-        material_name = material.name if material else "Default_Material"
-        profile_name = profile_data[4] if profile_data else "Ends"
-        type_name = cls._type_name(
-            start_obj, profile_name, length, material_name, end_obj
-        )
-
+        comp_type = cls._resolve_type(edge, layers, weight_range, data_holder, type_class)
         if comp_type is None:
-            comp_type = bim.find_type_by_name(ifc_file, cls.TYPE_CLASS, type_name)
-            if comp_type is None:
-                comp_type = cls._create_type(
-                    ifc_file,
-                    type_name,
-                    profile_data[0] if profile_data else None,
-                    material_name,
-                    data_holder,
-                    body_context,
-                    material,
-                )
-            if comp_type is None:
-                return None
+            return None
 
-        if start_obj or end_obj:
-            obj, element = cls._build_mesh_element(
-                ifc_file, matrix, profile_data, length, cardinal,
-                start_obj, end_obj, body_context, type_name,
-            )
-        else:
-            obj, element = cls._build_parametric_element(
-                ifc_file, matrix, profile_data, length, cardinal, body_context, type_name
-            )
+        # No profile set on the type stops the element: the section is READ from
+        # it, so there is nothing left to sweep.
+        if bim.resolve_type_material(comp_type, "IfcMaterialProfileSet") is None:
+            return None
+
+        section = cls._profile_of(comp_type)
+        if not section:
+            return None
+        profile, half_x, half_y = section
+
+        obj, element = cls._build_element(
+            ifc_file,
+            matrix,
+            profile,
+            cardinal_offset(cardinal, half_x, half_y),
+            length,
+            body_context,
+            comp_type.Name or profile.ProfileName or "Type",
+            ifc_class,
+        )
         if not element:
             return None
 
@@ -1018,9 +864,7 @@ class EdgeComponent:
         bim.assign_container(ifc_file, element, storey)
         # "Not Set" leaves the status out of the file entirely.
         if data_holder.enum_renov_source == "ATTRIBUTE":
-            status = bim.status_from_index(
-                cls._edge_int(edge, layers["renov"])
-            )
+            status = bim.status_from_index(cls._edge_int(edge, layers["renov"]))
         else:
             status = {"A": "EXISTING", "B": "DEMOLISH", "C": "NEW"}.get(
                 data_holder.enum_renov
@@ -1028,88 +872,28 @@ class EdgeComponent:
         if status:
             bim.set_status(ifc_file, element, status)
         bim.tag_family(ifc_file, element, key)
-        cls._materials[element.id()] = material
-        return element, types.index(comp_type)
+        return (
+            element,
+            types.index(comp_type),
+            comp_type,
+            cls._edge_vgroup_name(edge, layers["material"], parent_obj)
+            if data_holder.enum_mat_name == "RENAME"
+            else None,
+        )
 
     @classmethod
-    def _build_parametric_element(cls, ifc_file, matrix, profile_data, length,
-                                  cardinal, body_context, name):
-        if not profile_data:
-            return None, None
-        profile, _points, half_x, half_y, _n = profile_data
-        obj, element = bim.create_product(cls.IFC_CLASS, name, matrix)
+    def _build_element(
+        cls, ifc_file, matrix, profile, offset_2d, length, body_context, name,
+        ifc_class,
+    ):
+        obj, element = bim.create_product(ifc_class, name, matrix)
         if not element:
             return None, None
         representation = bim.extruded_representation(
-            ifc_file, body_context, profile, length,
-            offset_2d=cardinal_offset(cardinal, half_x, half_y),
+            ifc_file, body_context, profile, length, offset_2d=offset_2d
         )
         bim.set_representation(ifc_file, obj, element, representation)
         return obj, element
-
-    @classmethod
-    def _build_mesh_element(cls, ifc_file, matrix, profile_data, length, cardinal,
-                            start_obj, end_obj, body_context, name):
-        """End components weld arbitrary geometry onto the swept body, so there
-        is no single profile left to sweep — the whole thing is built in Blender
-        and handed to IFC as a plain body."""
-        points = profile_data[1] if profile_data else None
-        if profile_data and not points:
-            print(
-                "[RefOps] 'Existing Type' não fornece contorno para varrer — "
-                "use Rectangle/Circle/Object/Collection, ou perfil 'None'."
-            )
-            return None, None
-
-        if points:
-            _profile, _pts, half_x, half_y = profile_data[:4]
-            mesh = prism_mesh(name, points, length, cardinal_offset(cardinal, half_x, half_y))
-        else:
-            mesh = bpy.data.meshes.new(name)  # ends only
-
-        if start_obj:
-            append_object_mesh(mesh, start_obj, mathutils.Matrix.Identity(4))
-        if end_obj:
-            append_object_mesh(
-                mesh, end_obj, mathutils.Matrix.Translation((0.0, 0.0, length))
-            )
-
-        obj = bpy.data.objects.new(name, mesh)
-        bpy.context.scene.collection.objects.link(obj)
-        obj.matrix_world = matrix
-        element = bim.assign_ifc_class(
-            obj, cls.IFC_CLASS, add_representation=True, context=body_context
-        )
-        if not element:
-            bpy.data.objects.remove(obj, do_unlink=True)
-            return None, None
-        bim.file_object(obj)
-        return obj, element
-
-    @classmethod
-    def _end_object(cls, edge, layers, ranges, data_holder, which):
-        mode = getattr(data_holder, f"enum_{which}")
-        if mode == "OBJECT":
-            return getattr(data_holder, f"{which}_object")
-        if mode == "COLLECTION":
-            return cls._pick(
-                edge, layers, ranges, f"{which}_weight",
-                getattr(data_holder, f"{which}_collection"),
-            )
-        return None
-
-    @classmethod
-    def _create_type(cls, ifc_file, type_name, profile, material_name, data_holder,
-                     body_context, material=None):
-        type_obj, comp_type = bim.create_type(ifc_file, cls.TYPE_CLASS, type_name)
-        if not comp_type:
-            return None
-        ifc_mat = bim.get_or_create_material(ifc_file, material_name)
-        if material is not None:
-            bim.sync_material_style(ifc_file, ifc_mat, material, body_context)
-        if profile is not None:
-            bim.assign_profile_set(ifc_file, comp_type, type_name, profile, ifc_mat)
-        return comp_type
 
     @classmethod
     def _assign_cardinal(cls, ifc_file, element, cardinal):
@@ -1123,36 +907,25 @@ class EdgeComponent:
         except Exception as e:
             print(f"[RefOps] CardinalPoint: {e}")
 
-    @classmethod
-    def _type_name(cls, start_obj, profile_name, length, material_name, end_obj):
-        """<start>_<PREFIX>-<profile>-<length>mm_<material>_<end>
-
-        Length appears ONLY when there are end components. A plain extrusion of
-        the same section is the same type whatever its length — putting the
-        length in the name spawned one IfcType per edge. With end components the
-        length is genuinely part of the assembly, so it earns its place."""
-        core = f"{cls.PREFIX}-{profile_name}_{material_name}"
-        if start_obj or end_obj:
-            core = f"{cls.PREFIX}-{profile_name}-{int(round(length * 1000))}mm_{material_name}"
-        if start_obj:
-            core = f"{start_obj.name}_{core}"
-        if end_obj:
-            core = f"{core}_{end_obj.name}"
-        return core
-
     # --- FINISHING ---
 
     @classmethod
-    def _apply_material_slots(cls, obj, cut_material, body_material):
-        """Same slot contract as the face-based operators:
+    def _apply_material_slots(cls, obj, cut_material):
+        """Two slots, because the boolean cut runs on INDEX:
             slot 0 -> cut material
-            slot 1 -> body material
+            slot 1 -> body
 
-        Edges carry no material of their own, so slot 1 comes from an input
-        rather than being inherited."""
+        Nothing is resolved for the body any more — it keeps whatever Bonsai put
+        on the object for the IFC surface style, which is read back BEFORE the
+        clear so rebuilding the slots doesn't throw the style away."""
         mesh = obj.data
         if not mesh:
             return
+        if cut_material is None:
+            # Nothing to insert at slot 0, and clearing would only cost the
+            # style material.
+            return
+        body_material = mesh.materials[0] if mesh.materials else None
         mesh.materials.clear()
         mesh.materials.append(cut_material)
         mesh.materials.append(body_material)
