@@ -84,7 +84,6 @@ class BonsaiWall:
                 ),
             },
         ),
-        **bim.material_props("face"),
         "sep2": ("Separator", {}),
         "lbl_bim_props": (
             "Label",
@@ -178,7 +177,7 @@ class BonsaiWall:
             bm.free()
             return False
 
-        # Grouped by plane and material ONLY. Making thickness or alignment part
+        # Grouped by plane ONLY. Making thickness or alignment part
         # of the key split a subdivided wall — carving a door loop leaves several
         # coplanar faces and the attributes are rarely painted on every one of
         # them, so each fragment became its own wall. The values are voted on
@@ -187,7 +186,6 @@ class BonsaiWall:
             return bm.faces.layers.int.get(name) if name else None
 
         storey_layer = int_layer(data_holder.storey_attr)
-        material_layer = int_layer(data_holder.material_attr)
 
         split_layer = (
             bm.edges.layers.bool.get(data_holder.split_edge_attr)
@@ -222,9 +220,6 @@ class BonsaiWall:
         # join_walls_intersection can replace the Blender object, leaving any
         # reference taken before them pointing at something that is gone.
         created = []  # (IFC element, type index)
-        # Faces per type, so 'Rename' can vote ONCE for the whole type instead
-        # of once per wall — see rename_type_material_set.
-        faces_by_type = {}
         types = bim.TypeIndexer()
         # A coplanar group can hold several disconnected runs of wall, and each
         # run is its own element.
@@ -264,10 +259,6 @@ class BonsaiWall:
                 )
                 continue
 
-            faces_by_type.setdefault(wall_type.id(), (wall_type, []))[1].extend(
-                group
-            )
-
             # One wall per facing. A coplanar group can still hold faces that
             # point different ways, and measuring them together cancels the
             # normal and drops the wall.
@@ -288,18 +279,6 @@ class BonsaiWall:
                     island_of_obj[obj.name] = run
                     align_groups.setdefault(align_value, []).append(obj)
                     created.append((element, types.index(wall_type)))
-
-        # Renaming runs per TYPE, after every element is built: the set lives on
-        # the type, so one vote over all the faces that used it beats renaming
-        # it again for each wall and letting the last one win.
-        if data_holder.enum_mat_name == "RENAME":
-            for wall_type, faces in faces_by_type.values():
-                bim.rename_type_material_set(
-                    ifc_file,
-                    wall_type,
-                    "IfcMaterialLayerSet",
-                    bim.vgroup_name_from_faces(parent_obj, faces, material_layer),
-                )
 
         # Alignment first: trimming solves the corners against the final body
         # positions, so it has to run after the walls have been offset.

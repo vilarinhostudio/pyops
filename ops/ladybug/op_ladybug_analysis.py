@@ -179,7 +179,7 @@ class LadybugAnalysis:
                 "default": 1,
                 "min": 1,
                 "max": 24,
-                "description": "Cost is faces x suns x obstacles; raise this to preview",
+                "description": "Cost is faces x suns (BVH); raise this to preview",
                 "show_if": ("analysis_type", {"DIRECT_SUN_HOURS", "OUTDOOR_COMFORT"}),
             },
         ),
@@ -280,9 +280,16 @@ class LadybugAnalysis:
             return False
 
         if domain == "VERTEX_GROUP":
-            lb.write_vertex_group(
+            # Checked: a group that failed to be written used to leave the
+            # operation reporting success with nothing on the object.
+            if not lb.write_vertex_group(
                 target, output_name, list(results.values()), list(results.keys())
-            )
+            ):
+                print(
+                    f"[RefOps.ladybug] Vertex group '{output_name}' não foi "
+                    f"escrito em '{target.name}'."
+                )
+                return False
         else:
             # Blender's vertex domain is called POINT in the attribute API.
             cls._write_attribute(
@@ -355,11 +362,16 @@ class LadybugAnalysis:
 
     @classmethod
     def _obstacles(cls, obj, data_holder):
-        """The parent always obstructs; a context collection adds to it."""
-        faces = [face for face, _index in lb.faces_from_object(obj)]
+        """The parent always obstructs; a context collection adds to it.
+
+        The same geometry as before, handed over as a BVH instead of a Face3D
+        list: the ray test is the inner loop of every analysis here
+        (sensors x vectors x faces) and the tree turns the per-ray cost from
+        linear in the face count into a walk down the hierarchy."""
+        objects = [obj]
         if data_holder.context_mode == "COLLECTION":
-            faces.extend(lb.collection_faces(data_holder.context))
-        return faces
+            objects.extend(lb.collection_meshes(data_holder.context))
+        return lb.obstacle_bvh(objects)
 
     @classmethod
     def _sun_vectors(cls, data_holder):
@@ -404,15 +416,19 @@ class LadybugAnalysis:
         obstacles = cls._obstacles(source, data_holder)
         step = max(int(data_holder.sun_timestep), 1)
 
+        # Ladybug -> mathutils once per sun, not once per (sensor, sun).
+        rays = [(vector, lb.as_vector(vector)) for vector, _hoy, _sun in vectors]
+
         results = {}
         for index, origin, normal in sensors:
+            ray_origin = lb.as_vector(origin)
             exposed = 0
-            for vector, _hoy, _sun in vectors:
+            for vector, ray_vector in rays:
                 # A face only sees a sun on its own side; the dot product test
                 # skips most rays before any intersection work happens.
                 if normal.dot(vector) <= 0:
                     continue
-                if not lb.is_blocked(origin, vector, obstacles):
+                if not lb.is_blocked_bvh(obstacles, ray_origin, ray_vector):
                     exposed += 1
             # Each sample stands for `step` hours of the period.
             results[index] = float(exposed * step)
@@ -451,15 +467,20 @@ class LadybugAnalysis:
             return None
 
         obstacles = cls._obstacles(source, data_holder)
+        patches = [
+            (value, vector, lb.as_vector(vector))
+            for value, vector in zip(patch_values, patch_vectors)
+        ]
 
         results = {}
         for index, origin, normal in sensors:
+            ray_origin = lb.as_vector(origin)
             total = 0.0
-            for value, vector in zip(patch_values, patch_vectors):
+            for value, vector, ray_vector in patches:
                 cosine = normal.dot(vector)
                 if cosine <= 0:
                     continue
-                if lb.is_blocked(origin, vector, obstacles):
+                if lb.is_blocked_bvh(obstacles, ray_origin, ray_vector):
                     continue
                 # Lambert's cosine law: a patch contributes in proportion to how
                 # square-on it is to the face.
@@ -531,17 +552,19 @@ class LadybugAnalysis:
         obstacles = cls._obstacles(source, data_holder)
         metric = data_holder.comfort_metric
         rise = data_holder.sun_mrt_delta
+        rays = [(vector, lb.as_vector(vector), hoy) for vector, hoy, _sun in vectors]
 
         results = {}
         for index, origin, normal in sensors:
+            ray_origin = lb.as_vector(origin)
             samples = []
-            for vector, hoy, _sun in vectors:
+            for vector, ray_vector, hoy in rays:
                 conditions = weather.get(round(hoy, 3))
                 if conditions is None:
                     continue
                 temperature, speed, moisture = conditions
-                sunlit = normal.dot(vector) > 0 and not lb.is_blocked(
-                    origin, vector, obstacles
+                sunlit = normal.dot(vector) > 0 and not lb.is_blocked_bvh(
+                    obstacles, ray_origin, ray_vector
                 )
                 mrt = temperature + (rise if sunlit else 0.0)
                 # Station wind is measured at 10 m in the open; at body height
@@ -627,11 +650,27 @@ class LadybugAnalysis:
 
     @classmethod
     def _assign_material(cls, obj, material):
+        """The display material REPLACES what the output geometry carried.
+
+        Appending only when absent left every earlier run's material in place:
+        swapping the ramp added a second slot and the viewport kept showing the
+        first, because the faces still pointed at material_index 0. Clearing
+        first is what makes the input mean "this is the material".
+
+        Only the slots are touched — the FLOAT attribute with the numbers lives
+        in mesh.attributes and vertex-group results in obj.vertex_groups, and
+        neither is affected by the material list."""
         if material is None:
+            # Nothing to apply: leave whatever is there rather than stripping
+            # materials the operator was never asked to manage.
             return
         mesh = obj.data
-        if material.name not in [m.name for m in mesh.materials if m]:
-            mesh.materials.append(material)
+        mesh.materials.clear()
+        mesh.materials.append(material)
+        # One slot left, so index 0 is the only valid one — a face still
+        # pointing at a slot that no longer exists renders untouched.
+        if mesh.polygons:
+            mesh.polygons.foreach_set("material_index", [0] * len(mesh.polygons))
         for slot in obj.material_slots:
             if slot.link != "DATA":
                 slot.link = "DATA"

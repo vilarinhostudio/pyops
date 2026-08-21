@@ -319,7 +319,6 @@ class EdgeComponent:
                 "show_if": ("enum_offsets", {"ATTRS"}),
             },
         ),
-        **bim.material_props("edge"),
         "sep5": ("Separator", {}),
         "lbl_bim": (
             "Label",
@@ -432,10 +431,6 @@ class EdgeComponent:
 
         weight_range = cls._weight_range(edges, layers)
         created = []  # (IFC element, type index)
-        # type id -> (type, {vertex group name: edge count}). 'Rename' votes
-        # ONCE per type: the set lives on the type, so renaming it per element
-        # only means the last edge wins.
-        name_votes = {}
         types = bim.TypeIndexer()
         for edge in edges:
             result = cls._build_edge(
@@ -444,7 +439,6 @@ class EdgeComponent:
                 layers=layers,
                 weight_range=weight_range,
                 source=source,
-                parent_obj=parent_obj,
                 data_holder=data_holder,
                 storey=storey_pointer,
                 body_context=body_context,
@@ -454,21 +448,7 @@ class EdgeComponent:
                 type_class=type_class,
             )
             if result:
-                element, type_index, comp_type, mat_name = result
-                created.append((element, type_index))
-                if mat_name:
-                    tally = name_votes.setdefault(comp_type.id(), (comp_type, {}))[1]
-                    tally[mat_name] = tally.get(mat_name, 0) + 1
-
-        # An edge has no area to weight the vote with, so the most repeated
-        # name wins.
-        for comp_type, tally in name_votes.values():
-            bim.rename_type_material_set(
-                ifc_file,
-                comp_type,
-                "IfcMaterialProfileSet",
-                max(tally.items(), key=lambda item: item[1])[0],
-            )
+                created.append(result)
 
         for element, type_index in created:
             obj = bim.object_for(element)
@@ -574,7 +554,6 @@ class EdgeComponent:
         return {
             "select": select,
             "cardinal": edge_int(data_holder.cardinal_attr),
-            "material": edge_int(data_holder.material_attr),
             "storey": edge_int(data_holder.storey_attr),
             "vertex_split": (
                 bm.verts.layers.bool.get(data_holder.vertex_split_attr)
@@ -601,20 +580,6 @@ class EdgeComponent:
             return int(edge[layer])
         except Exception:
             return default
-
-    @classmethod
-    def _edge_vgroup_name(cls, edge, layer, parent_obj):
-        """The vertex group name one edge points at, or None when the attribute
-        is blank. The edge equivalent of bim.vgroup_name_from_faces — an edge
-        has no area, so there is nothing to weight and the value is read
-        straight off."""
-        if layer is None:
-            return None
-        try:
-            return bim.vgroup_string(parent_obj, int(edge[layer]))
-        except ValueError as e:
-            print(f"[RefOps] {e}")
-            return None
 
     @classmethod
     def _weight_range(cls, edges, layers):
@@ -754,7 +719,6 @@ class EdgeComponent:
         layers,
         weight_range,
         source,
-        parent_obj,
         data_holder,
         storey,
         body_context,
@@ -816,14 +780,7 @@ class EdgeComponent:
             )
         bim.assign_container(ifc_file, element, storey)
         bim.tag_family(ifc_file, element, key)
-        return (
-            element,
-            types.index(comp_type),
-            comp_type,
-            cls._edge_vgroup_name(edge, layers["material"], parent_obj)
-            if data_holder.enum_mat_name == "RENAME"
-            else None,
-        )
+        return element, types.index(comp_type)
 
     @classmethod
     def _build_element(

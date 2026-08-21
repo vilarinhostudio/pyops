@@ -67,6 +67,12 @@ path.flush    { stroke: var(--color-principal1, black); stroke-width: 0.1; strok
 .PredefinedType-GRID { marker-start: url(#grid-marker); marker-end: url(#grid-marker); }
 .PredefinedType-DIMENSION { marker-start: url(#dimension-marker-start); marker-end: url(#dimension-marker-end); }
 .PredefinedType-TEXT { fill: var(--color-principal1, black); stroke: none; }
+text.title, tspan.title { /* 7mm */ font-size: 11.55px; }
+text.header, tspan.header { /* 5mm */ font-size: 8.25px; }
+text.large, tspan.large { /* 3.5mm */ font-size: 5.78px; }
+text.regular, tspan.regular { /* 2.5mm */ font-size: 4.13px; }
+text.small, tspan.small { /* 1.8mm */ font-size: 2.97px; }
+text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 
 /* Opacidade
 

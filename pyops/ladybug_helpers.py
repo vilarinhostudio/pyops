@@ -662,17 +662,24 @@ def faces_from_object(obj, selected_only=None):
     return result
 
 
-def collection_faces(collection):
-    """Every mesh face in a collection and its children, in world space.
+def collection_meshes(collection):
+    """Visible mesh objects of a collection and its children.
 
     all_objects already walks nested collections, which is what makes the
     context recursive without any traversal here."""
     if collection is None:
         return []
+    return [
+        obj
+        for obj in collection.all_objects
+        if obj.type == "MESH" and obj.visible_get()
+    ]
+
+
+def collection_faces(collection):
+    """Every mesh face in a collection and its children, in world space."""
     faces = []
-    for obj in collection.all_objects:
-        if obj.type != "MESH" or not obj.visible_get():
-            continue
+    for obj in collection_meshes(collection):
         faces.extend(face for face, _index in faces_from_object(obj))
     return faces
 
@@ -684,7 +691,10 @@ def write_vertex_group(obj, name, values, indices=None):
     the group carries the SHAPE of the distribution, not its magnitude. The real
     numbers stay in the float attribute; a group is for driving modifiers and
     selections, which is what weights are good at."""
-    if not obj or not getattr(obj, "vertex_groups", None):
+    # hasattr, NOT truthiness: vertex_groups is a bpy_prop_collection and an
+    # EMPTY one is falsy, so the old test refused to write on exactly the object
+    # that has no group yet — the first run on any object, silently.
+    if obj is None or not hasattr(obj, "vertex_groups"):
         return None
     numbers = list(values)
     if not numbers:
@@ -757,9 +767,10 @@ def is_blocked(origin, direction, obstacles, distance=1e6):
     """True when a ray from origin along direction meets any obstacle.
 
     Face3D.intersect_line_ray is Ladybug's own test, so the result agrees with
-    the rest of the library. It is pure Python and the cost is
-    sensors x vectors x obstacles — the reason the operators downsample the sun
-    vectors rather than firing all 4000-odd daylight hours."""
+    the rest of the library. It is pure Python and linear in the obstacle count;
+    is_blocked_bvh answers the same question through a BVH and is what the
+    operators call. This one stays as the reference the BVH is checked against,
+    and as the path for obstacles that only exist as Face3D."""
     from ladybug_geometry.geometry3d.ray import Ray3D
 
     ray = Ray3D(origin, direction)
@@ -770,6 +781,71 @@ def is_blocked(origin, direction, obstacles, distance=1e6):
         except Exception:
             continue
     return False
+
+
+# --- OBSTRUCTION: BVH ---
+
+
+def obstacle_bvh(objects, epsilon=0.0):
+    """World-space BVH over every mesh face of `objects`, or None if empty.
+
+    The geometry fed in is the same one the Face3D obstacle list carried: the
+    mesh's own vertices through matrix_world, each polygon as its n-gon index
+    tuple. FromPolygons fans an n-gon into triangles, so the surface tested is
+    the same boundary Face3D would have tested; what changes is only HOW a ray
+    finds a candidate — a tree walk instead of a linear scan over every face.
+
+    epsilon stays at 0.0 on purpose: any padding would grow the obstacles and
+    start blocking rays that used to pass.
+    """
+    from mathutils.bvhtree import BVHTree
+
+    vertices = []
+    polygons = []
+    for obj in objects:
+        mesh = getattr(obj, "data", None)
+        if not mesh or not getattr(mesh, "polygons", None):
+            continue
+        matrix = obj.matrix_world
+        offset = len(vertices)
+        vertices.extend((matrix @ vertex.co)[:] for vertex in mesh.vertices)
+        for polygon in mesh.polygons:
+            if len(polygon.vertices) < 3:
+                continue  # degenerate, same ones Face3D refused
+            polygons.append([offset + index for index in polygon.vertices])
+    if not polygons:
+        return None
+    try:
+        return BVHTree.FromPolygons(
+            vertices, polygons, all_triangles=False, epsilon=epsilon
+        )
+    except Exception as e:
+        print(f"[RefOps.ladybug] BVH das obstruções: {e}")
+        return None
+
+
+def as_vector(point):
+    """Ladybug Point3D/Vector3D → mathutils.Vector, which is what the BVH takes.
+
+    Callers hoist this out of the inner loop — the ray count is
+    sensors x vectors and the conversion would otherwise dominate the win."""
+    from mathutils import Vector
+
+    return Vector((point.x, point.y, point.z))
+
+
+def is_blocked_bvh(bvh, origin, direction, distance=1e6):
+    """is_blocked's answer, from a BVH: does this ray meet any obstacle?
+
+    origin and direction are mathutils Vectors (see as_vector). Only whether
+    there is a hit matters, so ray_cast's nearest-hit is already the answer.
+    An empty tree (None) obstructs nothing, matching an empty obstacle list.
+
+    The sensor sits offset off its own face — see face_sensors — which is what
+    keeps a face from shadowing itself here just as it did with Face3D."""
+    if bvh is None:
+        return False
+    return bvh.ray_cast(origin, direction, distance)[0] is not None
 
 
 # --- DATA ---

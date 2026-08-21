@@ -1,8 +1,14 @@
 ## Como preencher
 
-Marque o estado real, não o esperado. `?` para "implementado mas nunca rodado no Blender".
+Marque o estado real, não o esperado. 
 
-Estados: `ok` testado e funcionando · `parcial` funciona com ressalva anotada · `bug` com problema conhecido, ver [GOTCHAS](GOTCHAS.md) · `?` não testado · `-` não se aplica
+Estados:
+
+- `ok` testado e funcionando;
+- `parcial` funciona com ressalva anotada;
+- `bug` com problema conhecido, ver [GOTCHAS](GOTCHAS.md);
+- `?` implementado mas nunca rodado no Blender;
+- `-` não se aplica;
 
 ## Motor
 
@@ -18,18 +24,18 @@ Estados: `ok` testado e funcionando · `parcial` funciona com ressalva anotada �
 
 ## ops/bonsai
 
-| Operador                      | Estado           | Nota                                                       |
-| ----------------------------- | ---------------- | ---------------------------------------------------------- |
-| `op_bim_wall.py`              | ==requer teste== | ok em 18-08-2026; Renovation Status removido depois disso  |
-| `op_bim_slab.py`              | ==requer teste== | ok em 18-08-2026; Renovation Status removido depois disso  |
-| `op_bim_face_component.py`    | ==requer teste== | sem cutter; material com um atributo só; storey por atributo |
-| `op_bim_panel.py`             | ==requer teste== | sem cutter; material com um atributo só                    |
-| `op_bim_component.py`         | ==requer teste== | reescrita pendente; ainda tem cutter, único que sobrou      |
-| `op_bim_distribute.py`        | ==requer teste== | reescrito: ver nota abaixo                                 |
-| `op_bim_column.py`            | ==requer teste== | via `bim_profiles.py`, sem cutter                          |
-| `op_bim_beam.py`              | ==requer teste== | via `bim_profiles.py`, sem cutter                          |
-| `op_bim_profile_component.py` | ==requer teste== | não carregava (`with_ifc_class` inexistente); sem cutter    |
-| `op_bim_space.py`             | ==requer teste== | Renovation Status removido                                 |
+| Operador                      | Estado | Nota                                                   |
+| ----------------------------- | ------ | ------------------------------------------------------ |
+| `op_bim_wall.py`              | ?      | seção de Material removida, 20-08-2026 — ver nota      |
+| `op_bim_slab.py`              | ?      | seção de Material removida, 20-08-2026 — ver nota      |
+| `op_bim_face_component.py`    | ?      |                                                        |
+| `op_bim_panel.py`             | ?      |                                                        |
+| `op_bim_component.py`         | ?      | reescrita pendente; ainda tem cutter, único que sobrou |
+| `op_bim_distribute.py`        | ?      |                                                        |
+| `op_bim_column.py`            | ?      | seção de Material removida, 20-08-2026 — ver nota      |
+| `op_bim_beam.py`              | ?      | seção de Material removida, 20-08-2026 — ver nota      |
+| `op_bim_profile_component.py` | ?      | seção de Material removida, 20-08-2026 — ver nota      |
+| `op_bim_space.py`             | ?      |                                                        |
 
 `op_bim_distribute.py`, 18-08-2026 — três mudanças, nenhuma rodada no Blender:
 
@@ -40,24 +46,52 @@ Estados: `ok` testado e funcionando · `parcial` funciona com ressalva anotada �
 - o caminho `Blender Objects` nunca tinha rodado — exigia projeto IFC aberto e
   o laço só chamava o construtor IFC. **É o primeiro a testar.**
 
+`op_bim_wall.py` e `op_bim_slab.py`, 20-08-2026 — nenhuma rodada no Blender:
+
+- saiu a seção de Material inteira (`enum_mat_name`, `material_attr`) dos dois.
+  São consumidores puros de type agora: leem a espessura do
+  `IfcMaterialLayerSet` e não escrevem nada de volta
+- isso mata de raiz o `ReferenceError: BMFace has been removed` da laje — o
+  `faces_by_type` guardava BMFaces que `dissolve_regions` já tinha destruído, e
+  só era lido no modo `Rename`. Sem o modo, não há o que segurar
+- **testar que a laje termina sem exceção**, que era o caso que quebrava, e que
+  wall e slab continuam lendo a espessura do type
+- edição de material fica só em quem cria type: `op_bim_panel.py` e
+  `op_bim_face_component.py`
+
+`bim_profiles.EdgeComponent` (base de `op_bim_column.py`, `op_bim_beam.py` e
+`op_bim_profile_component.py`), 20-08-2026 — nenhuma rodada no Blender:
+
+- mesma remoção, mesmo motivo: a base era consumidora pura de type e só sabia
+  renomear o `IfcMaterialProfileSet`. Saíram `material_props("edge")`, a chave
+  `material` de `_layers`, `name_votes` e `_edge_vgroup_name`
+- `_build_edge` voltou a devolver `(element, type_index)` em vez da tupla de
+  quatro; o `parent_obj` saiu da assinatura porque só servia ao rename
+- **testar os três**, que a mudança é na classe base e atinge todos de uma vez
+
+Helpers deletados de `bim_helpers.py` na mesma leva: `rename_type_material_set`,
+`MATERIAL_NAME_MODES_READ`, `_SET_NAME_ATTR` e o ramo READ de `material_props`
+(que perdeu o parâmetro `mints_type`). `vgroup_string` e
+`vgroup_name_from_faces` continuam vivos, usados por panel e face component.
+
 ## ops/ladybug
 
-| Operador                 | Estado           | Nota                                           |
-| ------------------------ | ---------------- | ---------------------------------------------- |
-| `op_ladybug_graphs.py`   | ok               | requer instalação pip completa (lbt-ladybug)   |
-| `op_ladybug_analysis.py` | ==requer teste== | lento sem BVH, ver roadmap item de performance |
+| Operador                 | Estado  | Nota                                                                                   |
+| ------------------------ | ------- | -------------------------------------------------------------------------------------- |
+| `op_ladybug_graphs.py`   | parcial | Tudo funciona, mas preciso que o gráfico *wind* esteja junto do conjunto *sky e dome*. |
+| `op_ladybug_analysis.py` | ?       | Três mudanças por testar: (1) obstrução via BVHTree (`lb.obstacle_bvh`/`is_blocked_bvh`) — conferir se os valores batem com o caminho Face3D; (2) Display Material agora limpa `mesh.materials` antes de aplicar, em vez de acumular slots; (3) saída em Vertex Group destravada — testar num Result Object **sem nenhum grupo**, que era o caso que falhava |
 
 ## ops/honeybee
 
-| Operador                  | Estado           | Nota                                           |
-| ------------------------- | ---------------- | ---------------------------------------------- |
-| `op_honeybee_radiance.py` | ==requer teste== | requer Radiance instalado além dos pacotes pip |
+| Operador                  | Estado | Nota                                                                 |
+| ------------------------- | ------ | -------------------------------------------------------------------- |
+| `op_honeybee_radiance.py` | ?      | Precisa de BVH pois está lento. Fora isso, vou repensar bastante ele. Herdou a correção do `write_vertex_group` — a saída em Vertex Group também nunca funcionou na primeira execução |
 
 ## ops/arch
 
-| Operador             | Estado           | Nota                                                  |
-| -------------------- | ---------------- | ----------------------------------------------------- |
-| `op_space_syntax.py` | ==requer teste== | decomposição volumétrica e conexões por IFC validadas |
+| Operador             | Estado | Nota                                                                                                       |
+| -------------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
+| `op_space_syntax.py` | bug    | Não detecta quando dois espaços são conectados por uma porta. Mas tirando isso, vou repensar bastante ele. |
 
 ## ops/basic
 
@@ -68,12 +102,12 @@ Estados: `ok` testado e funcionando · `parcial` funciona com ressalva anotada �
 
 ## assets-bonsai (CSS/SVG)
 
-| Item                                      | Estado           | Nota                                      |
-| ----------------------------------------- | ---------------- | ----------------------------------------- |
-| Hachuras + paleta com níveis              | ok               | testado via inspetor do navegador         |
-| Prefixo `p`/`c` (projeção/corte)          | ok               | inclusive filhos `path.outline`/`.crease` |
-| 6 temas gerados                           | ok               |                                           |
-| Peso em produção web (múltiplas pranchas) | ==requer teste== | ver nota de peso em CLAUDE.md             |
+| Item                                      | Estado | Nota                                      |
+| ----------------------------------------- | ------ | ----------------------------------------- |
+| Hachuras + paleta com níveis              | ok     | testado via inspetor do navegador         |
+| Prefixo `p`/`c` (projeção/corte)          | ok     | inclusive filhos `path.outline`/`.crease` |
+| 6 temas gerados                           | ok     |                                           |
+| Peso em produção web (múltiplas pranchas) | ?      | ver nota de peso em CLAUDE.md             |
 
 ## Dependências externas
 

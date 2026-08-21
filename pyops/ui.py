@@ -258,7 +258,7 @@ class VIEW3D_PT_procedural_sidebar(bpy.types.Panel):
 
 
 class VIEW3D_PT_refops_commands(bpy.types.Panel):
-    bl_label = "RefOps"
+    bl_label = "PyOps"
     bl_idname = "VIEW3D_PT_refops_commands"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -280,7 +280,9 @@ class VIEW3D_PT_refops_commands(bpy.types.Panel):
             header.prop(
                 context.scene,
                 "ui_show_refresh_order",
-                icon="TRIA_DOWN" if context.scene.ui_show_refresh_order else "TRIA_RIGHT",
+                icon="TRIA_DOWN"
+                if context.scene.ui_show_refresh_order
+                else "TRIA_RIGHT",
                 text=f"Refresh order ({len(copies)})",
                 emboss=False,
             )

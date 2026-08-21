@@ -120,10 +120,10 @@ class BonsaiFaceComponent:
                 "show_if": ("enum_extrude", {"VECTOR"}),
             },
         ),
-        # mints_type=True: this operator BUILDS its own type and its
-        # constituent set, so there is no prior name to rename — the attribute
-        # is always read, not gated behind a Rename mode.
-        **bim.material_props("face", mints_type=True),
+        # This operator BUILDS its own type and its constituent set, which is
+        # why it still has a Material section: the attribute is the only source
+        # for the name. Type-consuming operators have none.
+        **bim.material_props("face"),
         "sep2": ("Separator", {}),
         "lbl_ifc": ("Label", {"text": "IFC Class", "icon": "FILE_3D"}),
         "ifc_class": (

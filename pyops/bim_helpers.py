@@ -1356,27 +1356,13 @@ def get_or_create_material(ifc_file, name):
 # type and never builds one from a loose scene material, so an input can never
 # disagree with the model. Blender materials left this path on purpose -- the
 # viewport colour comes from the IFC surface style.
-
-# Two families of operator, two sets of modes. One READS the set off a type and
-# can only rename it; the other MINTS its own type, has nothing to rename, and
-# chooses instead the name of the set it is about to create.
-MATERIAL_NAME_MODES_READ = [
-    ("AS_FOUND", "As Found", "Leave the type's material set untouched"),
-    (
-        "RENAME",
-        "Rename",
-        "Rename the type's set after the vertex group — every element of "
-        "the type follows",
-    ),
-]
-
-# IfcMaterialLayerSet is the odd one out: its name lives in LayerSetName, while
-# every other set uses a plain Name.
-_SET_NAME_ATTR = {
-    "IfcMaterialLayerSet": "LayerSetName",
-    "IfcMaterialConstituentSet": "Name",
-    "IfcMaterialProfileSet": "Name",
-}
+#
+# Only the operators that MINT a type touch material at all. The ones that
+# consume a type used to be able to rename its set from a painted attribute;
+# that renamed a shared set project-wide from a local vote, and the name it
+# wrote was decoupled from the layers underneath, so it could disagree with
+# the very model it was supposed to describe. Two different names now mean two
+# different types, which is what they meant in IFC all along.
 
 
 def type_material_set(type_entity, set_class):
@@ -1517,93 +1503,22 @@ def _create_constituent_set(ifc_file, set_name, constituent_name):
         return None
 
 
-def rename_type_material_set(ifc_file, type_entity, set_class, new_name):
-    """Rename the set a type carries, in place.
+def material_props(domain="face"):
+    """The Material section, for the operators that MINT a type. Kept next to
+    the functions that read these fields so the names can't drift apart.
 
-    In place is the point: every type and element pointing at this set follows.
-    The set belongs to the type, so there is no per-occurrence copy to make --
-    an occurrence pointing at a private copy of the set was the old 'Use or
-    Create', and it contradicted the rule that the type is the only authority.
+    `domain` only changes the label: edge-driven components paint the index on
+    edges, face-driven ones on faces.
 
-    Called ONCE per type, after the element loop. Calling it per element renamed
-    the same set N times in a single refresh and let the last element win, which
-    is not something the user can predict from what they painted."""
-    if not new_name:
-        return True
-    material_set = type_material_set(type_entity, set_class)
-    if material_set is None:
-        return False
-    attribute = _SET_NAME_ATTR[set_class]
-    try:
-        ifcopenshell.api.run(
-            "material.edit_assigned_material",
-            ifc_file,
-            element=material_set,
-            attributes={attribute: new_name},
-        )
-        return True
-    except Exception:
-        pass
-    # The API for editing a material set has moved between IfcOpenShell
-    # versions; the attribute on the entity has not since IFC4.
-    try:
-        setattr(material_set, attribute, new_name)
-        return True
-    except Exception as e:
-        print(f"[RefOps.bim] renomear {set_class}: {e}")
-        return False
+    The single attribute names the material AND, through the type name, the
+    set: a second field asking for another vertex group index read as a
+    duplicate of the first in the UI, and nothing needed the two to differ.
 
-
-def material_props(domain="face", mints_type=False):
-    """The Material section, shared by every BIM operator that touches a
-    material set. Kept next to the functions that read these fields so the
-    names can't drift apart.
-
-    `domain` only changes the label: edge-driven components (column, beam,
-    profile) paint the index on edges, face-driven ones on faces.
-
-    Two shapes, because the two families of operator mean different things by
-    "material name":
-
-    mints_type=False -- the operator READS the set off an existing type. The
-    only thing it can do to it is rename it, so ONE attribute is enough and it
-    only shows in Rename; As Found asks for nothing at all. An earlier version
-    carried a second attribute here and it was pure duplication.
-
-    mints_type=True -- the operator CREATES the type and its constituent set.
-    The same single attribute names the material AND, through the type name,
-    the set: a second field asking for another vertex group index read as a
-    duplicate of the first in the UI, and nothing needed the two to differ."""
-    header = {
+    There is no shape for the type-consuming operators — see the note above
+    type_material_set for why they no longer have a Material section at all."""
+    return {
         "sep_material": ("Separator", {}),
         "lbl_material": ("Label", {"text": "Material", "icon": "MATERIAL"}),
-    }
-    if not mints_type:
-        return {
-            **header,
-            "enum_mat_name": (
-                "Enum",
-                {
-                    "name": "Material Name",
-                    "items": MATERIAL_NAME_MODES_READ,
-                    "default": "AS_FOUND",
-                },
-            ),
-            "material_attr": (
-                "String",
-                {
-                    "name": f"Material Attr ({domain} int)",
-                    "search": "attribute",
-                    "description": (
-                        "Index into the reference object's vertex groups; the "
-                        "group's name becomes the name of the type's set"
-                    ),
-                    "show_if": ("enum_mat_name", {"RENAME"}),
-                },
-            ),
-        }
-    return {
-        **header,
         "material_attr": (
             "String",
             {

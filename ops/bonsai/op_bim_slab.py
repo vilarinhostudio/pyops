@@ -101,7 +101,6 @@ class BonsaiSlab:
                 ),
             },
         ),
-        **bim.material_props("face"),
         "sep2": ("Separator", {}),
         "lbl_bim_props": (
             "Label",
@@ -192,7 +191,7 @@ class BonsaiSlab:
             print(f"[RefOps] Nenhuma face com '{data_holder.bool_attr}' verdadeiro.")
             return False
 
-        # Plane and material only — see the wall operator: attributes painted on
+        # Plane only — see the wall operator: attributes painted on
         # part of a subdivided face must not fragment the element.
         type_objects = prof.ordered_objects(data_holder.type_collection)
         type_weight_layer = (
@@ -209,7 +208,6 @@ class BonsaiSlab:
             return bm.faces.layers.int.get(name) if name else None
 
         storey_layer = int_layer(data_holder.storey_attr)
-        material_layer = int_layer(data_holder.material_attr)
 
         split_layer = (
             bm.edges.layers.bool.get(data_holder.split_edge_attr)
@@ -228,9 +226,6 @@ class BonsaiSlab:
         body_context = bim.get_body_context(ifc_file)
 
         created = []  # (slab object, type index)
-        # Faces per type, so 'Rename' can vote ONCE for the whole type instead
-        # of once per slab — see rename_type_material_set.
-        faces_by_type = {}
         types = bim.TypeIndexer()
         for group in groups:
             align_value, _mixed = bim.dominant(
@@ -262,10 +257,6 @@ class BonsaiSlab:
                 )
                 continue
 
-            faces_by_type.setdefault(slab_type.id(), (slab_type, []))[1].extend(
-                group
-            )
-
             # Coplanar faces that aren't connected dissolve into separate
             # regions — each one is its own slab.
             regions = []
@@ -294,18 +285,6 @@ class BonsaiSlab:
                 )
                 if obj:
                     created.append((obj, types.index(slab_type)))
-
-        # Renaming runs per TYPE, after every element is built: the set lives on
-        # the type, so one vote over all the faces that used it beats renaming
-        # it again for each slab and letting the last one win.
-        if data_holder.enum_mat_name == "RENAME":
-            for slab_type, faces in faces_by_type.values():
-                bim.rename_type_material_set(
-                    ifc_file,
-                    slab_type,
-                    "IfcMaterialLayerSet",
-                    bim.vgroup_name_from_faces(parent_obj, faces, material_layer),
-                )
 
         # One void, cut into every element of the run. A Blender boolean would
         # be invisible to IFC; these are real openings, so they export and can

@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "RefOps",
+    "name": "PyOps",
     "author": "Arthur Vilarinho",
     "version": (1, 7, 0),
     "blender": (4, 0, 0),
