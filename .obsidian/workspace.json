@@ -200,6 +200,7 @@
   },
   "active": "3aa4a27bf4054c1c",
   "lastOpenFiles": [
+    "ops/bonsai/op_bim_type_geometry.py",
     "pyops.zip",
     "ops/bonsai/sedkmaIyI",
     "ops/bonsai/sedcepw7g",
@@ -213,7 +214,6 @@
     "STATUS.md",
     "CLAUDE.md",
     "files.zip",
-    "days",
-    "assets"
+    "days"
   ]
 }

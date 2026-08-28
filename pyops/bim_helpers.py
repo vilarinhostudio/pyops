@@ -17,7 +17,9 @@ The two rules this module encodes, learned the hard way:
     by name against the real signature instead of guessing positions.
 """
 
+import importlib
 import inspect
+import sys
 import traceback
 
 import bpy
@@ -38,46 +40,81 @@ core_style = None
 AVAILABLE = False
 STYLE_AVAILABLE = False
 IMPORT_ERROR = None
+PACKAGE = None
+
+# The package is not always called "bonsai". A PR/alpha build installs itself as
+# "bonsaiPR", and an extension is also reachable as bl_ext.<repo>.<id> — where,
+# depending on the build, the code either lives inside the extension folder or
+# in a wheel package next to it. Hardcoding one spelling is what broke here:
+# ModuleNotFoundError: No module named 'bonsai' with Bonsai plainly running.
+KNOWN_PACKAGES = ("bonsai", "bonsaiPR")
+
+
+def _package_candidates():
+    """Import roots that might be Bonsai, most likely first.
+
+    Anything already loaded wins — if Blender enabled it, its name is the right
+    one — and the known spellings follow for the case where nothing is loaded
+    yet. Only roots: a package whose name is a plain top-level one, or the
+    bl_ext.<repo>.<id> alias of an extension. Candidates are guesses; ensure()
+    settles it by actually importing `<candidate>.tool`."""
+    names = []
+    for name, module in list(sys.modules.items()):
+        if module is None or not getattr(module, "__path__", None):
+            continue
+        if "." in name and not name.startswith("bl_ext."):
+            continue
+        if name.rsplit(".", 1)[-1].lower().startswith("bonsai"):
+            names.append(name)
+    for name in KNOWN_PACKAGES:
+        if name not in names:
+            names.append(name)
+    return names
 
 
 def ensure(force=False):
     """Try to bind Bonsai. Cheap and idempotent once it succeeds — call it at the
     top of any operation that needs IFC, instead of reading AVAILABLE directly."""
     global tool, ifcopenshell, core_root, core_geometry, core_style
-    global AVAILABLE, STYLE_AVAILABLE, IMPORT_ERROR
+    global AVAILABLE, STYLE_AVAILABLE, IMPORT_ERROR, PACKAGE
 
     if AVAILABLE and not force:
         return True
 
-    try:
-        # bonsai.tool first — it sets up the package, and importing a
-        # bonsai.core submodule ahead of it has bitten us before.
-        import bonsai.tool as _tool
-        import bonsai.core.root as _root
-        import bonsai.core.geometry as _geometry
-        import ifcopenshell as _ifcopenshell
-        import ifcopenshell.api
-        import ifcopenshell.util.element
-        import ifcopenshell.util.representation
-        import ifcopenshell.guid
-    except Exception:
+    last_error = None
+    for package in _package_candidates():
+        try:
+            # .tool first — it sets up the package, and importing a core
+            # submodule ahead of it has bitten us before.
+            _tool = importlib.import_module(f"{package}.tool")
+            _root = importlib.import_module(f"{package}.core.root")
+            _geometry = importlib.import_module(f"{package}.core.geometry")
+            import ifcopenshell as _ifcopenshell
+            import ifcopenshell.api
+            import ifcopenshell.util.element
+            import ifcopenshell.util.representation
+            import ifcopenshell.guid
+        except Exception:
+            last_error = traceback.format_exc()
+            continue
+        break
+    else:
         AVAILABLE = False
-        IMPORT_ERROR = traceback.format_exc()
+        IMPORT_ERROR = last_error or "Nenhum pacote Bonsai encontrado."
         return False
 
     tool = _tool
     core_root = _root
     core_geometry = _geometry
     ifcopenshell = _ifcopenshell
+    PACKAGE = package
     AVAILABLE = True
     IMPORT_ERROR = None
 
     # Only sync_material_style needs this. Missing style support means walls
     # come out uncoloured, not that Bonsai is unusable.
     try:
-        import bonsai.core.style as _style
-
-        core_style = _style
+        core_style = importlib.import_module(f"{PACKAGE}.core.style")
         STYLE_AVAILABLE = True
     except Exception:
         core_style = None
@@ -92,6 +129,7 @@ def status():
     ensure()
     return {
         "AVAILABLE": AVAILABLE,
+        "PACKAGE": PACKAGE,
         "STYLE_AVAILABLE": STYLE_AVAILABLE,
         "IMPORT_ERROR": IMPORT_ERROR,
     }
@@ -580,6 +618,38 @@ def file_object(obj):
     unlink_from_scene_root(obj)
 
 
+def file_in_collection(obj, name):
+    """File a Bonsai-managed object into a NAMED CHILD of wherever the Collector
+    put it — for a type, a subfolder of the types collection.
+
+    Blender-side only: the outliner grouping carries no IFC meaning, which is
+    why this runs after the Collector instead of replacing it. Bonsai may pull
+    the object back up to the parent collection on its next pass; the next
+    refresh puts it back."""
+    file_object(obj)
+    if not name:
+        return None
+    parent = next(iter(obj.users_collection), bpy.context.scene.collection)
+    child = parent.children.get(name)
+    if child is None:
+        child = bpy.data.collections.get(name) or bpy.data.collections.new(name)
+        try:
+            parent.children.link(child)
+        except RuntimeError as e:
+            # Already linked elsewhere in the tree — leave it there rather than
+            # duplicating it under the types collection.
+            print(f"[RefOps.bim] coleção '{name}': {e}")
+            child = None
+    if child is None:
+        return None
+    for collection in list(obj.users_collection):
+        if collection is not child:
+            collection.objects.unlink(obj)
+    if obj.name not in child.objects:
+        child.objects.link(obj)
+    return child
+
+
 # --- ENTITY LIFECYCLE ---
 
 
@@ -622,6 +692,33 @@ def object_for(element):
     return obj if isinstance(obj, bpy.types.Object) else None
 
 
+def link_object(element, name):
+    """Give an IFC entity a Blender object and register the link.
+
+    A type read back from an IFC file has no object: Bonsai lists it in the
+    Type Manager straight from the file and only builds one when something asks
+    for it in the scene. Everything that writes a representation needs a real
+    object, so an adopted type gets one here instead of being rebuilt — see the
+    update rules in op_bim_type_geometry.
+
+    The object is named Bonsai's way, "<Class>/<Name>". Its rename callback
+    reads the element's name back off the object name, so anything else gets
+    rewritten — and a bare "Cube" collides with the reference object, leaving
+    Blender's "Cube.001" to be written into the IFC as the entity's name."""
+    obj = bpy.data.objects.new(
+        f"{element.is_a()}/{name}", bpy.data.meshes.new(name)
+    )
+    bpy.context.scene.collection.objects.link(obj)
+    try:
+        tool.Ifc.link(element, obj)
+    except Exception as e:
+        print(f"[RefOps.bim] tool.Ifc.link falhou para '{name}': {e}")
+        bpy.data.objects.remove(obj, do_unlink=True)
+        return None
+    file_object(obj)
+    return obj
+
+
 def create_product(ifc_class, name, matrix=None, predefined_type=None):
     """New Blender object + linked IFC occurrence, with no representation yet.
     Returns (obj, element) or (None, None)."""
@@ -653,11 +750,7 @@ def create_type(ifc_file, ifc_class, name, predefined_type=None):
         return None, None
     if not entity:
         return None, None
-    obj = bpy.data.objects.new(name, bpy.data.meshes.new(name))
-    bpy.context.scene.collection.objects.link(obj)
-    tool.Ifc.link(entity, obj)
-    file_object(obj)
-    return obj, entity
+    return link_object(entity, name), entity
 
 
 def set_representation(ifc_file, obj, element, representation):
@@ -670,16 +763,32 @@ def set_representation(ifc_file, obj, element, representation):
         product=element,
         representation=representation,
     )
+    show_representation(obj, representation)
+
+
+def show_representation(obj, representation):
+    """Rebuild a Blender object's mesh from an IFC representation, WITHOUT
+    assigning it.
+
+    Split out of set_representation because an UPDATE must not assign again:
+    assigning a representation to a type mints another IfcRepresentationMap, and
+    every element already placed references the first one."""
+    if obj is None or representation is None:
+        return
     # switch_representation swaps obj.data for a mesh built from the IFC, which
     # orphans the placeholder created with the object. One per element per
     # refresh, and Blender never collects it on its own.
     placeholder = obj.data
-    call_core(
-        core_geometry.switch_representation,
-        obj=obj,
-        representation=representation,
-        apply_openings=True,
-    )
+    try:
+        call_core(
+            core_geometry.switch_representation,
+            obj=obj,
+            representation=representation,
+            apply_openings=True,
+        )
+    except Exception as e:
+        print(f"[RefOps.bim] switch_representation em '{obj.name}': {e}")
+        return
     if placeholder and placeholder is not obj.data:
         try:
             if not placeholder.users and not placeholder.use_fake_user:
@@ -687,6 +796,114 @@ def set_representation(ifc_file, obj, element, representation):
         except (ReferenceError, TypeError):
             pass
     file_object(obj)
+
+
+def representation_in_context(product, context):
+    """The product's representation in one context, or None.
+
+    A type carries IfcRepresentationMaps and an occurrence an
+    IfcProductDefinitionShape, so the two have to be looked at separately. The
+    match is on the context ENTITY, not on its type/identifier/target triple:
+    a file can hold two contexts answering to the same triple, and picking the
+    wrong one writes the plan symbol over the body."""
+    for rep_map in getattr(product, "RepresentationMaps", None) or []:
+        rep = getattr(rep_map, "MappedRepresentation", None)
+        if rep is not None and rep.ContextOfItems == context:
+            return rep
+    shape = getattr(product, "Representation", None)
+    for rep in getattr(shape, "Representations", None) or []:
+        if rep.ContextOfItems == context:
+            return rep
+    return None
+
+
+def mesh_representation(ifc_file, context, obj, mesh=None):
+    """A representation built from a Blender mesh, in whatever form the context
+    asks for — Tessellation under Model/Body/MODEL_VIEW, a curve set under a
+    plan or section context.
+
+    add_representation reads the representation type off the context itself,
+    which is why nothing here names one. Only the three arguments that never
+    moved are passed: the rest of that signature has changed between
+    IfcOpenShell versions and the defaults are what we want anyway."""
+    # Listeners only for an object Bonsai knows. The one post-listener on
+    # add_representation is generate_box, which does `assert product` on
+    # tool.Ifc.get_entity(blender_object) — a bare assert, which is how this
+    # failure showed up as an exception with an empty message. A throwaway
+    # carrier is linked to nothing, and has no bounding box worth generating.
+    linked = tool.Ifc.get_entity(obj) is not None
+    try:
+        return ifcopenshell.api.run(
+            "geometry.add_representation",
+            ifc_file,
+            should_run_listeners=linked,
+            context=context,
+            blender_object=obj,
+            geometry=mesh if mesh is not None else obj.data,
+        )
+    except Exception as e:
+        # Traceback, not just str(e): the failure comes from deep inside
+        # ifcopenshell's Blender-dependent add_representation, and some of what
+        # it raises (a bare assert, notably) has an empty message — "erro: "
+        # with nothing after it is the one report that says nothing at all.
+        print(
+            f"[RefOps.bim] add_representation "
+            f"({getattr(context, 'ContextIdentifier', '?')}/"
+            f"{getattr(context, 'TargetView', '?')}): {e!r}"
+        )
+        print(traceback.format_exc())
+        return None
+
+
+def set_mesh_representation(ifc_file, product, obj, context, mesh=None):
+    """Give a product the geometry of a Blender mesh in one context, updating in
+    place when it already has one there.
+
+    Updating means swapping the Items of the EXISTING IfcShapeRepresentation,
+    never assigning a fresh one: an occurrence references its type through an
+    IfcMappedItem pointing at the type's IfcRepresentationMap, so a new
+    representation would mint a new map and every element already placed would
+    keep pointing at the old one — the very reference this exists to preserve.
+    Same entity, new items."""
+    new_rep = mesh_representation(ifc_file, context, obj, mesh)
+    if new_rep is None:
+        return None
+
+    existing = representation_in_context(product, context)
+    if existing is None:
+        try:
+            ifcopenshell.api.run(
+                "geometry.assign_representation",
+                ifc_file,
+                product=product,
+                representation=new_rep,
+            )
+        except Exception as e:
+            print(f"[RefOps.bim] assign_representation: {e}")
+            return None
+        return new_rep
+
+    old_items = list(existing.Items or [])
+    existing.Items = new_rep.Items
+    existing.RepresentationType = new_rep.RepresentationType
+    # The carrier is empty now — its items live on the representation the
+    # occurrences already reference.
+    try:
+        ifc_file.remove(new_rep)
+    except Exception as e:
+        print(f"[RefOps.bim] descartar representação temporária: {e}")
+    for item in old_items:
+        # The styled item goes first: it holds an inverse reference to the
+        # geometry, and remove_deep2 keeps whatever is still referenced — the
+        # old faces would survive as orphans with the style pinning them.
+        for referrer in list(ifc_file.get_inverse(item)):
+            if referrer.is_a("IfcStyledItem"):
+                ifc_file.remove(referrer)
+        try:
+            ifcopenshell.util.element.remove_deep2(ifc_file, item)
+        except Exception as e:
+            print(f"[RefOps.bim] remover item antigo: {e}")
+    return existing
 
 
 def assign_type(ifc_file, element, type_entity):
@@ -1503,6 +1720,60 @@ def _create_constituent_set(ifc_file, set_name, constituent_name):
         return None
 
 
+def find_constituent_set(ifc_file, name):
+    """An IfcMaterialConstituentSet ALREADY in the file, by name.
+
+    Never creates one — the mirror of assign_constituent_set, for the operators
+    that consume a set someone else authored. A name matching nothing leaves the
+    entity without material, which is the honest outcome: minting a set here
+    would put a material in the model no one asked for."""
+    if not name:
+        return None
+    return next(
+        (
+            candidate
+            for candidate in ifc_file.by_type("IfcMaterialConstituentSet")
+            if candidate.Name == name
+        ),
+        None,
+    )
+
+
+def assign_material_set(ifc_file, entity, material_set):
+    """Point an entity at an existing material set, replacing what it had.
+
+    Skipped when it already carries that very set: re-running assign_material on
+    every refresh churns the file, and the association it would rebuild is the
+    one every element reads through."""
+    if material_set is None or not ensure():
+        return None
+    try:
+        current = ifcopenshell.util.element.get_material(entity)
+    except Exception:
+        current = None
+    if current is not None and current.id() == material_set.id():
+        return material_set
+    if current is not None:
+        try:
+            ifcopenshell.api.run(
+                "material.unassign_material", ifc_file, products=[entity]
+            )
+        except Exception as e:
+            print(f"[RefOps.bim] material.unassign_material: {e}")
+    try:
+        ifcopenshell.api.run(
+            "material.assign_material",
+            ifc_file,
+            products=[entity],
+            type=material_set.is_a(),
+            material=material_set,
+        )
+    except Exception as e:
+        print(f"[RefOps.bim] material.assign_material: {e}")
+        return None
+    return material_set
+
+
 def material_props(domain="face"):
     """The Material section, for the operators that MINT a type. Kept next to
     the functions that read these fields so the names can't drift apart.
@@ -1866,25 +2137,36 @@ def swept_solid_representation(ifc_file, context, points_2d, depth):
     )
 
 
-def get_body_context(ifc_file):
-    body = ifcopenshell.util.representation.get_context(
-        ifc_file, "Model", "Body", "MODEL_VIEW"
+def get_context(ifc_file, context_type="Model", identifier="Body",
+                target_view="MODEL_VIEW"):
+    """Get-or-create a representation context.
+
+    Bonsai only creates the contexts a project actually used, so an operator
+    writing a plan or section representation has to be able to mint the one it
+    needs — a missing Plan/Body/PLAN_VIEW would otherwise fail at the moment the
+    geometry is assigned, with nothing said about why."""
+    context = ifcopenshell.util.representation.get_context(
+        ifc_file, context_type, identifier, target_view
     )
-    if body:
-        return body
-    model = ifcopenshell.util.representation.get_context(ifc_file, "Model")
-    if not model:
-        model = ifcopenshell.api.run(
-            "context.add_context", ifc_file, context_type="Model"
+    if context:
+        return context
+    parent = ifcopenshell.util.representation.get_context(ifc_file, context_type)
+    if not parent:
+        parent = ifcopenshell.api.run(
+            "context.add_context", ifc_file, context_type=context_type
         )
     return ifcopenshell.api.run(
         "context.add_context",
         ifc_file,
-        context_type="Model",
-        context_identifier="Body",
-        target_view="MODEL_VIEW",
-        parent=model,
+        context_type=context_type,
+        context_identifier=identifier,
+        target_view=target_view,
+        parent=parent,
     )
+
+
+def get_body_context(ifc_file):
+    return get_context(ifc_file, "Model", "Body", "MODEL_VIEW")
 
 
 # --- MESH ANALYSIS ---

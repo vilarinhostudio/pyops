@@ -28,9 +28,9 @@ Estados:
 | ----------------------------- | ------ | --------------------------------------------------------- |
 | `op_bim_wall.py`              | ok     | testado                                                   |
 | `op_bim_slab.py`              | ok     | testado                                                   |
-| `op_bim_face_component.py`    | ok     | testado                                                   |
-| `op_bim_panel.py`             | ok     |                                                           |
-| `op_bim_component.py`         | -      | reescrita pendente; ainda tem cutter, único que sobrou    |
+| `op_bim_face_component.py`    | parcial | reteste pendente: herdou de `create_type` a nomeação `<Classe>/<Nome>` do objeto do type |
+| `op_bim_panel.py`             | parcial | reteste pendente: mesma nomeação de type do `face_component` |
+| `op_bim_type_geometry.py`     | ok     | Single e Multiple testados, com 2D e atualização sem recriar. Multiple agrupa por atributo int de **ponto** (corpo, símbolos 2D e material); origem de todo type = origem do objeto de referência; malha instanciada exige *Realize Instances* |
 | `op_bim_distribute.py`        | ok     | Testei a porta, falta testar a janela e a parte "Blender" |
 | `op_bim_column.py`            | ok     |                                                           |
 | `op_bim_beam.py`              | ok     |                                                           |

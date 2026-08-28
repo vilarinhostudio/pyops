@@ -28,8 +28,24 @@ Solução: sempre checar `"FINISHED" in result`.
 Causa: o enum do painel do Bonsai é filtrado pela classe que o painel está mostrando naquele momento. Definir a classe certa antes de atribuir o tipo nem sempre refiltra a lista em tempo de dirigir pela UI via código.
 Solução: construir a ocorrência pela API do IFC (`root.create_entity` + `type.assign_type`) em vez de dirigir o painel — determinístico, sem depender de estado de UI.
 
+**`ModuleNotFoundError: No module named 'bonsai'` com o Bonsai instalado e funcionando.**
+Causa: o nome importável do pacote não é sempre `bonsai`. O build de PR/alpha se instala como `bonsaiPR` (wheel em `extensions/.local/lib/pythonX.Y/site-packages/bonsaiPR`), e como extensão ele também responde por `bl_ext.<repo>.<id>` — que, dependendo do build, aponta para a pasta da extensão, onde pode não haver `tool/` nenhum. Os operadores (`bpy.ops.bim.*`) continuam iguais; só o import muda.
+Solução: `bim_helpers.ensure()` descobre o nome — varre `sys.modules` por raiz que comece com "bonsai" (top-level ou `bl_ext.*`), completa com as grafias conhecidas, e decide importando `<candidato>.tool` de verdade. `bim_helpers.status()["PACKAGE"]` diz qual venceu.
+
+**`add_representation` levanta `AssertionError` sem mensagem nenhuma — o print sai `erro: ` e acabou.**
+Causa: não é o `add_representation` que falha, é um **post-listener** do Bonsai (`model.product.generate_box`, registrado em `geometry.add_representation`). Ele faz `assert product` sobre `tool.Ifc.get_entity(settings["blender_object"])` — assert nu, mensagem vazia. Passar um objeto descartável, não ligado a nenhuma entidade IFC (o carrier que segura a malha de um Type), reprova o assert e derruba a chamada inteira **depois** da representação já ter sido criada: ela fica órfã no arquivo e o `run()` devolve exceção em vez do resultado.
+Solução: `should_run_listeners=False` quando o objeto não está ligado a uma entidade (`mesh_representation` decide por `tool.Ifc.get_entity`). Para objeto ligado os listeners continuam ligados — é o que gera o Box do produto.
+
 **Nome de operador ou de módulo da API muda entre versões sem aviso** (ex.: `void` deixou de existir; `add_constr_type_instance` não existe em todas as versões).
 Solução: descobrir por palavra-chave em tempo de execução (`find_operator("add", "type", "instance")`) com fallback, em vez de hard-code.
+
+**`Type 'X' sem objeto Blender — nada atualizado.` num type que aparece normalmente no Type Manager.**
+Causa: um type lido de volta de um `.ifc` não tem objeto Blender. O Bonsai lista o Type Manager direto do arquivo e só constrói o objeto quando algo pede ele na cena, então `tool.Ifc.get_object(type)` devolve `None` — e sem objeto não há para onde escrever representação.
+Solução: **adotar**, nunca recriar. `link_object` cria o objeto e faz `tool.Ifc.link` na entidade existente. Recriar o type para ganhar um objeto destruiria o `IfcRepresentationMap` que toda ocorrência já colocada referencia.
+
+**O operador cria um type novo a cada refresh em vez de atualizar o que já existe** (`Cube`, `Cube.001`, `Cube.002`...).
+Causa: o `name_callback` do Bonsai escreve o nome do objeto Blender **de volta** na entidade IFC. Um objeto criado com o nome nu (`Cube`) colide com o objeto de referência, o Blender resolve para `Cube.001`, e o callback renomeia o *type* para `Cube.001`. O refresh seguinte procura por `Cube`, não acha, e cria outro.
+Solução: nomear o objeto na convenção do próprio Bonsai, `"<Classe>/<Nome>"` — sem colisão e o callback lê de volta exatamente o nome pretendido (`link_object` em `bim_helpers.py`, e o rename final em `op_bim_type_geometry`).
 
 ## Geometria e placement
 
@@ -44,6 +60,14 @@ Solução: filtrar por verticalidade (`abs(normal.z) < 0.5`) antes de somar, e p
 **Plano de parede indetectável quando há duas portas na mesma parede, ou portas em paredes diferentes.**
 Causa: tentar achar o plano por soma de normais de face falha quando o ponto de referência (porta, vão) não está centrado ou está numa junção.
 Solução: usar as **arestas horizontais** que passam pelo ponto — elas correm ao longo da parede, então a normal é a perpendicular delas. Funciona independente de quantas portas existem na parede.
+
+**As ocorrências já inseridas saltam de lugar quando o type é atualizado.**
+Causa: a geometria do type estava sendo recentrada num ponto calculado da própria malha (centroide dos vértices). Como o type não tem placement — sua geometria mora na origem do `IfcRepresentationMap` —, qualquer edição que mova esse ponto desloca a geometria de **toda** ocorrência já colocada. De quebra, centroide de vértices é ponderado por densidade de malha, não por volume: subdividir um lado já basta para movê-lo.
+Solução: não recentrar. A geometria do type vai no espaço local do objeto de referência, então o pivô é a única coisa que a operação nunca toca. O preço é que um grupo modelado longe da origem nasce deslocado dela — modele perto da origem em vez de mover o pivô.
+
+**`Error: Evaluated geometry from modifier does not contain a mesh` ao assar um Geometry Nodes.**
+Causa: a saída da árvore são **instâncias**, não malha. `modifier_apply` não realiza instância nenhuma, então não há o que assar — e o container do PyOps fica sem malha, o que derruba qualquer operação que leia dele.
+Solução: um nó *Realize Instances* no fim da árvore. Para separar o que era cada instância depois disso, pintar um atributo inteiro **de ponto** e agrupar por ele (é o que `op_bim_type_geometry` faz no modo Multiple) — instância realizada perde a identidade, atributo não. Ponto e não face porque o mesmo atributo agrupa os símbolos 2D, que são wireframe e não têm face para pintar.
 
 ## Instalação de dependências (pip / Windows)
 
