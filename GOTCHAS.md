@@ -15,8 +15,12 @@ Solução: passar a porta/janela (ou uma caixa burra) + parede ativa; deixar o B
 **A abertura fica no lugar certo mas não corta a parede / o `IfcRelVoidsElement` existe mas nada muda visualmente.**
 Causa: escrever a relação no arquivo registra o dado, mas não regenera a malha do Blender. É preciso `switch_representation(apply_openings=True)`.
 
+**A matriz que você deu para a porta é ignorada: ela nasce com a rotação da parede, o flip não muda nada e o cardinal inverte conforme o alinhamento da parede.**
+Causa: com `preserve_placement=False` (o padrão), o `FilledOpeningGenerator` do Bonsai faz `filling_obj.matrix_world = voided_obj.matrix_world.copy()` — a rotação do preenchimento é a do **hospedeiro**, inteira, mais meia volta em Z quando o ponto está mais perto do eixo *side* do layer set do que do *base*. Como `base = OffsetFromReferenceLine` e `side = base + espessura`, quem decide essa meia volta é o **alinhamento da parede**: INTERIOR cai no side (gira), CENTER e EXTERIOR caem no base (não gira). O `translation.xy` vira a projeção do ponto no eixo escolhido, então a posição ao longo da parede sobrevive — só a orientação é descartada. Uma caixa delimitadora medida antes da chamada descreve uma orientação que deixou de existir, e é por isso que o cardinal erra em metade das combinações.
+Solução: `preserve_placement=True` e assentar a porta você mesmo na face por onde ela abre. Convenção do Bonsai para preenchimento: origem **sobre** uma face do hospedeiro, **+Y local para dentro** da parede.
+
 **Rodar `add_opening` uma segunda vez à mão "conserta" a posição da porta.**
-Causa: o argumento `preserve_placement=False` permite ao Bonsai reposicionar o preenchimento conforme o vazio. Sem ele (ou com `True`), a colocação anterior é mantida. A segunda execução manual é a primeira vez que o argumento certo foi usado.
+Causa: a mesma de cima — a segunda execução reposiciona porque o gerador sempre reposiciona. Não é o argumento que muda entre a primeira e a segunda vez; é que a primeira colocação nunca chegou a valer.
 
 ## Bonsai / API e operadores
 

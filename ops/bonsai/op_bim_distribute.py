@@ -179,19 +179,15 @@ class BonsaiDistributeOnPoints:
                 "show_if": ("enum_output", {"FILLING"}),
             },
         ),
-        "direction_attr": (
-            "String",
-            {
-                "name": "Direction Attr (vert bool)",
-                "search": "attribute",
-                "show_if": ("enum_output", {"FILLING"}),
-            },
-        ),
         "flip_attr": (
             "String",
             {
                 "name": "Flip Attr (vert bool)",
                 "search": "attribute",
+                "description": (
+                    "Off, the element faces the way the reference face's "
+                    "normal points; on, the other way"
+                ),
                 "show_if": ("enum_output", {"FILLING"}),
             },
         ),
@@ -407,16 +403,12 @@ class BonsaiDistributeOnPoints:
         def vert_bool(name):
             return bm.verts.layers.bool.get(name) if name else None
 
-        def vert_int(name):
-            return bm.verts.layers.int.get(name) if name else None
-
         def vert_float(name):
             return bm.verts.layers.float.get(name) if name else None
 
         return {
             "select": select,
             "align": vert_int(data_holder.align_attr),
-            "direction": vert_bool(data_holder.direction_attr),
             "flip": vert_bool(data_holder.flip_attr),
             "weight": vert_float(data_holder.weight_attr),
             "angle": vert_float(data_holder.angle_attr),
@@ -464,8 +456,21 @@ class BonsaiDistributeOnPoints:
             print(f"[RefOps] '{template.name}' não é um elemento IFC.")
             return None
 
-        matrix, host_candidate = cls._matrix_for(
-            vert, layers, source, data_holder, entity
+        # The host comes FIRST now: the placement is built against the wall's
+        # own face planes, so it has to be known before the matrix exists. The
+        # lookup uses the painted point rather than the element's final origin —
+        # the cardinal shift can carry a door past the end of its wall, and the
+        # point is what the user actually marked.
+        host = None
+        if data_holder.enum_output == "FILLING" and data_holder.apply_to_wall:
+            host = cls._find_host(
+                ifc_file, source.matrix_world @ vert.co, data_holder.host_class
+            )
+            if host is None:
+                print("[RefOps] Nenhum hospedeiro encontrado para este ponto.")
+
+        matrix, cardinal_axis = cls._matrix_for(
+            vert, layers, source, data_holder, host
         )
         if matrix is None:
             return None
@@ -484,10 +489,19 @@ class BonsaiDistributeOnPoints:
         bim.assign_container(ifc_file, element, storey)
         bim.tag_family(ifc_file, element, key)
 
-        # Everything that changes the element happens BEFORE the void is cut.
-        # Bonsai sizes the opening from the filling as it stands, so a door
-        # moved or re-swung afterwards leaves its void behind at the old place —
-        # which is exactly what the openings were doing.
+        # Body first, THEN the cardinal shift: the numpad anchors the real
+        # bounding box, and before the rebuild that box is the type's, not the
+        # occurrence's. Both stay ahead of the void — Bonsai sizes the opening
+        # from the filling as it stands, so a door moved afterwards leaves its
+        # void behind at the old place.
+        bim.regenerate_parametric(obj)
+
+        # Which jamb the leaf hangs on is the TYPE's business — Bonsai exposes
+        # it as a type property only, so changing it swings every door of that
+        # type. The old per-point "direction" attribute could not do better:
+        # negating one horizontal axis mirrored the placement instead of
+        # re-hanging the door, and the mirror does not survive an IFC export.
+
         # Gated on FILLING, not on the align mode alone: the field is only
         # drawn for a filling, so a value left over from an earlier setting
         # would otherwise shift a component that never asked to be aligned.
@@ -496,34 +510,22 @@ class BonsaiDistributeOnPoints:
             and data_holder.enum_align_mode == "BOUNDING_BOX"
         ):
             cardinal = int(vert[layers["align"]]) if layers["align"] else 5
-            cls._apply_cardinal(obj, cardinal)
-
-        # Build the body FIRST, then change the swing. The regeneration ends by
-        # cancelling the door editor, and a cancel discards a pending direction
-        # change — which is why flipping the geometry stuck and changing the
-        # direction did not.
-        bim.regenerate_parametric(obj)
-
-        # Swing and hinge are handled by the placement above, not by the
-        # parametric toggle: that one mirrored the leaf vertically and its
-        # direction change was discarded by the editor cancel.
+            cls._apply_cardinal(obj, cardinal, cardinal_axis)
 
         if data_holder.enum_output == "FILLING" and data_holder.apply_to_wall:
-            host = cls._find_host(
-                ifc_file, obj.matrix_world.translation, data_holder.host_class
-            )
-            if host is None:
-                print("[RefOps] Nenhum hospedeiro encontrado para este ponto.")
-            else:
+            if host is not None:
                 # The filling cuts its own void: Bonsai sizes the opening from
-                # the element and repositions it, which is the step that fixed
-                # the placement when it was done by hand.
+                # the element as it stands.
                 # The host's mesh is rebuilt when the void lands, and the
                 # rebuild arrives bare: cut material, cutter and inherited
                 # material all go with it. Captured here, restored after.
                 host_finish = bim.capture_finish(bim.object_for(host))
 
-                opening = bim.opening_from_object(host, obj)
+                # preserve_placement: the door is already seated on the face it
+                # opens through. Letting Bonsai re-snap it overwrites the whole
+                # matrix with the host's, which is what made the flip do nothing
+                # and tied the cardinal to the wall's alignment.
+                opening = bim.opening_from_object(host, obj, preserve_placement=True)
                 if opening is None:
                     print("[RefOps] O vazio não foi criado.")
                 else:
@@ -536,8 +538,11 @@ class BonsaiDistributeOnPoints:
         return element
 
     @classmethod
-    def _matrix_for(cls, vert, layers, source, data_holder, entity):
-        """(placement, host hint) for one point."""
+    def _matrix_for(cls, vert, layers, source, data_holder, host=None):
+        """(placement, cardinal axis) for one point.
+
+        The axis is None for anything that is not a filling — only a filling is
+        cardinal-aligned."""
         matrix_world = source.matrix_world
         position = matrix_world @ vert.co
 
@@ -545,54 +550,83 @@ class BonsaiDistributeOnPoints:
         # or plain copy — is placed free, which is why the Blender path can
         # share this function instead of carrying its own.
         if data_holder.enum_output == "FILLING":
-            return cls._wall_matrix(vert, layers, matrix_world, position, entity), None
-        return cls._free_matrix(
-            vert, layers, matrix_world, position, data_holder
-        ), None
+            return cls._wall_matrix(vert, layers, matrix_world, position, host)
+        return (
+            cls._free_matrix(vert, layers, matrix_world, position, data_holder),
+            None,
+        )
 
     @classmethod
-    def _wall_matrix(cls, vert, layers, matrix_world, position, entity):
-        """Door or window placement.
+    def _wall_matrix(cls, vert, layers, matrix_world, position, host):
+        """Door or window placement: (matrix, cardinal axis).
 
-        Local Z is world up, always — these elements stand. The horizontal
-        direction comes from the wall plane at the point, taken from the faces
-        marked for alignment when there are any and from the vertical faces
-        around the vertex otherwise. Averaging in a floor face is what used to
-        tilt the frame."""
+        Local Z is world up, always — these elements stand. Which way the
+        element faces comes from the reference mesh: the normal of the wall
+        plane at the point, taken from the faces marked for alignment when
+        there are any and from the vertical faces around the vertex otherwise.
+        Averaging in a floor face is what used to tilt the frame.
+
+        Bonsai's convention for a filling is that its origin sits ON a face of
+        the host and its local +Y points INTO the wall, so the element faces the
+        way that face does. Unflipped, that face is the one the reference normal
+        points out of; flipped, the other one."""
         normal = cls._wall_normal(vert, layers, matrix_world)
         if normal is None:
-            return None
+            return None, None
 
-        across = mathutils.Vector((normal.y, -normal.x, 0.0))
-        through = -normal
-
-        # Flip: the element faces the other side of the wall. A half turn about
-        # the vertical, which is both horizontal axes at once — the parametric
-        # toggle mirrored it top to bottom instead, which is not what "flip"
-        # means for a door.
+        # Outward: the way the element faces and opens. The flip is the whole
+        # of the mechanic — the hinge side belongs to the type.
+        outward = normal.copy()
         if layers["flip"] and vert[layers["flip"]]:
-            across = -across
-            through = -through
+            outward = -outward
 
-        # Direction: the hinge moves to the other jamb. Negating only the axis
-        # across the opening mirrors the leaf, and a mirrored door IS a door
-        # hung on the other side. It is deliberately a left-handed frame.
-        if layers["direction"] and vert[layers["direction"]]:
-            across = -across
+        # Local Y is INTO the wall, so it is the opposite of the facing. X is
+        # then Y x Z, which keeps the frame right-handed: IfcAxis2Placement3D
+        # stores only Z and X and derives Y from them, so a mirrored frame
+        # lives in Blender and exports as an element facing the other way.
+        through = -outward
+        across = through.cross(mathutils.Vector((0.0, 0.0, 1.0)))
 
-        # The element lands ON the point; the cardinal shift comes afterwards,
-        # once its real bounding box is known. Bonsai has no alignment input of
-        # its own, and the type's nominal size is not always the built size.
-        centre = position
+        # Rightwards seen from the reference normal's side — that is where the
+        # numpad is read from, and it does NOT follow the flip: the number names
+        # a place on the WALL, not on the element.
+        cardinal_axis = mathutils.Vector((-normal.y, normal.x, 0.0))
 
-        return mathutils.Matrix(
+        origin = cls._seat_on_host(host, position, outward)
+
+        matrix = mathutils.Matrix(
             (
-                (across.x, through.x, 0.0, centre.x),
-                (across.y, through.y, 0.0, centre.y),
-                (0.0, 0.0, 1.0, centre.z),
+                (across.x, through.x, 0.0, origin.x),
+                (across.y, through.y, 0.0, origin.y),
+                (0.0, 0.0, 1.0, origin.z),
                 (0.0, 0.0, 0.0, 1.0),
             )
         )
+        return matrix, cardinal_axis
+
+    @classmethod
+    def _seat_on_host(cls, host, position, outward):
+        """Slide the point across the wall onto the face it opens through.
+
+        The two faces are the host's own bounding box in its local Y — the body
+        is built spanning exactly from one to the other, so reading them off the
+        object needs no unit conversion and survives an alignment that moved the
+        body off the reference line. Without a host the point stands as it is:
+        there is no wall to seat against, and the reference plane is the best
+        guess left."""
+        host_obj = bim.object_for(host) if host is not None else None
+        if host_obj is None or host_obj.data is None:
+            return position
+        try:
+            local = host_obj.matrix_world.inverted() @ position
+        except ValueError:
+            return position  # singular matrix: a degenerate host
+        ys = [corner[1] for corner in host_obj.bound_box]
+        # +local Y of a wall is its reference normal, so the face that opens
+        # towards `outward` is the far one when the two agree.
+        forward = host_obj.matrix_world.to_3x3().col[1]
+        local.y = max(ys) if forward.dot(outward) > 0 else min(ys)
+        return host_obj.matrix_world @ local
 
     @classmethod
     def _wall_normal(cls, vert, layers, matrix_world):
@@ -687,7 +721,7 @@ class BonsaiDistributeOnPoints:
             print("[RefOps] Nenhum objeto de origem para este ponto.")
             return None
 
-        matrix, _host = cls._matrix_for(vert, layers, source, data_holder, None)
+        matrix, _axis = cls._matrix_for(vert, layers, source, data_holder)
         if matrix is None:
             return None
 
@@ -698,7 +732,7 @@ class BonsaiDistributeOnPoints:
         return obj
 
     @classmethod
-    def _apply_cardinal(cls, obj, cardinal):
+    def _apply_cardinal(cls, obj, cardinal, right):
         """Move the element so the numbered point of its bounding box lands on
         the marked vertex.
 
@@ -711,28 +745,34 @@ class BonsaiDistributeOnPoints:
         bottom centre has min_z of zero, and moving by half the height would
         lift it off the floor.
 
-        Only X (across) and Z (up) are touched. Y runs through the wall, and a
-        filling belongs inside the wall it cuts."""
-        if not 1 <= cardinal <= 9 or obj.data is None:
+        `right` is the wall's rightwards direction seen from the normal side,
+        and it does NOT follow the flip. Measuring the box against the object's
+        own axes instead made left and right trade places whenever the door was
+        flipped, so only half the numpad ever landed where it was asked to.
+
+        Only the horizontal axis along the wall and Z are touched. The axis
+        through the wall is left alone: a filling belongs inside what it cuts."""
+        if not 1 <= cardinal <= 9 or obj.data is None or right is None:
             return
-        corners = [mathutils.Vector(corner) for corner in obj.bound_box]
-        min_x = min(c.x for c in corners)
-        max_x = max(c.x for c in corners)
-        min_z = min(c.z for c in corners)
-        max_z = max(c.z for c in corners)
+        # The box corners are local and relative to the origin, so rotating them
+        # without translating gives the extents around the point itself.
+        rotation = obj.matrix_world.to_3x3()
+        right = right.normalized()
+        up = mathutils.Vector((0.0, 0.0, 1.0))
+        corners = [rotation @ mathutils.Vector(corner) for corner in obj.bound_box]
+        rights = [corner.dot(right) for corner in corners]
+        ups = [corner.dot(up) for corner in corners]
+        min_r, max_r = min(rights), max(rights)
+        min_u, max_u = min(ups), max(ups)
 
         column = (cardinal - 1) % 3  # 0 left, 1 centre, 2 right
         row = (cardinal - 1) // 3  # 0 bottom, 1 middle, 2 top
-        target_x = (min_x, (min_x + max_x) / 2.0, max_x)[column]
-        target_z = (min_z, (min_z + max_z) / 2.0, max_z)[row]
+        target_r = (min_r, (min_r + max_r) / 2.0, max_r)[column]
+        target_u = (min_u, (min_u + max_u) / 2.0, max_u)[row]
 
-        if abs(target_x) < TOL and abs(target_z) < TOL:
+        if abs(target_r) < TOL and abs(target_u) < TOL:
             return
-        rotation = obj.matrix_world.to_3x3()
-        obj.matrix_world.translation -= (
-            rotation.col[0].normalized() * target_x
-            + rotation.col[2].normalized() * target_z
-        )
+        obj.matrix_world.translation -= right * target_r + up * target_u
 
     @classmethod
     def _free_matrix(cls, vert, layers, matrix_world, position, data_holder):

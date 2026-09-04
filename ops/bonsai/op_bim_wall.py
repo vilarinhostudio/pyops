@@ -177,11 +177,12 @@ class BonsaiWall:
             bm.free()
             return False
 
-        # Grouped by plane ONLY. Making thickness or alignment part
-        # of the key split a subdivided wall — carving a door loop leaves several
-        # coplanar faces and the attributes are rarely painted on every one of
-        # them, so each fragment became its own wall. The values are voted on
-        # below instead, weighted by area.
+        # Grouped by plane AND by the attributes that describe the element.
+        # They were voted on per island before — area-weighted majority for the
+        # alignment, mean for the type weight, lowest for the storey — which
+        # meant one wall could be built from faces that disagreed. A wall now
+        # follows the faces that actually carry its values, and a face left
+        # unpainted falls to the default and becomes a wall of its own.
         def int_layer(name):
             return bm.faces.layers.int.get(name) if name else None
 
@@ -209,8 +210,35 @@ class BonsaiWall:
             values = [face[type_weight_layer] for face in wall_faces]
             type_range = (min(values), max(values))
 
+        def face_align(face):
+            return int(face[align_layer]) if align_layer else 0
+
+        def face_type_index(face):
+            """The RESOLVED index, never the raw weight: two faces differing in
+            the sixth decimal pick the same type and must stay one wall."""
+            if data_holder.enum_wall_mode != "W" or not type_weight_layer:
+                return None
+            if not type_range or not type_objects:
+                return None
+            low, high = type_range
+            return prof.weight_to_index(
+                face[type_weight_layer], low, high, len(type_objects)
+            )
+
+        def face_storey(face):
+            if data_holder.enum_storey != "ATTRIBUTE" or storey_layer is None:
+                return None
+            return int(face[storey_layer])
+
         groups = bim.group_coplanar_faces(
-            wall_faces, source.matrix_world, data_holder.precision
+            wall_faces,
+            source.matrix_world,
+            data_holder.precision,
+            extra_key=lambda face: (
+                face_align(face),
+                face_type_index(face),
+                face_storey(face),
+            ),
         )
         body_context = bim.get_body_context(ifc_file)
 
@@ -226,15 +254,12 @@ class BonsaiWall:
         islands = [island for group in groups for island in bim.split_islands(group)]
 
         for group in islands:
-            align_value, mixed_align = bim.dominant(
-                group, align_layer, default=0, cast=int
-            )
-            if mixed_align:
-                print(
-                    f"[RefOps] Alinhamentos diferentes na mesma parede; usando {align_value}."
-                )
+            # Uniform across the group by construction — the values are part of
+            # the grouping key, so the first face speaks for all of them.
+            sample = group[0]
+            align_value = face_align(sample)
 
-            picked = cls._pick_type(group, type_objects, type_weight_layer, type_range)
+            picked = cls._pick_type(type_objects, face_type_index(sample))
             wall_type = cls._resolve_wall_type(
                 data_holder.enum_wall_mode,
                 data_holder.wall_type_pointer,
@@ -437,9 +462,9 @@ class BonsaiWall:
         rotation = matrix_world.to_3x3()
         spans = {}
         for name, faces in island_of_obj.items():
-            normal = mathutils.Vector((0.0, 0.0, 0.0))
-            for face in faces:
-                normal += (rotation @ face.normal) * face.calc_area()
+            # The same normal _measure_wall_group built the wall from, so the
+            # junction is classified against the body that actually exists.
+            normal = rotation @ max(faces, key=lambda face: face.calc_area()).normal
             normal.z = 0.0
             if normal.length < TOL:
                 continue
@@ -563,37 +588,30 @@ class BonsaiWall:
         )
 
     @classmethod
-    def _pick_type(cls, faces, objects, layer, weight_range):
-        """One type per element, chosen by the group's own weight.
+    def _pick_type(cls, objects, index):
+        """One type per element.
 
-        The weight is averaged over the group rather than read from one face —
-        a coplanar run is a single element and one stray value should not decide
-        for the whole of it."""
+        The index is part of the grouping key, so every face of the element
+        already resolved to the same type — there is nothing left to average."""
         if not objects:
             return None
-        if not layer or not weight_range:
+        if index is None:
             return objects[0]
-        total = sum(face[layer] * face.calc_area() for face in faces)
-        area = sum(face.calc_area() for face in faces) or 1.0
-        low, high = weight_range
-        index = prof.weight_to_index(total / area, low, high, len(objects))
-        return objects[index] if index is not None else None
+        return objects[index] if 0 <= index < len(objects) else None
 
     # --- GEOMETRY ---
 
     @classmethod
     def _run_storey(cls, ifc_file, faces, layer, pointer, data_holder):
-        """The storey of one wall, from the faces that make it up.
+        """The storey of one wall.
 
-        The LOWEST index wins: a wall crossing a floor line belongs to the
-        storey it rises from. Cutting it per storey is what the split attribute
-        does, and that is a separate decision."""
-        if data_holder.enum_storey != "ATTRIBUTE" or layer is None:
+        The index is part of the grouping key, so every face here carries the
+        same one — a wall that used to cross a floor line and be voted onto the
+        lower storey is now two walls. The split attribute is still what cuts a
+        wall on a line the storey attribute does not mark."""
+        if data_holder.enum_storey != "ATTRIBUTE" or layer is None or not faces:
             return pointer
-        values = [int(face[layer]) for face in faces]
-        if not values:
-            return pointer
-        return bim.storey_by_index(min(values), ifc_file)
+        return bim.storey_by_index(int(faces[0][layer]), ifc_file)
 
     @classmethod
     def _split_runs(cls, faces, matrix_world, split_layer):
@@ -639,12 +657,11 @@ class BonsaiWall:
     def _split_by_direction(cls, faces, matrix_world, tolerance=0.9):
         """Split a coplanar group whose faces do not share a facing.
 
-        group_coplanar_faces keys on the rounded normal, so two faces at a
-        slight angle — a wall run that is not perfectly axis-aligned, or one
-        rounded across a precision boundary — can land in the same group facing
-        different ways. Their area-weighted normal then partly cancels, the
-        tangent comes out wrong and the wall is dropped. Splitting by actual
-        facing keeps each run measurable."""
+        Redundant at the default precision — the rounded normal is part of the
+        grouping key, so a group already faces one way. It earns its place at a
+        LOW precision, where the rounding bucket is wide enough to hold faces at
+        a real angle to each other: the wall would then be built from the
+        largest face's normal and the rest of the run would sit askew to it."""
         rotation = matrix_world.to_3x3()
         runs = []
         for face in faces:
@@ -675,17 +692,18 @@ class BonsaiWall:
         so a hole in the middle changes nothing. The origin sits at the low end
         of that span, at the lowest Z."""
         rotation = matrix_world.to_3x3()
-        normal = mathutils.Vector((0.0, 0.0, 0.0))
-        for face in faces:
-            normal += (rotation @ face.normal) * face.calc_area()
+        # The direction is ONE painted face's normal, never a blend of several.
+        # The rounded normal is part of the grouping key, so the whole run faces
+        # the same way already; the largest face is the one that speaks for it
+        # when a low `precision` widens the bucket.
+        normal = rotation @ max(faces, key=lambda face: face.calc_area()).normal
         normal.z = 0.0
         if normal.length < TOL:
-            # Area-weighted normals that cancel out. Two coplanar faces pointing
-            # opposite ways, or horizontal faces marked as wall, both land here —
+            # A horizontal face marked as wall — it has no facing to build from,
             # and the wall used to vanish without a word.
             print(
-                "[RefOps] Grupo de parede sem direção horizontal (faces opostas "
-                "ou horizontais marcadas como parede) — ignorado."
+                "[RefOps] Grupo de parede sem direção horizontal (face "
+                "horizontal marcada como parede) — ignorado."
             )
             return None
         normal.normalize()

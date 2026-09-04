@@ -24,18 +24,18 @@ Estados:
 
 ## ops/bonsai
 
-| Operador                      | Estado | Nota                                                      |
-| ----------------------------- | ------ | --------------------------------------------------------- |
-| `op_bim_wall.py`              | ok     | testado                                                   |
-| `op_bim_slab.py`              | ok     | testado                                                   |
+| Operador                      | Estado  | Nota                                                                                     |
+| ----------------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| `op_bim_wall.py`              | parcial | direção pela normal da face confirmada; falta testar align/tipo/pavimento como chave de agrupamento — face não pintada agora vira parede própria |
+| `op_bim_slab.py`              | ok      |                                                                                          |
 | `op_bim_face_component.py`    | parcial | reteste pendente: herdou de `create_type` a nomeação `<Classe>/<Nome>` do objeto do type |
-| `op_bim_panel.py`             | parcial | reteste pendente: mesma nomeação de type do `face_component` |
-| `op_bim_type_geometry.py`     | ok     | Single e Multiple testados, com 2D e atualização sem recriar. Multiple agrupa por atributo int de **ponto** (corpo, símbolos 2D e material); origem de todo type = origem do objeto de referência; malha instanciada exige *Realize Instances* |
-| `op_bim_distribute.py`        | ok     | Testei a porta, falta testar a janela e a parte "Blender" |
-| `op_bim_column.py`            | ok     |                                                           |
-| `op_bim_beam.py`              | ok     |                                                           |
-| `op_bim_profile_component.py` | ok     |                                                           |
-| `op_bim_space.py`             | ?      |                                                           |
+| `op_bim_panel.py`             | parcial | reteste pendente: mesma nomeação de type do `face_component`                             |
+| `op_bim_type_geometry.py`     | ok      |                                                                                          |
+| `op_bim_distribute.py`        | ok      | `direction` removido; flip = sentido da normal da face; cardinal independente do flip e do alinhamento da parede (`preserve_placement=True`, ver GOTCHAS) |
+| `op_bim_column.py`            | ok      |                                                                                          |
+| `op_bim_beam.py`              | ok      |                                                                                          |
+| `op_bim_profile_component.py` | ok      |                                                                                          |
+| `op_bim_space.py`             | ?       |                                                                                          |
 
 
 ## ops/ladybug
@@ -43,7 +43,7 @@ Estados:
 | Operador                 | Estado  | Nota                                                                                   |
 | ------------------------ | ------- | -------------------------------------------------------------------------------------- |
 | `op_ladybug_graphs.py`   | parcial | Tudo funciona, mas preciso que o gráfico *wind* esteja junto do conjunto *sky e dome*. |
-| `op_ladybug_analysis.py` | ok      | Testado                                                                                |
+| `op_ladybug_analysis.py` | ok      |                                                                                        |
 
 ## ops/honeybee
 

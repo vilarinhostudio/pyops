@@ -1083,7 +1083,7 @@ def rebuild_geometry(element):
         return False
 
 
-def opening_from_object(host, obj):
+def opening_from_object(host, obj, preserve_placement=False):
     """Turn a plain Blender mesh into a void in `host`, using Bonsai's operator.
 
     This is the workflow the operator was written for: you model a dumb box and
@@ -1092,6 +1092,15 @@ def opening_from_object(host, obj):
     ALREADY an IfcOpeningElement is why the poll kept answering "Select openings
     and a target element" — the object had stopped being a candidate opening the
     moment it became one.
+
+    `preserve_placement` is what decides who positions a FILLING. Left False,
+    Bonsai's FilledOpeningGenerator throws the filling's matrix away and writes
+    the HOST's rotation onto it, plus a half turn when the point is nearer the
+    layer set's side axis than its base axis. That is a good default for a door
+    dragged in by hand and a disaster for a placed one: the swing then follows
+    the wall's alignment instead of the input, and a bounding box measured
+    before the call describes an orientation that no longer exists. Pass True
+    when the caller has already put the filling exactly where it belongs.
 
     Returns the entity Bonsai created, found by diffing the host's voids."""
     if not ensure() or obj is None or host is None:
@@ -1107,14 +1116,12 @@ def opening_from_object(host, obj):
     }
     try:
         select([obj], host_obj)
-        # preserve_placement=False is the whole point: it lets Bonsai RESET the
-        # filling's transform to the one the void implies. With it left at the
-        # default the wrong placement is kept, which is why running the same
-        # command again by hand corrected the door — that second run was the
-        # one that repositioned it.
+        # Called without an execution context, so Blender runs execute() and not
+        # invoke() — invoke would overwrite the flag from the shift key.
         try:
-            result = bpy.ops.bim.add_opening(preserve_placement=False)
+            result = bpy.ops.bim.add_opening(preserve_placement=preserve_placement)
         except TypeError:
+            # Older Bonsai without the flag: it always repositions.
             result = bpy.ops.bim.add_opening()
         if "FINISHED" not in result:
             print(f"[refops.bim] bim.add_opening -> {result}")
