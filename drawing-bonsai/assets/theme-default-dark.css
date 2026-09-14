@@ -19,8 +19,52 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 .annotation, .IfcAnnotation { fill: none; stroke: #ffffff; stroke-width: 0.3; }
 .PredefinedType-LINEWORK { stroke: #ffffff; stroke-width: 0.25; }
 .PredefinedType-TEXT { fill: #ffffff; stroke: none; }
+
+/* Anotacoes do Bonsai — markers, pesos de linewok, tamanhos de texto.
+   Sem estas regras os simbolos de cota de elevacao, escada, raio e
+   quebra simplesmente nao desenham: o marker existe em markers.svg mas
+   nada o referencia. */
+.PredefinedType-LINEWORK { stroke: #ffffff; stroke-width: 0.25; }
+.PredefinedType-LINEWORK.dashed { stroke-dasharray: 3, 2; }
+.PredefinedType-LINEWORK.fine { stroke-width: 0.18; stroke: #757575; }
+.PredefinedType-LINEWORK.thin { stroke-width: 0.25; }
+.PredefinedType-LINEWORK.medium { stroke-width: 0.35; }
+.PredefinedType-LINEWORK.thick { stroke-width: 0.5; }
+.PredefinedType-LINEWORK.strong { stroke-width: 1.0; }
+.PredefinedType-BACKGROUND { stroke: #ffffff; stroke-width: 0.18; }
+.PredefinedType-TEXT { fill: #ffffff; stroke: none; }
+.PredefinedType-SECTION { stroke-dasharray: 12.5, 3, 3, 3; }
 .PredefinedType-GRID { marker-start: url(#grid-marker); marker-end: url(#grid-marker); }
+.PredefinedType-SECTIONLEVEL { marker-start: url(#section-level-marker); stroke-dasharray: 12.5, 3, 3, 3; }
+.PredefinedType-PLANLEVEL { marker-end: url(#plan-level-marker); }
 .PredefinedType-DIMENSION { marker-start: url(#dimension-marker-start); marker-end: url(#dimension-marker-end); }
+.PredefinedType-ANGLE { marker-start: url(#angle-marker-start); marker-end: url(#angle-marker-end); }
+.PredefinedType-RADIUS { marker-end: url(#fall-marker-end); }
+.PredefinedType-FALL { marker-end: url(#radius-marker-end); }
+.PredefinedType-SLOPEANGLE { marker-end: url(#radius-marker-end); }
+.PredefinedType-SLOPEPERCENT { marker-end: url(#radius-marker-end); }
+.PredefinedType-SLOPEFRACTION { marker-end: url(#radius-marker-end); }
+.PredefinedType-DIAMETER { marker-start: url(#diameter-marker-start); marker-end: url(#diameter-marker-end); }
+.PredefinedType-STAIRARROW { marker-start: url(#stair-marker-start); marker-end: url(#stair-marker-end); }
+.PredefinedType-BOUNDARY { fill: none; stroke: #ff5252; stroke-width: 1; stroke-dasharray: 12, 4, 3, 4, 3, 4; }
+.PredefinedType-FILLAREA { fill: #121212; stroke: #ffffff; }
+.PredefinedType-BREAKLINE { fill: none; stroke: #ffffff; stroke-width: 0.25; marker-mid: url(#breakline-marker); }
+path.PredefinedType-TEXTLEADER { marker-end: url(#leader-marker); }
+text.PredefinedType-TEXTLEADER, tspan.PredefinedType-TEXTLEADER { fill: #ffffff; stroke: none; }
+.PredefinedType-STUD { stroke: #ffffff; stroke-width: 1; }
+.PredefinedType-SEALANT { fill: url(#crosshatch1-fgprincipal1); stroke-width: 0.25; }
+.IfcSpace { fill: none; stroke: none; }
+.PredefinedType-WOOD { fill: url(#wood-fgprincipal1); stroke: #ffffff; stroke-width: 0.5; }
+.PredefinedType-STEEL { fill: url(#steel-fgprincipal1); stroke: #ffffff; stroke-width: 0.5; }
+.PredefinedType-CONCRETE { fill: url(#concrete-fgprincipal1); stroke: #ffffff; stroke-width: 0.5; }
+.PredefinedType-PLASTERBOARD { fill: url(#sand-fgprincipal1); stroke: #ffffff; stroke-width: 0.25; }
+text.title, tspan.title { /* 7mm */ font-size: 11.55px; }
+text.header, tspan.header { /* 5mm */ font-size: 8.25px; }
+text.large, tspan.large { /* 3.5mm */ font-size: 5.78px; }
+text.regular, tspan.regular { /* 2.5mm */ font-size: 4.13px; }
+text.small, tspan.small { /* 1.8mm */ font-size: 2.97px; }
+text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
+.material-blank { fill: #121212; }
 
 /* Opacidade. O :not() existe porque 'fillopacity25' contem 'opacity25'. */
 [class*="fillopacity10"] { fill-opacity: 0.10 !important; }
@@ -319,6 +363,41 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 .cut[class*="cpen070"] path, .cut[class*="clineextrathick"] path { stroke-width: 0.7px !important; }
 .cut[class*="cpen100"] path, .cut[class*="clineultrathick"] path { stroke-width: 1.0px !important; }
 
+/* Hachura sem cor declarada: 'brick' sozinho, sem fg. Seletor de
+   classe exata, entao nao colide com material-brickfgprincipal1. */
+.material-demolish { fill: url(#demolish-fgprincipal1); }
+.material-steel { fill: url(#steel-fgprincipal1); }
+.material-diagonal1 { fill: url(#diagonal1-fgprincipal1); }
+.material-diagonal2 { fill: url(#diagonal2-fgprincipal1); }
+.material-diagonal3 { fill: url(#diagonal3-fgprincipal1); }
+.material-square1 { fill: url(#square1-fgprincipal1); }
+.material-square2 { fill: url(#square2-fgprincipal1); }
+.material-square3 { fill: url(#square3-fgprincipal1); }
+.material-recth1 { fill: url(#recth1-fgprincipal1); }
+.material-recth2 { fill: url(#recth2-fgprincipal1); }
+.material-recth3 { fill: url(#recth3-fgprincipal1); }
+.material-rectv1 { fill: url(#rectv1-fgprincipal1); }
+.material-rectv2 { fill: url(#rectv2-fgprincipal1); }
+.material-rectv3 { fill: url(#rectv3-fgprincipal1); }
+.material-tile1 { fill: url(#tile1-fgprincipal1); }
+.material-tile2 { fill: url(#tile2-fgprincipal1); }
+.material-tile3 { fill: url(#tile3-fgprincipal1); }
+.material-board1 { fill: url(#board1-fgprincipal1); }
+.material-board2 { fill: url(#board2-fgprincipal1); }
+.material-board3 { fill: url(#board3-fgprincipal1); }
+.material-crosshatch1 { fill: url(#crosshatch1-fgprincipal1); }
+.material-crosshatch2 { fill: url(#crosshatch2-fgprincipal1); }
+.material-crosshatch3 { fill: url(#crosshatch3-fgprincipal1); }
+.material-brick { fill: url(#brick-fgprincipal1); }
+.material-earth { fill: url(#earth-fgprincipal1); }
+.material-glass { fill: url(#glass-fgprincipal1); }
+.material-liquid { fill: url(#liquid-fgprincipal1); }
+.material-grass { fill: url(#grass-fgprincipal1); }
+.material-honeycomb { fill: url(#honeycomb-fgprincipal1); }
+.material-wood { fill: url(#wood-fgprincipal1); }
+.material-sand { fill: url(#sand-fgprincipal1); }
+.material-concrete { fill: url(#concrete-fgprincipal1); }
+
 /* Hachuras. As cores vivem no patterns SVG deste tema. */
 [class*="material-demolish"][class*="fgprincipal1"] { fill: url(#demolish-fgprincipal1); }
 .projection[class*="material-pdemolish"][class*="pfgprincipal1"] { fill: url(#demolish-fgprincipal1); }
@@ -350,6 +429,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-demolish"][class*="fgaccent1"][class*="bg25"] { fill: url(#demolish-fgaccent1-bg25); }
 .projection[class*="material-pdemolish"][class*="pfgaccent1"][class*="bg25"] { fill: url(#demolish-fgaccent1-bg25); }
 .cut[class*="material-cdemolish"][class*="cfgaccent1"][class*="bg25"] { fill: url(#demolish-fgaccent1-bg25); }
+[class*="material-demolish"][class*="fgsuccess1"] { fill: url(#demolish-fgsuccess1); }
+.projection[class*="material-pdemolish"][class*="pfgsuccess1"] { fill: url(#demolish-fgsuccess1); }
+.cut[class*="material-cdemolish"][class*="cfgsuccess1"] { fill: url(#demolish-fgsuccess1); }
+[class*="material-demolish"][class*="fgsuccess1"][class*="bg25"] { fill: url(#demolish-fgsuccess1-bg25); }
+.projection[class*="material-pdemolish"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#demolish-fgsuccess1-bg25); }
+.cut[class*="material-cdemolish"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#demolish-fgsuccess1-bg25); }
 [class*="material-steel"][class*="fgprincipal1"] { fill: url(#steel-fgprincipal1); }
 .projection[class*="material-psteel"][class*="pfgprincipal1"] { fill: url(#steel-fgprincipal1); }
 .cut[class*="material-csteel"][class*="cfgprincipal1"] { fill: url(#steel-fgprincipal1); }
@@ -380,6 +465,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-steel"][class*="fgaccent1"][class*="bg25"] { fill: url(#steel-fgaccent1-bg25); }
 .projection[class*="material-psteel"][class*="pfgaccent1"][class*="bg25"] { fill: url(#steel-fgaccent1-bg25); }
 .cut[class*="material-csteel"][class*="cfgaccent1"][class*="bg25"] { fill: url(#steel-fgaccent1-bg25); }
+[class*="material-steel"][class*="fgsuccess1"] { fill: url(#steel-fgsuccess1); }
+.projection[class*="material-psteel"][class*="pfgsuccess1"] { fill: url(#steel-fgsuccess1); }
+.cut[class*="material-csteel"][class*="cfgsuccess1"] { fill: url(#steel-fgsuccess1); }
+[class*="material-steel"][class*="fgsuccess1"][class*="bg25"] { fill: url(#steel-fgsuccess1-bg25); }
+.projection[class*="material-psteel"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#steel-fgsuccess1-bg25); }
+.cut[class*="material-csteel"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#steel-fgsuccess1-bg25); }
 [class*="material-diagonal1"][class*="fgprincipal1"] { fill: url(#diagonal1-fgprincipal1); }
 .projection[class*="material-pdiagonal1"][class*="pfgprincipal1"] { fill: url(#diagonal1-fgprincipal1); }
 .cut[class*="material-cdiagonal1"][class*="cfgprincipal1"] { fill: url(#diagonal1-fgprincipal1); }
@@ -410,6 +501,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-diagonal1"][class*="fgaccent1"][class*="bg25"] { fill: url(#diagonal1-fgaccent1-bg25); }
 .projection[class*="material-pdiagonal1"][class*="pfgaccent1"][class*="bg25"] { fill: url(#diagonal1-fgaccent1-bg25); }
 .cut[class*="material-cdiagonal1"][class*="cfgaccent1"][class*="bg25"] { fill: url(#diagonal1-fgaccent1-bg25); }
+[class*="material-diagonal1"][class*="fgsuccess1"] { fill: url(#diagonal1-fgsuccess1); }
+.projection[class*="material-pdiagonal1"][class*="pfgsuccess1"] { fill: url(#diagonal1-fgsuccess1); }
+.cut[class*="material-cdiagonal1"][class*="cfgsuccess1"] { fill: url(#diagonal1-fgsuccess1); }
+[class*="material-diagonal1"][class*="fgsuccess1"][class*="bg25"] { fill: url(#diagonal1-fgsuccess1-bg25); }
+.projection[class*="material-pdiagonal1"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#diagonal1-fgsuccess1-bg25); }
+.cut[class*="material-cdiagonal1"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#diagonal1-fgsuccess1-bg25); }
 [class*="material-diagonal2"][class*="fgprincipal1"] { fill: url(#diagonal2-fgprincipal1); }
 .projection[class*="material-pdiagonal2"][class*="pfgprincipal1"] { fill: url(#diagonal2-fgprincipal1); }
 .cut[class*="material-cdiagonal2"][class*="cfgprincipal1"] { fill: url(#diagonal2-fgprincipal1); }
@@ -440,6 +537,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-diagonal2"][class*="fgaccent1"][class*="bg25"] { fill: url(#diagonal2-fgaccent1-bg25); }
 .projection[class*="material-pdiagonal2"][class*="pfgaccent1"][class*="bg25"] { fill: url(#diagonal2-fgaccent1-bg25); }
 .cut[class*="material-cdiagonal2"][class*="cfgaccent1"][class*="bg25"] { fill: url(#diagonal2-fgaccent1-bg25); }
+[class*="material-diagonal2"][class*="fgsuccess1"] { fill: url(#diagonal2-fgsuccess1); }
+.projection[class*="material-pdiagonal2"][class*="pfgsuccess1"] { fill: url(#diagonal2-fgsuccess1); }
+.cut[class*="material-cdiagonal2"][class*="cfgsuccess1"] { fill: url(#diagonal2-fgsuccess1); }
+[class*="material-diagonal2"][class*="fgsuccess1"][class*="bg25"] { fill: url(#diagonal2-fgsuccess1-bg25); }
+.projection[class*="material-pdiagonal2"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#diagonal2-fgsuccess1-bg25); }
+.cut[class*="material-cdiagonal2"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#diagonal2-fgsuccess1-bg25); }
 [class*="material-diagonal3"][class*="fgprincipal1"] { fill: url(#diagonal3-fgprincipal1); }
 .projection[class*="material-pdiagonal3"][class*="pfgprincipal1"] { fill: url(#diagonal3-fgprincipal1); }
 .cut[class*="material-cdiagonal3"][class*="cfgprincipal1"] { fill: url(#diagonal3-fgprincipal1); }
@@ -470,6 +573,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-diagonal3"][class*="fgaccent1"][class*="bg25"] { fill: url(#diagonal3-fgaccent1-bg25); }
 .projection[class*="material-pdiagonal3"][class*="pfgaccent1"][class*="bg25"] { fill: url(#diagonal3-fgaccent1-bg25); }
 .cut[class*="material-cdiagonal3"][class*="cfgaccent1"][class*="bg25"] { fill: url(#diagonal3-fgaccent1-bg25); }
+[class*="material-diagonal3"][class*="fgsuccess1"] { fill: url(#diagonal3-fgsuccess1); }
+.projection[class*="material-pdiagonal3"][class*="pfgsuccess1"] { fill: url(#diagonal3-fgsuccess1); }
+.cut[class*="material-cdiagonal3"][class*="cfgsuccess1"] { fill: url(#diagonal3-fgsuccess1); }
+[class*="material-diagonal3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#diagonal3-fgsuccess1-bg25); }
+.projection[class*="material-pdiagonal3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#diagonal3-fgsuccess1-bg25); }
+.cut[class*="material-cdiagonal3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#diagonal3-fgsuccess1-bg25); }
 [class*="material-square1"][class*="fgprincipal1"] { fill: url(#square1-fgprincipal1); }
 .projection[class*="material-psquare1"][class*="pfgprincipal1"] { fill: url(#square1-fgprincipal1); }
 .cut[class*="material-csquare1"][class*="cfgprincipal1"] { fill: url(#square1-fgprincipal1); }
@@ -500,6 +609,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-square1"][class*="fgaccent1"][class*="bg25"] { fill: url(#square1-fgaccent1-bg25); }
 .projection[class*="material-psquare1"][class*="pfgaccent1"][class*="bg25"] { fill: url(#square1-fgaccent1-bg25); }
 .cut[class*="material-csquare1"][class*="cfgaccent1"][class*="bg25"] { fill: url(#square1-fgaccent1-bg25); }
+[class*="material-square1"][class*="fgsuccess1"] { fill: url(#square1-fgsuccess1); }
+.projection[class*="material-psquare1"][class*="pfgsuccess1"] { fill: url(#square1-fgsuccess1); }
+.cut[class*="material-csquare1"][class*="cfgsuccess1"] { fill: url(#square1-fgsuccess1); }
+[class*="material-square1"][class*="fgsuccess1"][class*="bg25"] { fill: url(#square1-fgsuccess1-bg25); }
+.projection[class*="material-psquare1"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#square1-fgsuccess1-bg25); }
+.cut[class*="material-csquare1"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#square1-fgsuccess1-bg25); }
 [class*="material-square2"][class*="fgprincipal1"] { fill: url(#square2-fgprincipal1); }
 .projection[class*="material-psquare2"][class*="pfgprincipal1"] { fill: url(#square2-fgprincipal1); }
 .cut[class*="material-csquare2"][class*="cfgprincipal1"] { fill: url(#square2-fgprincipal1); }
@@ -530,6 +645,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-square2"][class*="fgaccent1"][class*="bg25"] { fill: url(#square2-fgaccent1-bg25); }
 .projection[class*="material-psquare2"][class*="pfgaccent1"][class*="bg25"] { fill: url(#square2-fgaccent1-bg25); }
 .cut[class*="material-csquare2"][class*="cfgaccent1"][class*="bg25"] { fill: url(#square2-fgaccent1-bg25); }
+[class*="material-square2"][class*="fgsuccess1"] { fill: url(#square2-fgsuccess1); }
+.projection[class*="material-psquare2"][class*="pfgsuccess1"] { fill: url(#square2-fgsuccess1); }
+.cut[class*="material-csquare2"][class*="cfgsuccess1"] { fill: url(#square2-fgsuccess1); }
+[class*="material-square2"][class*="fgsuccess1"][class*="bg25"] { fill: url(#square2-fgsuccess1-bg25); }
+.projection[class*="material-psquare2"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#square2-fgsuccess1-bg25); }
+.cut[class*="material-csquare2"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#square2-fgsuccess1-bg25); }
 [class*="material-square3"][class*="fgprincipal1"] { fill: url(#square3-fgprincipal1); }
 .projection[class*="material-psquare3"][class*="pfgprincipal1"] { fill: url(#square3-fgprincipal1); }
 .cut[class*="material-csquare3"][class*="cfgprincipal1"] { fill: url(#square3-fgprincipal1); }
@@ -560,6 +681,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-square3"][class*="fgaccent1"][class*="bg25"] { fill: url(#square3-fgaccent1-bg25); }
 .projection[class*="material-psquare3"][class*="pfgaccent1"][class*="bg25"] { fill: url(#square3-fgaccent1-bg25); }
 .cut[class*="material-csquare3"][class*="cfgaccent1"][class*="bg25"] { fill: url(#square3-fgaccent1-bg25); }
+[class*="material-square3"][class*="fgsuccess1"] { fill: url(#square3-fgsuccess1); }
+.projection[class*="material-psquare3"][class*="pfgsuccess1"] { fill: url(#square3-fgsuccess1); }
+.cut[class*="material-csquare3"][class*="cfgsuccess1"] { fill: url(#square3-fgsuccess1); }
+[class*="material-square3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#square3-fgsuccess1-bg25); }
+.projection[class*="material-psquare3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#square3-fgsuccess1-bg25); }
+.cut[class*="material-csquare3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#square3-fgsuccess1-bg25); }
 [class*="material-recth1"][class*="fgprincipal1"] { fill: url(#recth1-fgprincipal1); }
 .projection[class*="material-precth1"][class*="pfgprincipal1"] { fill: url(#recth1-fgprincipal1); }
 .cut[class*="material-crecth1"][class*="cfgprincipal1"] { fill: url(#recth1-fgprincipal1); }
@@ -590,6 +717,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-recth1"][class*="fgaccent1"][class*="bg25"] { fill: url(#recth1-fgaccent1-bg25); }
 .projection[class*="material-precth1"][class*="pfgaccent1"][class*="bg25"] { fill: url(#recth1-fgaccent1-bg25); }
 .cut[class*="material-crecth1"][class*="cfgaccent1"][class*="bg25"] { fill: url(#recth1-fgaccent1-bg25); }
+[class*="material-recth1"][class*="fgsuccess1"] { fill: url(#recth1-fgsuccess1); }
+.projection[class*="material-precth1"][class*="pfgsuccess1"] { fill: url(#recth1-fgsuccess1); }
+.cut[class*="material-crecth1"][class*="cfgsuccess1"] { fill: url(#recth1-fgsuccess1); }
+[class*="material-recth1"][class*="fgsuccess1"][class*="bg25"] { fill: url(#recth1-fgsuccess1-bg25); }
+.projection[class*="material-precth1"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#recth1-fgsuccess1-bg25); }
+.cut[class*="material-crecth1"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#recth1-fgsuccess1-bg25); }
 [class*="material-recth2"][class*="fgprincipal1"] { fill: url(#recth2-fgprincipal1); }
 .projection[class*="material-precth2"][class*="pfgprincipal1"] { fill: url(#recth2-fgprincipal1); }
 .cut[class*="material-crecth2"][class*="cfgprincipal1"] { fill: url(#recth2-fgprincipal1); }
@@ -620,6 +753,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-recth2"][class*="fgaccent1"][class*="bg25"] { fill: url(#recth2-fgaccent1-bg25); }
 .projection[class*="material-precth2"][class*="pfgaccent1"][class*="bg25"] { fill: url(#recth2-fgaccent1-bg25); }
 .cut[class*="material-crecth2"][class*="cfgaccent1"][class*="bg25"] { fill: url(#recth2-fgaccent1-bg25); }
+[class*="material-recth2"][class*="fgsuccess1"] { fill: url(#recth2-fgsuccess1); }
+.projection[class*="material-precth2"][class*="pfgsuccess1"] { fill: url(#recth2-fgsuccess1); }
+.cut[class*="material-crecth2"][class*="cfgsuccess1"] { fill: url(#recth2-fgsuccess1); }
+[class*="material-recth2"][class*="fgsuccess1"][class*="bg25"] { fill: url(#recth2-fgsuccess1-bg25); }
+.projection[class*="material-precth2"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#recth2-fgsuccess1-bg25); }
+.cut[class*="material-crecth2"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#recth2-fgsuccess1-bg25); }
 [class*="material-recth3"][class*="fgprincipal1"] { fill: url(#recth3-fgprincipal1); }
 .projection[class*="material-precth3"][class*="pfgprincipal1"] { fill: url(#recth3-fgprincipal1); }
 .cut[class*="material-crecth3"][class*="cfgprincipal1"] { fill: url(#recth3-fgprincipal1); }
@@ -650,6 +789,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-recth3"][class*="fgaccent1"][class*="bg25"] { fill: url(#recth3-fgaccent1-bg25); }
 .projection[class*="material-precth3"][class*="pfgaccent1"][class*="bg25"] { fill: url(#recth3-fgaccent1-bg25); }
 .cut[class*="material-crecth3"][class*="cfgaccent1"][class*="bg25"] { fill: url(#recth3-fgaccent1-bg25); }
+[class*="material-recth3"][class*="fgsuccess1"] { fill: url(#recth3-fgsuccess1); }
+.projection[class*="material-precth3"][class*="pfgsuccess1"] { fill: url(#recth3-fgsuccess1); }
+.cut[class*="material-crecth3"][class*="cfgsuccess1"] { fill: url(#recth3-fgsuccess1); }
+[class*="material-recth3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#recth3-fgsuccess1-bg25); }
+.projection[class*="material-precth3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#recth3-fgsuccess1-bg25); }
+.cut[class*="material-crecth3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#recth3-fgsuccess1-bg25); }
 [class*="material-rectv1"][class*="fgprincipal1"] { fill: url(#rectv1-fgprincipal1); }
 .projection[class*="material-prectv1"][class*="pfgprincipal1"] { fill: url(#rectv1-fgprincipal1); }
 .cut[class*="material-crectv1"][class*="cfgprincipal1"] { fill: url(#rectv1-fgprincipal1); }
@@ -680,6 +825,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-rectv1"][class*="fgaccent1"][class*="bg25"] { fill: url(#rectv1-fgaccent1-bg25); }
 .projection[class*="material-prectv1"][class*="pfgaccent1"][class*="bg25"] { fill: url(#rectv1-fgaccent1-bg25); }
 .cut[class*="material-crectv1"][class*="cfgaccent1"][class*="bg25"] { fill: url(#rectv1-fgaccent1-bg25); }
+[class*="material-rectv1"][class*="fgsuccess1"] { fill: url(#rectv1-fgsuccess1); }
+.projection[class*="material-prectv1"][class*="pfgsuccess1"] { fill: url(#rectv1-fgsuccess1); }
+.cut[class*="material-crectv1"][class*="cfgsuccess1"] { fill: url(#rectv1-fgsuccess1); }
+[class*="material-rectv1"][class*="fgsuccess1"][class*="bg25"] { fill: url(#rectv1-fgsuccess1-bg25); }
+.projection[class*="material-prectv1"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#rectv1-fgsuccess1-bg25); }
+.cut[class*="material-crectv1"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#rectv1-fgsuccess1-bg25); }
 [class*="material-rectv2"][class*="fgprincipal1"] { fill: url(#rectv2-fgprincipal1); }
 .projection[class*="material-prectv2"][class*="pfgprincipal1"] { fill: url(#rectv2-fgprincipal1); }
 .cut[class*="material-crectv2"][class*="cfgprincipal1"] { fill: url(#rectv2-fgprincipal1); }
@@ -710,6 +861,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-rectv2"][class*="fgaccent1"][class*="bg25"] { fill: url(#rectv2-fgaccent1-bg25); }
 .projection[class*="material-prectv2"][class*="pfgaccent1"][class*="bg25"] { fill: url(#rectv2-fgaccent1-bg25); }
 .cut[class*="material-crectv2"][class*="cfgaccent1"][class*="bg25"] { fill: url(#rectv2-fgaccent1-bg25); }
+[class*="material-rectv2"][class*="fgsuccess1"] { fill: url(#rectv2-fgsuccess1); }
+.projection[class*="material-prectv2"][class*="pfgsuccess1"] { fill: url(#rectv2-fgsuccess1); }
+.cut[class*="material-crectv2"][class*="cfgsuccess1"] { fill: url(#rectv2-fgsuccess1); }
+[class*="material-rectv2"][class*="fgsuccess1"][class*="bg25"] { fill: url(#rectv2-fgsuccess1-bg25); }
+.projection[class*="material-prectv2"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#rectv2-fgsuccess1-bg25); }
+.cut[class*="material-crectv2"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#rectv2-fgsuccess1-bg25); }
 [class*="material-rectv3"][class*="fgprincipal1"] { fill: url(#rectv3-fgprincipal1); }
 .projection[class*="material-prectv3"][class*="pfgprincipal1"] { fill: url(#rectv3-fgprincipal1); }
 .cut[class*="material-crectv3"][class*="cfgprincipal1"] { fill: url(#rectv3-fgprincipal1); }
@@ -740,6 +897,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-rectv3"][class*="fgaccent1"][class*="bg25"] { fill: url(#rectv3-fgaccent1-bg25); }
 .projection[class*="material-prectv3"][class*="pfgaccent1"][class*="bg25"] { fill: url(#rectv3-fgaccent1-bg25); }
 .cut[class*="material-crectv3"][class*="cfgaccent1"][class*="bg25"] { fill: url(#rectv3-fgaccent1-bg25); }
+[class*="material-rectv3"][class*="fgsuccess1"] { fill: url(#rectv3-fgsuccess1); }
+.projection[class*="material-prectv3"][class*="pfgsuccess1"] { fill: url(#rectv3-fgsuccess1); }
+.cut[class*="material-crectv3"][class*="cfgsuccess1"] { fill: url(#rectv3-fgsuccess1); }
+[class*="material-rectv3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#rectv3-fgsuccess1-bg25); }
+.projection[class*="material-prectv3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#rectv3-fgsuccess1-bg25); }
+.cut[class*="material-crectv3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#rectv3-fgsuccess1-bg25); }
 [class*="material-tile1"][class*="fgprincipal1"] { fill: url(#tile1-fgprincipal1); }
 .projection[class*="material-ptile1"][class*="pfgprincipal1"] { fill: url(#tile1-fgprincipal1); }
 .cut[class*="material-ctile1"][class*="cfgprincipal1"] { fill: url(#tile1-fgprincipal1); }
@@ -770,6 +933,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-tile1"][class*="fgaccent1"][class*="bg25"] { fill: url(#tile1-fgaccent1-bg25); }
 .projection[class*="material-ptile1"][class*="pfgaccent1"][class*="bg25"] { fill: url(#tile1-fgaccent1-bg25); }
 .cut[class*="material-ctile1"][class*="cfgaccent1"][class*="bg25"] { fill: url(#tile1-fgaccent1-bg25); }
+[class*="material-tile1"][class*="fgsuccess1"] { fill: url(#tile1-fgsuccess1); }
+.projection[class*="material-ptile1"][class*="pfgsuccess1"] { fill: url(#tile1-fgsuccess1); }
+.cut[class*="material-ctile1"][class*="cfgsuccess1"] { fill: url(#tile1-fgsuccess1); }
+[class*="material-tile1"][class*="fgsuccess1"][class*="bg25"] { fill: url(#tile1-fgsuccess1-bg25); }
+.projection[class*="material-ptile1"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#tile1-fgsuccess1-bg25); }
+.cut[class*="material-ctile1"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#tile1-fgsuccess1-bg25); }
 [class*="material-tile2"][class*="fgprincipal1"] { fill: url(#tile2-fgprincipal1); }
 .projection[class*="material-ptile2"][class*="pfgprincipal1"] { fill: url(#tile2-fgprincipal1); }
 .cut[class*="material-ctile2"][class*="cfgprincipal1"] { fill: url(#tile2-fgprincipal1); }
@@ -800,6 +969,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-tile2"][class*="fgaccent1"][class*="bg25"] { fill: url(#tile2-fgaccent1-bg25); }
 .projection[class*="material-ptile2"][class*="pfgaccent1"][class*="bg25"] { fill: url(#tile2-fgaccent1-bg25); }
 .cut[class*="material-ctile2"][class*="cfgaccent1"][class*="bg25"] { fill: url(#tile2-fgaccent1-bg25); }
+[class*="material-tile2"][class*="fgsuccess1"] { fill: url(#tile2-fgsuccess1); }
+.projection[class*="material-ptile2"][class*="pfgsuccess1"] { fill: url(#tile2-fgsuccess1); }
+.cut[class*="material-ctile2"][class*="cfgsuccess1"] { fill: url(#tile2-fgsuccess1); }
+[class*="material-tile2"][class*="fgsuccess1"][class*="bg25"] { fill: url(#tile2-fgsuccess1-bg25); }
+.projection[class*="material-ptile2"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#tile2-fgsuccess1-bg25); }
+.cut[class*="material-ctile2"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#tile2-fgsuccess1-bg25); }
 [class*="material-tile3"][class*="fgprincipal1"] { fill: url(#tile3-fgprincipal1); }
 .projection[class*="material-ptile3"][class*="pfgprincipal1"] { fill: url(#tile3-fgprincipal1); }
 .cut[class*="material-ctile3"][class*="cfgprincipal1"] { fill: url(#tile3-fgprincipal1); }
@@ -830,6 +1005,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-tile3"][class*="fgaccent1"][class*="bg25"] { fill: url(#tile3-fgaccent1-bg25); }
 .projection[class*="material-ptile3"][class*="pfgaccent1"][class*="bg25"] { fill: url(#tile3-fgaccent1-bg25); }
 .cut[class*="material-ctile3"][class*="cfgaccent1"][class*="bg25"] { fill: url(#tile3-fgaccent1-bg25); }
+[class*="material-tile3"][class*="fgsuccess1"] { fill: url(#tile3-fgsuccess1); }
+.projection[class*="material-ptile3"][class*="pfgsuccess1"] { fill: url(#tile3-fgsuccess1); }
+.cut[class*="material-ctile3"][class*="cfgsuccess1"] { fill: url(#tile3-fgsuccess1); }
+[class*="material-tile3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#tile3-fgsuccess1-bg25); }
+.projection[class*="material-ptile3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#tile3-fgsuccess1-bg25); }
+.cut[class*="material-ctile3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#tile3-fgsuccess1-bg25); }
 [class*="material-board1"][class*="fgprincipal1"] { fill: url(#board1-fgprincipal1); }
 .projection[class*="material-pboard1"][class*="pfgprincipal1"] { fill: url(#board1-fgprincipal1); }
 .cut[class*="material-cboard1"][class*="cfgprincipal1"] { fill: url(#board1-fgprincipal1); }
@@ -860,6 +1041,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-board1"][class*="fgaccent1"][class*="bg25"] { fill: url(#board1-fgaccent1-bg25); }
 .projection[class*="material-pboard1"][class*="pfgaccent1"][class*="bg25"] { fill: url(#board1-fgaccent1-bg25); }
 .cut[class*="material-cboard1"][class*="cfgaccent1"][class*="bg25"] { fill: url(#board1-fgaccent1-bg25); }
+[class*="material-board1"][class*="fgsuccess1"] { fill: url(#board1-fgsuccess1); }
+.projection[class*="material-pboard1"][class*="pfgsuccess1"] { fill: url(#board1-fgsuccess1); }
+.cut[class*="material-cboard1"][class*="cfgsuccess1"] { fill: url(#board1-fgsuccess1); }
+[class*="material-board1"][class*="fgsuccess1"][class*="bg25"] { fill: url(#board1-fgsuccess1-bg25); }
+.projection[class*="material-pboard1"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#board1-fgsuccess1-bg25); }
+.cut[class*="material-cboard1"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#board1-fgsuccess1-bg25); }
 [class*="material-board2"][class*="fgprincipal1"] { fill: url(#board2-fgprincipal1); }
 .projection[class*="material-pboard2"][class*="pfgprincipal1"] { fill: url(#board2-fgprincipal1); }
 .cut[class*="material-cboard2"][class*="cfgprincipal1"] { fill: url(#board2-fgprincipal1); }
@@ -890,6 +1077,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-board2"][class*="fgaccent1"][class*="bg25"] { fill: url(#board2-fgaccent1-bg25); }
 .projection[class*="material-pboard2"][class*="pfgaccent1"][class*="bg25"] { fill: url(#board2-fgaccent1-bg25); }
 .cut[class*="material-cboard2"][class*="cfgaccent1"][class*="bg25"] { fill: url(#board2-fgaccent1-bg25); }
+[class*="material-board2"][class*="fgsuccess1"] { fill: url(#board2-fgsuccess1); }
+.projection[class*="material-pboard2"][class*="pfgsuccess1"] { fill: url(#board2-fgsuccess1); }
+.cut[class*="material-cboard2"][class*="cfgsuccess1"] { fill: url(#board2-fgsuccess1); }
+[class*="material-board2"][class*="fgsuccess1"][class*="bg25"] { fill: url(#board2-fgsuccess1-bg25); }
+.projection[class*="material-pboard2"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#board2-fgsuccess1-bg25); }
+.cut[class*="material-cboard2"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#board2-fgsuccess1-bg25); }
 [class*="material-board3"][class*="fgprincipal1"] { fill: url(#board3-fgprincipal1); }
 .projection[class*="material-pboard3"][class*="pfgprincipal1"] { fill: url(#board3-fgprincipal1); }
 .cut[class*="material-cboard3"][class*="cfgprincipal1"] { fill: url(#board3-fgprincipal1); }
@@ -920,6 +1113,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-board3"][class*="fgaccent1"][class*="bg25"] { fill: url(#board3-fgaccent1-bg25); }
 .projection[class*="material-pboard3"][class*="pfgaccent1"][class*="bg25"] { fill: url(#board3-fgaccent1-bg25); }
 .cut[class*="material-cboard3"][class*="cfgaccent1"][class*="bg25"] { fill: url(#board3-fgaccent1-bg25); }
+[class*="material-board3"][class*="fgsuccess1"] { fill: url(#board3-fgsuccess1); }
+.projection[class*="material-pboard3"][class*="pfgsuccess1"] { fill: url(#board3-fgsuccess1); }
+.cut[class*="material-cboard3"][class*="cfgsuccess1"] { fill: url(#board3-fgsuccess1); }
+[class*="material-board3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#board3-fgsuccess1-bg25); }
+.projection[class*="material-pboard3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#board3-fgsuccess1-bg25); }
+.cut[class*="material-cboard3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#board3-fgsuccess1-bg25); }
 [class*="material-crosshatch1"][class*="fgprincipal1"] { fill: url(#crosshatch1-fgprincipal1); }
 .projection[class*="material-pcrosshatch1"][class*="pfgprincipal1"] { fill: url(#crosshatch1-fgprincipal1); }
 .cut[class*="material-ccrosshatch1"][class*="cfgprincipal1"] { fill: url(#crosshatch1-fgprincipal1); }
@@ -950,6 +1149,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-crosshatch1"][class*="fgaccent1"][class*="bg25"] { fill: url(#crosshatch1-fgaccent1-bg25); }
 .projection[class*="material-pcrosshatch1"][class*="pfgaccent1"][class*="bg25"] { fill: url(#crosshatch1-fgaccent1-bg25); }
 .cut[class*="material-ccrosshatch1"][class*="cfgaccent1"][class*="bg25"] { fill: url(#crosshatch1-fgaccent1-bg25); }
+[class*="material-crosshatch1"][class*="fgsuccess1"] { fill: url(#crosshatch1-fgsuccess1); }
+.projection[class*="material-pcrosshatch1"][class*="pfgsuccess1"] { fill: url(#crosshatch1-fgsuccess1); }
+.cut[class*="material-ccrosshatch1"][class*="cfgsuccess1"] { fill: url(#crosshatch1-fgsuccess1); }
+[class*="material-crosshatch1"][class*="fgsuccess1"][class*="bg25"] { fill: url(#crosshatch1-fgsuccess1-bg25); }
+.projection[class*="material-pcrosshatch1"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#crosshatch1-fgsuccess1-bg25); }
+.cut[class*="material-ccrosshatch1"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#crosshatch1-fgsuccess1-bg25); }
 [class*="material-crosshatch2"][class*="fgprincipal1"] { fill: url(#crosshatch2-fgprincipal1); }
 .projection[class*="material-pcrosshatch2"][class*="pfgprincipal1"] { fill: url(#crosshatch2-fgprincipal1); }
 .cut[class*="material-ccrosshatch2"][class*="cfgprincipal1"] { fill: url(#crosshatch2-fgprincipal1); }
@@ -980,6 +1185,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-crosshatch2"][class*="fgaccent1"][class*="bg25"] { fill: url(#crosshatch2-fgaccent1-bg25); }
 .projection[class*="material-pcrosshatch2"][class*="pfgaccent1"][class*="bg25"] { fill: url(#crosshatch2-fgaccent1-bg25); }
 .cut[class*="material-ccrosshatch2"][class*="cfgaccent1"][class*="bg25"] { fill: url(#crosshatch2-fgaccent1-bg25); }
+[class*="material-crosshatch2"][class*="fgsuccess1"] { fill: url(#crosshatch2-fgsuccess1); }
+.projection[class*="material-pcrosshatch2"][class*="pfgsuccess1"] { fill: url(#crosshatch2-fgsuccess1); }
+.cut[class*="material-ccrosshatch2"][class*="cfgsuccess1"] { fill: url(#crosshatch2-fgsuccess1); }
+[class*="material-crosshatch2"][class*="fgsuccess1"][class*="bg25"] { fill: url(#crosshatch2-fgsuccess1-bg25); }
+.projection[class*="material-pcrosshatch2"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#crosshatch2-fgsuccess1-bg25); }
+.cut[class*="material-ccrosshatch2"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#crosshatch2-fgsuccess1-bg25); }
 [class*="material-crosshatch3"][class*="fgprincipal1"] { fill: url(#crosshatch3-fgprincipal1); }
 .projection[class*="material-pcrosshatch3"][class*="pfgprincipal1"] { fill: url(#crosshatch3-fgprincipal1); }
 .cut[class*="material-ccrosshatch3"][class*="cfgprincipal1"] { fill: url(#crosshatch3-fgprincipal1); }
@@ -1010,6 +1221,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-crosshatch3"][class*="fgaccent1"][class*="bg25"] { fill: url(#crosshatch3-fgaccent1-bg25); }
 .projection[class*="material-pcrosshatch3"][class*="pfgaccent1"][class*="bg25"] { fill: url(#crosshatch3-fgaccent1-bg25); }
 .cut[class*="material-ccrosshatch3"][class*="cfgaccent1"][class*="bg25"] { fill: url(#crosshatch3-fgaccent1-bg25); }
+[class*="material-crosshatch3"][class*="fgsuccess1"] { fill: url(#crosshatch3-fgsuccess1); }
+.projection[class*="material-pcrosshatch3"][class*="pfgsuccess1"] { fill: url(#crosshatch3-fgsuccess1); }
+.cut[class*="material-ccrosshatch3"][class*="cfgsuccess1"] { fill: url(#crosshatch3-fgsuccess1); }
+[class*="material-crosshatch3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#crosshatch3-fgsuccess1-bg25); }
+.projection[class*="material-pcrosshatch3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#crosshatch3-fgsuccess1-bg25); }
+.cut[class*="material-ccrosshatch3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#crosshatch3-fgsuccess1-bg25); }
 [class*="material-brick"][class*="fgprincipal1"] { fill: url(#brick-fgprincipal1); }
 .projection[class*="material-pbrick"][class*="pfgprincipal1"] { fill: url(#brick-fgprincipal1); }
 .cut[class*="material-cbrick"][class*="cfgprincipal1"] { fill: url(#brick-fgprincipal1); }
@@ -1040,6 +1257,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-brick"][class*="fgaccent1"][class*="bg25"] { fill: url(#brick-fgaccent1-bg25); }
 .projection[class*="material-pbrick"][class*="pfgaccent1"][class*="bg25"] { fill: url(#brick-fgaccent1-bg25); }
 .cut[class*="material-cbrick"][class*="cfgaccent1"][class*="bg25"] { fill: url(#brick-fgaccent1-bg25); }
+[class*="material-brick"][class*="fgsuccess1"] { fill: url(#brick-fgsuccess1); }
+.projection[class*="material-pbrick"][class*="pfgsuccess1"] { fill: url(#brick-fgsuccess1); }
+.cut[class*="material-cbrick"][class*="cfgsuccess1"] { fill: url(#brick-fgsuccess1); }
+[class*="material-brick"][class*="fgsuccess1"][class*="bg25"] { fill: url(#brick-fgsuccess1-bg25); }
+.projection[class*="material-pbrick"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#brick-fgsuccess1-bg25); }
+.cut[class*="material-cbrick"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#brick-fgsuccess1-bg25); }
 [class*="material-earth"][class*="fgprincipal1"] { fill: url(#earth-fgprincipal1); }
 .projection[class*="material-pearth"][class*="pfgprincipal1"] { fill: url(#earth-fgprincipal1); }
 .cut[class*="material-cearth"][class*="cfgprincipal1"] { fill: url(#earth-fgprincipal1); }
@@ -1070,6 +1293,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-earth"][class*="fgaccent1"][class*="bg25"] { fill: url(#earth-fgaccent1-bg25); }
 .projection[class*="material-pearth"][class*="pfgaccent1"][class*="bg25"] { fill: url(#earth-fgaccent1-bg25); }
 .cut[class*="material-cearth"][class*="cfgaccent1"][class*="bg25"] { fill: url(#earth-fgaccent1-bg25); }
+[class*="material-earth"][class*="fgsuccess1"] { fill: url(#earth-fgsuccess1); }
+.projection[class*="material-pearth"][class*="pfgsuccess1"] { fill: url(#earth-fgsuccess1); }
+.cut[class*="material-cearth"][class*="cfgsuccess1"] { fill: url(#earth-fgsuccess1); }
+[class*="material-earth"][class*="fgsuccess1"][class*="bg25"] { fill: url(#earth-fgsuccess1-bg25); }
+.projection[class*="material-pearth"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#earth-fgsuccess1-bg25); }
+.cut[class*="material-cearth"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#earth-fgsuccess1-bg25); }
 [class*="material-glass"][class*="fgprincipal1"] { fill: url(#glass-fgprincipal1); }
 .projection[class*="material-pglass"][class*="pfgprincipal1"] { fill: url(#glass-fgprincipal1); }
 .cut[class*="material-cglass"][class*="cfgprincipal1"] { fill: url(#glass-fgprincipal1); }
@@ -1100,6 +1329,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-glass"][class*="fgaccent1"][class*="bg25"] { fill: url(#glass-fgaccent1-bg25); }
 .projection[class*="material-pglass"][class*="pfgaccent1"][class*="bg25"] { fill: url(#glass-fgaccent1-bg25); }
 .cut[class*="material-cglass"][class*="cfgaccent1"][class*="bg25"] { fill: url(#glass-fgaccent1-bg25); }
+[class*="material-glass"][class*="fgsuccess1"] { fill: url(#glass-fgsuccess1); }
+.projection[class*="material-pglass"][class*="pfgsuccess1"] { fill: url(#glass-fgsuccess1); }
+.cut[class*="material-cglass"][class*="cfgsuccess1"] { fill: url(#glass-fgsuccess1); }
+[class*="material-glass"][class*="fgsuccess1"][class*="bg25"] { fill: url(#glass-fgsuccess1-bg25); }
+.projection[class*="material-pglass"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#glass-fgsuccess1-bg25); }
+.cut[class*="material-cglass"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#glass-fgsuccess1-bg25); }
 [class*="material-liquid"][class*="fgprincipal1"] { fill: url(#liquid-fgprincipal1); }
 .projection[class*="material-pliquid"][class*="pfgprincipal1"] { fill: url(#liquid-fgprincipal1); }
 .cut[class*="material-cliquid"][class*="cfgprincipal1"] { fill: url(#liquid-fgprincipal1); }
@@ -1130,6 +1365,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-liquid"][class*="fgaccent1"][class*="bg25"] { fill: url(#liquid-fgaccent1-bg25); }
 .projection[class*="material-pliquid"][class*="pfgaccent1"][class*="bg25"] { fill: url(#liquid-fgaccent1-bg25); }
 .cut[class*="material-cliquid"][class*="cfgaccent1"][class*="bg25"] { fill: url(#liquid-fgaccent1-bg25); }
+[class*="material-liquid"][class*="fgsuccess1"] { fill: url(#liquid-fgsuccess1); }
+.projection[class*="material-pliquid"][class*="pfgsuccess1"] { fill: url(#liquid-fgsuccess1); }
+.cut[class*="material-cliquid"][class*="cfgsuccess1"] { fill: url(#liquid-fgsuccess1); }
+[class*="material-liquid"][class*="fgsuccess1"][class*="bg25"] { fill: url(#liquid-fgsuccess1-bg25); }
+.projection[class*="material-pliquid"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#liquid-fgsuccess1-bg25); }
+.cut[class*="material-cliquid"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#liquid-fgsuccess1-bg25); }
 [class*="material-grass"][class*="fgprincipal1"] { fill: url(#grass-fgprincipal1); }
 .projection[class*="material-pgrass"][class*="pfgprincipal1"] { fill: url(#grass-fgprincipal1); }
 .cut[class*="material-cgrass"][class*="cfgprincipal1"] { fill: url(#grass-fgprincipal1); }
@@ -1160,6 +1401,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-grass"][class*="fgaccent1"][class*="bg25"] { fill: url(#grass-fgaccent1-bg25); }
 .projection[class*="material-pgrass"][class*="pfgaccent1"][class*="bg25"] { fill: url(#grass-fgaccent1-bg25); }
 .cut[class*="material-cgrass"][class*="cfgaccent1"][class*="bg25"] { fill: url(#grass-fgaccent1-bg25); }
+[class*="material-grass"][class*="fgsuccess1"] { fill: url(#grass-fgsuccess1); }
+.projection[class*="material-pgrass"][class*="pfgsuccess1"] { fill: url(#grass-fgsuccess1); }
+.cut[class*="material-cgrass"][class*="cfgsuccess1"] { fill: url(#grass-fgsuccess1); }
+[class*="material-grass"][class*="fgsuccess1"][class*="bg25"] { fill: url(#grass-fgsuccess1-bg25); }
+.projection[class*="material-pgrass"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#grass-fgsuccess1-bg25); }
+.cut[class*="material-cgrass"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#grass-fgsuccess1-bg25); }
 [class*="material-honeycomb"][class*="fgprincipal1"] { fill: url(#honeycomb-fgprincipal1); }
 .projection[class*="material-phoneycomb"][class*="pfgprincipal1"] { fill: url(#honeycomb-fgprincipal1); }
 .cut[class*="material-choneycomb"][class*="cfgprincipal1"] { fill: url(#honeycomb-fgprincipal1); }
@@ -1190,6 +1437,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-honeycomb"][class*="fgaccent1"][class*="bg25"] { fill: url(#honeycomb-fgaccent1-bg25); }
 .projection[class*="material-phoneycomb"][class*="pfgaccent1"][class*="bg25"] { fill: url(#honeycomb-fgaccent1-bg25); }
 .cut[class*="material-choneycomb"][class*="cfgaccent1"][class*="bg25"] { fill: url(#honeycomb-fgaccent1-bg25); }
+[class*="material-honeycomb"][class*="fgsuccess1"] { fill: url(#honeycomb-fgsuccess1); }
+.projection[class*="material-phoneycomb"][class*="pfgsuccess1"] { fill: url(#honeycomb-fgsuccess1); }
+.cut[class*="material-choneycomb"][class*="cfgsuccess1"] { fill: url(#honeycomb-fgsuccess1); }
+[class*="material-honeycomb"][class*="fgsuccess1"][class*="bg25"] { fill: url(#honeycomb-fgsuccess1-bg25); }
+.projection[class*="material-phoneycomb"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#honeycomb-fgsuccess1-bg25); }
+.cut[class*="material-choneycomb"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#honeycomb-fgsuccess1-bg25); }
 [class*="material-wood"][class*="fgprincipal1"] { fill: url(#wood-fgprincipal1); }
 .projection[class*="material-pwood"][class*="pfgprincipal1"] { fill: url(#wood-fgprincipal1); }
 .cut[class*="material-cwood"][class*="cfgprincipal1"] { fill: url(#wood-fgprincipal1); }
@@ -1220,6 +1473,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-wood"][class*="fgaccent1"][class*="bg25"] { fill: url(#wood-fgaccent1-bg25); }
 .projection[class*="material-pwood"][class*="pfgaccent1"][class*="bg25"] { fill: url(#wood-fgaccent1-bg25); }
 .cut[class*="material-cwood"][class*="cfgaccent1"][class*="bg25"] { fill: url(#wood-fgaccent1-bg25); }
+[class*="material-wood"][class*="fgsuccess1"] { fill: url(#wood-fgsuccess1); }
+.projection[class*="material-pwood"][class*="pfgsuccess1"] { fill: url(#wood-fgsuccess1); }
+.cut[class*="material-cwood"][class*="cfgsuccess1"] { fill: url(#wood-fgsuccess1); }
+[class*="material-wood"][class*="fgsuccess1"][class*="bg25"] { fill: url(#wood-fgsuccess1-bg25); }
+.projection[class*="material-pwood"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#wood-fgsuccess1-bg25); }
+.cut[class*="material-cwood"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#wood-fgsuccess1-bg25); }
 [class*="material-sand"][class*="fgprincipal1"] { fill: url(#sand-fgprincipal1); }
 .projection[class*="material-psand"][class*="pfgprincipal1"] { fill: url(#sand-fgprincipal1); }
 .cut[class*="material-csand"][class*="cfgprincipal1"] { fill: url(#sand-fgprincipal1); }
@@ -1250,6 +1509,12 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-sand"][class*="fgaccent1"][class*="bg25"] { fill: url(#sand-fgaccent1-bg25); }
 .projection[class*="material-psand"][class*="pfgaccent1"][class*="bg25"] { fill: url(#sand-fgaccent1-bg25); }
 .cut[class*="material-csand"][class*="cfgaccent1"][class*="bg25"] { fill: url(#sand-fgaccent1-bg25); }
+[class*="material-sand"][class*="fgsuccess1"] { fill: url(#sand-fgsuccess1); }
+.projection[class*="material-psand"][class*="pfgsuccess1"] { fill: url(#sand-fgsuccess1); }
+.cut[class*="material-csand"][class*="cfgsuccess1"] { fill: url(#sand-fgsuccess1); }
+[class*="material-sand"][class*="fgsuccess1"][class*="bg25"] { fill: url(#sand-fgsuccess1-bg25); }
+.projection[class*="material-psand"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#sand-fgsuccess1-bg25); }
+.cut[class*="material-csand"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#sand-fgsuccess1-bg25); }
 [class*="material-concrete"][class*="fgprincipal1"] { fill: url(#concrete-fgprincipal1); }
 .projection[class*="material-pconcrete"][class*="pfgprincipal1"] { fill: url(#concrete-fgprincipal1); }
 .cut[class*="material-cconcrete"][class*="cfgprincipal1"] { fill: url(#concrete-fgprincipal1); }
@@ -1280,3 +1545,9 @@ path.flush    { stroke: #ffffff; stroke-width: 0.10; stroke-opacity: 0.4; }
 [class*="material-concrete"][class*="fgaccent1"][class*="bg25"] { fill: url(#concrete-fgaccent1-bg25); }
 .projection[class*="material-pconcrete"][class*="pfgaccent1"][class*="bg25"] { fill: url(#concrete-fgaccent1-bg25); }
 .cut[class*="material-cconcrete"][class*="cfgaccent1"][class*="bg25"] { fill: url(#concrete-fgaccent1-bg25); }
+[class*="material-concrete"][class*="fgsuccess1"] { fill: url(#concrete-fgsuccess1); }
+.projection[class*="material-pconcrete"][class*="pfgsuccess1"] { fill: url(#concrete-fgsuccess1); }
+.cut[class*="material-cconcrete"][class*="cfgsuccess1"] { fill: url(#concrete-fgsuccess1); }
+[class*="material-concrete"][class*="fgsuccess1"][class*="bg25"] { fill: url(#concrete-fgsuccess1-bg25); }
+.projection[class*="material-pconcrete"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#concrete-fgsuccess1-bg25); }
+.cut[class*="material-cconcrete"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#concrete-fgsuccess1-bg25); }
