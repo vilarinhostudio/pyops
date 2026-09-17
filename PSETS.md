@@ -66,3 +66,11 @@ Nome do Pset é configurável no campo **HVAC Pset**.
 | material                                          | `SpecificHeatCapacity` | J/kgK. Sem ela: 790                                        |
 
 Espessuras vêm do `IfcMaterialLayerSet` (convertidas pela unidade do projeto).
+
+**Unidades e zeros — nada disso é convertido nem validado pelo PyOps:**
+
+- sempre SI: `MassDensity` em kg/m³ (concreto **2400**, não 2,4), `SpecificHeatCapacity` em J/kgK (**840**, não 0,84), `ThermalConductivity` em W/mK;
+- propriedade **presente com 0** não cai no padrão: derruba a construção inteira do elemento para a genérica. Preencher ou apagar;
+- valor ausente usa o padrão e avisa; valor em unidade errada passa **calado** — conferir `Material` no `in.idf` (ver GOTCHAS).
+
+Referência para conferência (ordem de grandeza): concreto 1,75 / 2400 / 1000; bloco cerâmico ~0,7–0,9 / 1300–1600 / 840–920; EPS 0,035–0,04 / 15–35 / 1400.

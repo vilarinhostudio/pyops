@@ -12,7 +12,7 @@ Reaproveita o Radiance reformado: `planar_regions`, `pair_voids`, `match_opening
 
 - **Execução sem OpenStudio**: `honeybee_energy.writer.model_to_idf` + `run.run_idf`. Por isso HVAC é sempre `IdealAirSystem`.
 - **Room**: uma `Face` por região plana do Room Reference (só contorno externo). Abortar se não for sólido ou volume ≤ 0.
-- **Face ↔ Construction**: região paralela, distância ≤ espessura + 2 cm, centroide dentro do contorno externo; vence a mais próxima. Sem par: construção genérica + aviso.
+- **Face ↔ Construction**: região paralela, distância ≤ espessura + 2 cm, centroide **ou** algum ponto a meio caminho entre o centroide e um vértice da face dentro do contorno externo (2026-09-17: só o centroide falhava com porta até o piso centrada na parede — o entalhe engolia o centro); vence a mais próxima. Sem par: construção genérica + aviso.
 - **Vãos no Room Reference**: enum com duas opções
   - *Recortado*: furos do Room Reference → `match_openings` (novo parâmetro `pad` = espessura do elemento casado).
   - *Projetado*: vãos detectados na Construction (pipeline do Radiance) projetados na face do Room casada.

@@ -1369,12 +1369,17 @@ def match_room_faces(entries, objects):
     """Tag each room face with the construction element it stands for.
 
     Parallel planar region, no farther than the element's thickness plus
-    ROOM_MATCH_SLACK, room face centre inside the region's outline; nearest
-    wins. The centre test runs that way round because one wall element often
-    serves several rooms — its region is larger than any room face.
+    ROOM_MATCH_SLACK, and some sample of the room face inside the region's
+    outline; nearest wins. The test runs that way round because one wall
+    element often serves several rooms — its region is larger than any room face.
 
-    A second element whose region centre falls inside the same room face means
-    the face covers two elements; only the nearest counts, and it is reported."""
+    Samples are the centre plus the midpoints from the centre to each outline
+    vertex, not the centre alone: a door down to the floor is a notch in the
+    wall's OUTER outline, and a door centred on the wall swallows the centre.
+
+    A second element that also passes, or whose region centre falls inside the
+    same room face, means the face covers two elements; only the nearest
+    counts, and it is reported."""
     import refops_api
 
     bim = refops_api.bim_helpers
@@ -1386,6 +1391,7 @@ def match_room_faces(entries, objects):
 
     for entry in entries:
         normal, centre = entry["normal"], entry["centre"]
+        samples = [centre] + [(centre + p) / 2.0 for p in entry["outline"]]
         best = None
         others = set()
         for obj, element, thickness, regions in candidates:
@@ -1395,7 +1401,8 @@ def match_room_faces(entries, objects):
                 distance = abs((region["outer"][0] - centre).dot(normal))
                 if distance > thickness + ROOM_MATCH_SLACK:
                     continue
-                if _inside_loop(centre, region["outer"], normal, PLANE_DISTANCE):
+                if any(_inside_loop(s, region["outer"], normal, PLANE_DISTANCE) for s in samples):
+                    others.add(obj.name)
                     if best is None or distance < best[0]:
                         best = (distance, obj, element, thickness)
                 elif _inside_loop(_loop_centroid(region["outer"]), entry["outline"],

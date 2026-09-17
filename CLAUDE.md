@@ -105,3 +105,5 @@ Os demais itens do roadmap anterior (Qto_*, Pset_PyOps de proveniência, util.se
 
 - `STATUS.md` — o que está testado, por operador
 - `GOTCHAS.md` — comportamentos descobertos na marra (sintoma → causa), para não redescobrir
+- `PSETS.md` — Psets lidos pelos operadores, com unidades
+- `SIMULACOES.md` — que simulação climática rodar em cada fase do projeto, e como

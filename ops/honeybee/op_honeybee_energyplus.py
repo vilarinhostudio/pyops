@@ -341,8 +341,8 @@ class HoneybeeEnergyPlus:
             "si; o consumo absoluto sai otimista."
         )
         print(
-            f"[RefOps.energyplus] HVAC: resfriamento {cooling:.0f} W (COP {cop_cool or '—'}), "
-            f"aquecimento {heating:.0f} W (COP {cop_heat or '—'})."
+            f"[RefOps.energyplus] HVAC: resfriamento {cooling:.0f} W (COP {f'{cop_cool:.2f}' if cop_cool else '—'}), "
+            f"aquecimento {heating:.0f} W (COP {f'{cop_heat:.2f}' if cop_heat else '—'})."
         )
         try:
             system = IdealAirSystem(

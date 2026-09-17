@@ -125,6 +125,22 @@ Solução: virar primeiro (`Polyface3D.from_faces` → `.faces` já saem para fo
 Causa: o honeybee só aceita abertura em face `Outdoors` (ou `Surface`), e confere nos dois sentidos — condição de contorno depois das aberturas também quebra.
 Solução: contorno primeiro (`apply_envelope`), aberturas depois, e abertura em face não-Outdoors é descartada com aviso.
 
+**Todo elemento sai `sem IfcMaterialLayerSet utilizável` — mesmo com `get_material` mostrando o `IfcMaterialLayerSetUsage` no console.**
+Causa: `import ifcopenshell.util.unit` **dentro** de `material_layers`. Um `import a.b.c` numa função liga o nome `a` como variável **local da função inteira**, inclusive nas linhas antes do import — então `ifcopenshell.util.element.get_material(...)` no topo dava `UnboundLocalError`, e o `except Exception: return []` engolia como "sem camadas". O teste com `bim_helpers` simulado não passava por essa função.
+Solução: import com alias (`import ifcopenshell.util.unit as ifc_unit`), que liga só o alias. Vale para qualquer helper: import pontilhado local de um módulo cujo nome raiz já é usado na função é bug garantido.
+
+**`face refops_room_fN (Wall) sem elemento de Construction casado` numa parede que está lá, na distância certa.**
+Causa: porta até o piso **centrada** na parede. O vão vira entalhe no contorno externo da região (não laço interno), e o centro da face do Room — meio da largura, meia altura — cai dentro do entalhe. O teste antigo usava só o centro.
+Solução: `match_room_faces` testa o centro **e** os pontos a meio caminho entre o centro e cada vértice da face; basta um cair dentro. Porta larga o bastante para engolir todos (portão) ainda falha — com aviso.
+
+**`Input number material specific heat must be between 100.0 and inf. Got 0.0` e a parede inteira sai genérica.**
+Causa: o Pset térmico do material existe com o campo **zerado** (típico de Pset adicionado pelo template do Bonsai e não preenchido). O padrão só entra quando a propriedade está *ausente*; zero é lido como valor e o honeybee recusa. O log diz `sem IfcMaterialLayerSet utilizável`, o que engana — o layer set está lá. Não corrigido.
+Solução por ora: preencher o valor, ou apagar a propriedade para cair no padrão.
+
+**Cargas e conforto absurdos (resfriamento e aquecimento ~3×) sem aviso nenhum.**
+Causa: unidade errada no Pset do material — `MassDensity` 2,4 (t/m³) em vez de 2400 kg/m³. A laje vira uma folha sem massa térmica. Nada reclama: 2,4 é um número válido.
+Solução: tudo em SI (kg/m³, J/kgK, W/mK — ver PSETS). Para conferir o que realmente entrou, abrir `%TEMP%\refops_energyplus\active\in.idf` e ler os objetos `Material` e `BuildingSurface:Detailed` (construção e condição de contorno por face).
+
 ## Instalação de dependências (pip / Windows)
 
 **Point-in-Time falha com `No such option: --create-grids`; o Daylight Factor funciona. Depois vem `Invalid result folder`.**

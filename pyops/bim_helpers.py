@@ -1695,9 +1695,12 @@ def material_layers(element):
     if layer_set is None:
         return []
     try:
-        import ifcopenshell.util.unit
+        # Aliased on purpose: a bare `import ifcopenshell.util.unit` here would make
+        # `ifcopenshell` local to the whole function, breaking get_material above
+        # with an UnboundLocalError that the except swallows as "no layers".
+        import ifcopenshell.util.unit as ifc_unit
 
-        scale = ifcopenshell.util.unit.calculate_unit_scale(get_file())
+        scale = ifc_unit.calculate_unit_scale(get_file())
     except Exception as e:
         print(f"[RefOps.bim] escala de unidade ilegível ({e}); assumindo metros.")
         scale = 1.0
