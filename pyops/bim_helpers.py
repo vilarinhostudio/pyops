@@ -367,10 +367,14 @@ def surface_style_optics(element):
 
     for style in styles or []:
         for item in getattr(style, "Styles", None) or [style]:
-            if not item.is_a("IfcSurfaceStyleRendering"):
+            # Shading, not Rendering: Bonsai's default style is a plain
+            # IfcSurfaceStyleShading, and Rendering is a subtype of it anyway.
+            if not item.is_a("IfcSurfaceStyleShading"):
                 continue
             values = {}
             colour = getattr(item, "DiffuseColour", None)
+            if colour is None or not colour.is_a("IfcColourRgb"):
+                colour = getattr(item, "SurfaceColour", None)
             if colour is not None and colour.is_a("IfcColourRgb"):
                 values["reflectance"] = round(
                     0.265 * colour.Red + 0.670 * colour.Green + 0.065 * colour.Blue,
@@ -1668,6 +1672,39 @@ def layer_set_thickness(material_set):
         float(layer.LayerThickness or 0.0)
         for layer in (getattr(material_set, "MaterialLayers", None) or [])
     )
+
+
+def material_layers(element):
+    """[(thickness in metres, IfcMaterial)] of the element's layer set, layer 1 first.
+
+    Unlike layer_set_thickness this converts units: a thermal construction
+    built from millimetres read as metres is a wall a thousand times too thick,
+    and nothing downstream would complain. A usage or a type's set both count —
+    get_material inherits from the type."""
+    if element is None or not ensure():
+        return []
+    try:
+        material = ifcopenshell.util.element.get_material(element)
+    except Exception:
+        return []
+    if material is None:
+        return []
+    layer_set = material if material.is_a("IfcMaterialLayerSet") else getattr(
+        material, "ForLayerSet", None
+    )
+    if layer_set is None:
+        return []
+    try:
+        import ifcopenshell.util.unit
+
+        scale = ifcopenshell.util.unit.calculate_unit_scale(get_file())
+    except Exception as e:
+        print(f"[RefOps.bim] escala de unidade ilegível ({e}); assumindo metros.")
+        scale = 1.0
+    return [
+        (float(layer.LayerThickness or 0.0) * scale, layer.Material)
+        for layer in (layer_set.MaterialLayers or [])
+    ]
 
 
 def assign_constituent_set(ifc_file, type_entity, set_name, constituent_name):

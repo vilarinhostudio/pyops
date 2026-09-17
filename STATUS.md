@@ -24,18 +24,18 @@ Estados:
 
 ## ops/bonsai
 
-| Operador                      | Estado  | Nota                                                                                     |
-| ----------------------------- | ------- | ---------------------------------------------------------------------------------------- |
-| `op_bim_wall.py`              | parcial | direção pela normal da face confirmada; falta testar align/tipo/pavimento como chave de agrupamento — face não pintada agora vira parede própria |
-| `op_bim_slab.py`              | ok      |                                                                                          |
-| `op_bim_face_component.py`    | parcial | reteste pendente: herdou de `create_type` a nomeação `<Classe>/<Nome>` do objeto do type |
-| `op_bim_panel.py`             | parcial | reteste pendente: mesma nomeação de type do `face_component`                             |
-| `op_bim_type_geometry.py`     | ok      |                                                                                          |
-| `op_bim_distribute.py`        | ok      | `direction` removido; flip = sentido da normal da face; cardinal independente do flip e do alinhamento da parede (`preserve_placement=True`, ver GOTCHAS) |
-| `op_bim_column.py`            | ok      |                                                                                          |
-| `op_bim_beam.py`              | ok      |                                                                                          |
-| `op_bim_profile_component.py` | ok      |                                                                                          |
-| `op_bim_space.py`             | ?       |                                                                                          |
+| Operador                      | Estado  | Nota                                                         |
+| ----------------------------- | ------- | ------------------------------------------------------------ |
+| `op_bim_wall.py`              | ok      |                                                              |
+| `op_bim_slab.py`              | ok      |                                                              |
+| `op_bim_face_component.py`    | ok      |                                                              |
+| `op_bim_panel.py`             | parcial | reteste pendente: mesma nomeação de type do `face_component` |
+| `op_bim_type_geometry.py`     | ok      |                                                              |
+| `op_bim_distribute.py`        | ok      |                                                              |
+| `op_bim_column.py`            | ok      |                                                              |
+| `op_bim_beam.py`              | ok      |                                                              |
+| `op_bim_profile_component.py` | ok      |                                                              |
+| `op_bim_space.py`             | ?       |                                                              |
 
 
 ## ops/ladybug
@@ -47,10 +47,10 @@ Estados:
 
 ## ops/honeybee
 
-| Operador                  | Estado | Nota                                                                                                                                                                                  |
-| ------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `op_honeybee_radiance.py` | ?      | Precisa de BVH pois está lento. Fora isso, vou repensar bastante ele. Herdou a correção do `write_vertex_group` — a saída em Vertex Group também nunca funcionou na primeira execução |
-| `op_honeybee_radiance.py` | -      | Falta pensar                                                                                                                                                                          |
+| Operador                    | Estado | Nota                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `op_honeybee_radiance.py`   | ok     | 2026-09-16: Construction + Openings + luz por Pset testados no Blender com Daylight Factor e Point-in-Time (luz visível à noite). ==requer teste==: Annual Daylight/Irradiance, Face Attributes, custom props `hb_*_min/max/mean` (adicionadas depois do teste), aviso de fonte óptica ausente, estilo `IfcSurfaceStyleShading`; vidro de Openings e luz por Pset de novo (`glazing_modifier` → `glazing_values` e `light_sources` → `light_readings` refatorados para o EnergyPlus; mesma saída conferida só com IFC simulado). Bug conhecido: campos *Pset.Prop* de sobrescrita (ver GOTCHAS) |
+| `op_honeybee_energyplus.py` | ?      | 2026-09-16: rodado só em Blender background com `bim_helpers` simulado (sem Bonsai): Projected + Ideal Air + Annual + adaptativo + horas ocupadas; Cut + HVAC Collection + Monthly + faixa fixa; Single Month + luz None; Program inexistente; Last Layer Outside. IDF conferido (Adiabatic/Ground/Outdoors, camadas, SimpleGlazSys, porta NoMass, limites do Ideal Air). ==requer teste==: tudo com Bonsai real — `bim.material_layers` (escala de unidade, `LayerSetUsage`), `IsExternal` herdado do type, psets de material reais, Room Reference vindo do motor. Design em [op_honeybee_energyplus.md](ops/honeybee/op_honeybee_energyplus.md) |
 
 ## ops/arch
 
@@ -76,8 +76,10 @@ Estados:
 
 ## Dependências externas
 
-| Pacote                                   | Estado | Nota                                                            |
-| ---------------------------------------- | ------ | --------------------------------------------------------------- |
-| lbt-ladybug (pip)                        | ok     |                                                                 |
-| lbt-recipes + pollination-handlers (pip) | ok     | histórico de instalação incompleta, reinstalar com dependências |
-| Radiance (binário)                       | ok     | necessário além dos pacotes Python                              |
+| Pacote                                   | Estado | Nota                                                                     |
+| ---------------------------------------- | ------ | ------------------------------------------------------------------------ |
+| lbt-ladybug (pip)                        | ok     |                                                                          |
+| lbt-recipes + pollination-handlers (pip) | ok     | histórico de instalação incompleta, reinstalar com dependências          |
+| Radiance (binário)                       | ok     | necessário além dos pacotes Python                                       |
+| lbt-recipes 0.26.6 em `C:\refops_libs`   | ok     | fixado para casar com o honeybee-radiance do ladybug_tools (ver GOTCHAS) |
+| EnergyPlus (binário)                     | ok     | 26.1.0 em `C:\EnergyPlusV26-1-0`, achado sozinho pelo honeybee-energy 1.123.10 de `C:\refops_libs`; `tools/energyplus_smoke.py` confirma |

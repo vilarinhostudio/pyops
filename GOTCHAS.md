@@ -73,7 +73,63 @@ Solução: não recentrar. A geometria do type vai no espaço local do objeto de
 Causa: a saída da árvore são **instâncias**, não malha. `modifier_apply` não realiza instância nenhuma, então não há o que assar — e o container do PyOps fica sem malha, o que derruba qualquer operação que leia dele.
 Solução: um nó *Realize Instances* no fim da árvore. Para separar o que era cada instância depois disso, pintar um atributo inteiro **de ponto** e agrupar por ele (é o que `op_bim_type_geometry` faz no modo Multiple) — instância realizada perde a identidade, atributo não. Ponto e não face porque o mesmo atributo agrupa os símbolos 2D, que são wireframe e não têm face para pintar.
 
+## Honeybee / Radiance
+
+**Procurar "face com furo" na malha de uma parede com vão não acha nada.**
+Causa: polígono do Blender tem um único laço — não existe face com furo. O vão recortado pelo Bonsai aparece como faces (triângulos) *em volta* do buraco.
+Solução: agrupar faces conectadas e coplanares em região (`planar_regions`); as bordas da região formam laços, o maior é o contorno, os outros são vãos. Cada vão aparece nas duas faces da parede — parear (`pair_voids`) para não virar vidro duplo.
+
+**Porta até o piso não é detectada como vão.**
+Causa: o recorte encosta na borda e vira entalhe no contorno externo, não laço interno.
+Solução: objeto de Openings sem vão casado vira abertura pela sua maior região plana.
+
+**Luminária num cubo ilumina a parede, ou a luz artificial "não aparece" no Point-in-Time.**
+Causa: (1) o emissor é a maior face; num cubo as 6 empatam. (2) Ao meio-dia o sol pela janela dá dezenas de milhares de lux e a escala de cor, normalizada pelo máximo, esconde as centenas de lux da lâmpada.
+Solução: luminária como placa achatada; rodar à noite (ex.: 23h) para isolar a luz artificial.
+
+**Campo *Pset.Prop* de sobrescrita óptica é ignorado, mas o valor chega mesmo assim.**
+Causa: `pset_value` separa no **primeiro** ponto e só lê Psets do elemento, nunca do material. O valor chega pela busca por nome no material, que roda depois. Não corrigido.
+Solução por ora: deixar os campos vazios e pôr as propriedades no material.
+
+**Material com cor definida, mas o log diz que nenhuma fonte óptica foi encontrada.**
+Causa: o estilo padrão do Bonsai é `IfcSurfaceStyleShading`; a leitura antiga só aceitava `IfcSurfaceStyleRendering`.
+Solução: aceitar Shading (Rendering é subtipo) e usar `SurfaceColour` quando não houver `DiffuseColour`.
+
+**`Warning: Roughness values above .2 is uncommon` repetido no log.**
+Causa: `Roughness` do plastic no Radiance vai de 0 a 0.2.
+Solução: 0 para materiais foscos.
+
+## Honeybee / EnergyPlus
+
+**IDF de `model_to_idf` não roda: EnergyPlus reclama de `Version` ausente ou sem período de simulação.** (evitado desde o início — lido no CLI do honeybee-energy, não visto como erro)
+Causa: `model_to_idf` escreve só o modelo. O CLI (`cli/translate.py`) junta `energyplus_idf_version()` + `SimulationParameter.to_idf()` + modelo, nessa ordem.
+Solução: `simulate_energy` em `honeybee_helpers.py` monta o IDF do mesmo jeito.
+
+**Ideal Air sumiu do IDF / simulação sem carga nenhuma.** (evitado desde o início)
+Causa: o honeybee escreve o Ideal Air como `HVACTemplate:Zone:IdealLoadsAirSystem`, que só vira objeto de verdade depois do ExpandObjects.
+Solução: nunca passar `expand_objects=False` para `run_idf`.
+
+**EnergyPlus aborta no dimensionamento por falta de design days.** (evitado desde o início)
+Causa: `SimulationControl` do honeybee liga o zone sizing por padrão, e ele precisa de `SizingPeriod:DesignDay`.
+Solução: DDY ao lado do EPW (`add_from_ddy_996_004`); sem DDY, `EPW.approximate_design_day`.
+
+**`Temperature out of range [-100. to 200.] (PsyPsatFnTemp)` com ~6000 °C no `.err`.**
+Causa: `CalcPurchAirLoads` do Ideal Air durante o design day de entalpia (São Paulo, `CLG .4% CONDNS ENTH=>MDB`). Só no sizing, não no ano; a simulação termina normalmente.
+Solução: nenhuma ainda. Desconfiar de capacidade *autodimensionada*; as cargas anuais não são afetadas por esse aviso.
+
+**Parede virou teto (ou piso virou cobertura) no IDF.** (evitado desde o início)
+Causa: a `Face` do honeybee decide Wall/Floor/RoofCeiling pela normal **no momento em que é criada**. `Room(tolerance=...)` vira a geometria para fora depois, mas não reclassifica. Uma malha com normais para dentro sai com os tipos trocados.
+Solução: virar primeiro (`Polyface3D.from_faces` → `.faces` já saem para fora, na mesma ordem) e criar as `Face` a partir disso (`energy_room`).
+
+**`AssertionError: Adiabatic cannot be assigned to a Face with apertures or doors`.** (evitado desde o início)
+Causa: o honeybee só aceita abertura em face `Outdoors` (ou `Surface`), e confere nos dois sentidos — condição de contorno depois das aberturas também quebra.
+Solução: contorno primeiro (`apply_envelope`), aberturas depois, e abertura em face não-Outdoors é descartada com aviso.
+
 ## Instalação de dependências (pip / Windows)
+
+**Point-in-Time falha com `No such option: --create-grids`; o Daylight Factor funciona. Depois vem `Invalid result folder`.**
+Causa: a receita é montada pelo `lbt-recipes` do Blender (`C:\refops_libs`), mas executada pelo `honeybee-radiance` CLI do Python do ladybug_tools. `lbt-recipes 0.28.6` passa uma opção que o `honeybee-radiance 1.66.54` não tem; só algumas receitas usam essa opção. `run_succeeded` não pegou a falha (não corrigido).
+Solução: fixar `lbt-recipes==0.26.6` (a versão do ladybug_tools) em `C:\refops_libs` com `--no-deps`. Sempre casar as versões entre os dois Pythons.
 
 **`pip install` relata "Successfully installed" mas o pacote não funciona / `ModuleNotFoundError` num submódulo dele.**
 Causa: com `--target`, o pip instala numa pasta temporária e depois move os arquivos. Se a etapa de mover falhar (arquivo travado por outro processo, ex. Blender aberto, ou OneDrive sincronizando), parte dos arquivos nunca chega ao destino — mas o pip já tinha reportado sucesso da instalação em si.

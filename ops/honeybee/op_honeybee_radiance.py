@@ -1,10 +1,11 @@
 """Daylight analysis through Honeybee-Radiance, written onto Blender faces.
 
-The parent object is the architectural source. Face attributes say which faces
-are walls, floors, roofs, apertures and doors; a Honeybee model is assembled
-from them, a recipe runs, and the numbers come back as FLOAT attributes:
+The Honeybee model comes either from a collection of the real Bonsai elements
+(walls, slabs, roofs, with their voids already cut) or from face attributes
+painted on the parent. A recipe runs, and the numbers come back as FLOAT
+attributes on the sensor geometry:
 
-    Blender mesh -> face attributes -> Honeybee model -> Radiance -> attributes
+    elements | face attributes -> Honeybee model -> Radiance -> attributes
 
 Nothing is left behind in the scene — the model and the sensor grid exist only
 for the duration of the run.
@@ -22,7 +23,6 @@ import bpy
 import refops_api
 
 hb = refops_api.honeybee_helpers
-bim = refops_api.bim_helpers
 lb = refops_api.ladybug_helpers
 
 # Recipe name and the outputs each one produces. Adding an analysis is a row
@@ -99,10 +99,35 @@ class HoneybeeRadiance:
             {
                 "name": "Build From",
                 "items": [
-                    ("IFC", "IFC Elements", "Spaces, walls and the voids already cut"),
+                    ("CONSTRUCTION", "Construction", "Real walls, slabs and roofs, voids already cut"),
                     ("ATTRIBUTES", "Face Attributes", "Faces painted on the reference mesh"),
                 ],
-                "default": "IFC",
+                "default": "CONSTRUCTION",
+            },
+        ),
+        "construction": (
+            "Collection",
+            {
+                "name": "Construction",
+                "description": "Walls, slabs and roofs; each mesh is used as it is, voids included",
+                "show_if": ("enum_model", {"CONSTRUCTION"}),
+            },
+        ),
+        "openings": (
+            "Collection",
+            {
+                "name": "Openings",
+                "description": "Windows and doors; matched to the voids by position",
+                "show_if": ("enum_model", {"CONSTRUCTION"}),
+            },
+        ),
+        "glazing_pset": (
+            "String",
+            {
+                "name": "Glazing Pset",
+                "default": "PyOps_Glazing",
+                "description": "Pset on each opening with VisibleTransmittance and Reflectance",
+                "show_if": ("enum_model", {"CONSTRUCTION"}),
             },
         ),
         "wall_attribute": ("String", {"name": "Walls", "search": "attribute", "show_if": ("enum_model", {"ATTRIBUTES"})}),
@@ -127,19 +152,11 @@ class HoneybeeRadiance:
             "Collection",
             {"name": "Context Collection", "show_if": ("context_mode", {"COLLECTION"})},
         ),
-        "story_pointer": (
-            "Object",
-            {
-                "name": "Building Story",
-                "description": "Analyse one storey only; blank uses every space",
-                "show_if": ("enum_model", {"IFC"}),
-            },
-        ),
-        "sep_optics": ("Separator", {"show_if": ("enum_model", {"IFC"})}),
+        "sep_optics": ("Separator", {"show_if": ("enum_model", {"CONSTRUCTION"})}),
         "lbl_optics": (
             "Label",
             {"text": "Optical Properties", "icon": "MATERIAL",
-             "show_if": ("enum_model", {"IFC"})},
+             "show_if": ("enum_model", {"CONSTRUCTION"})},
         ),
         "use_optics": (
             "Bool",
@@ -150,7 +167,7 @@ class HoneybeeRadiance:
                     "Element pset, then material properties, then the display "
                     "style. Off means Radiance defaults"
                 ),
-                "show_if": ("enum_model", {"IFC"}),
+                "show_if": ("enum_model", {"CONSTRUCTION"}),
             },
         ),
         "layer_side": (
@@ -163,7 +180,7 @@ class HoneybeeRadiance:
                 ],
                 "default": "OUTER",
                 "description": "Which layer of a multi-layer wall light meets",
-                "show_if": [("enum_model", {"IFC"}), ("use_optics", {True})],
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("use_optics", {True})],
             },
         ),
         "reflectance_pset": (
@@ -172,7 +189,7 @@ class HoneybeeRadiance:
                 "name": "Reflectance Pset.Prop",
                 "default": "",
                 "description": "Override, e.g. Pset_MaterialOptical.VisibleReflectanceFront",
-                "show_if": [("enum_model", {"IFC"}), ("use_optics", {True})],
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("use_optics", {True})],
             },
         ),
         "transmittance_pset": (
@@ -180,7 +197,7 @@ class HoneybeeRadiance:
             {
                 "name": "Transmittance Pset.Prop",
                 "default": "",
-                "show_if": [("enum_model", {"IFC"}), ("use_optics", {True})],
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("use_optics", {True})],
             },
         ),
         "specularity_pset": (
@@ -188,7 +205,7 @@ class HoneybeeRadiance:
             {
                 "name": "Specularity Pset.Prop",
                 "default": "",
-                "show_if": [("enum_model", {"IFC"}), ("use_optics", {True})],
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("use_optics", {True})],
             },
         ),
         "roughness_pset": (
@@ -196,7 +213,7 @@ class HoneybeeRadiance:
             {
                 "name": "Roughness Pset.Prop",
                 "default": "",
-                "show_if": [("enum_model", {"IFC"}), ("use_optics", {True})],
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("use_optics", {True})],
             },
         ),
         "report_optics": (
@@ -205,14 +222,14 @@ class HoneybeeRadiance:
                 "name": "Report Sources",
                 "default": True,
                 "description": "Print where each number came from — a study run on defaults looks identical to one that wasn't",
-                "show_if": [("enum_model", {"IFC"}), ("use_optics", {True})],
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("use_optics", {True})],
             },
         ),
-        "sep_lights": ("Separator", {"show_if": ("enum_model", {"IFC"})}),
+        "sep_lights": ("Separator", {"show_if": ("enum_model", {"CONSTRUCTION"})}),
         "lbl_lights": (
             "Label",
             {"text": "Artificial Light", "icon": "LIGHT",
-             "show_if": ("enum_model", {"IFC"})},
+             "show_if": ("enum_model", {"CONSTRUCTION"})},
         ),
         "enum_lights": (
             "Enum",
@@ -220,32 +237,27 @@ class HoneybeeRadiance:
                 "name": "Sources",
                 "items": [
                     ("NONE", "None", "Daylight only"),
-                    ("COLLECTION", "Blender Lights", "Lights from a collection"),
-                    ("LINKED", "Linked to Fixtures", "Lights named by IfcLightFixture"),
+                    ("COLLECTION", "Collection", "Fixtures from a collection, flux from a pset"),
                 ],
                 "default": "NONE",
-                "show_if": ("enum_model", {"IFC"}),
+                "show_if": ("enum_model", {"CONSTRUCTION"}),
             },
         ),
         "light_collection": (
             "Collection",
             {
                 "name": "Light Collection",
-                "description": "Blank uses every light in the scene",
-                "show_if": [("enum_model", {"IFC"}), ("enum_lights", {"COLLECTION"})],
+                "description": "Emitter is each fixture's largest face",
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("enum_lights", {"COLLECTION"})],
             },
         ),
-        "enum_light_scope": (
-            "Enum",
+        "light_pset": (
+            "String",
             {
-                "name": "Scope",
-                "items": [
-                    ("ANALYSED", "Analysed Spaces", "Only lamps inside the modelled rooms"),
-                    ("ALL", "All", "Every light, wherever it is"),
-                ],
-                "default": "ANALYSED",
-                "show_if": [("enum_model", {"IFC"}),
-                            ("enum_lights", {"COLLECTION", "LINKED"})],
+                "name": "Light Pset",
+                "default": "PyOps_Light",
+                "description": "LuminousFlux (lm), or Wattage (W) at 90 lm/W",
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("enum_lights", {"COLLECTION"})],
             },
         ),
         "sep3": ("Separator", {}),
@@ -384,13 +396,12 @@ class HoneybeeRadiance:
         if not sensors:
             return False
 
-        model = None
-        if data_holder.enum_model == "IFC":
-            # Spaces are closed volumes and the voids are the real openings, so
-            # this describes the building rather than approximating it. It falls
-            # back when there are no spaces yet.
-            model = hb.model_from_ifc(
-                storey=bim.entity(data_holder.story_pointer),
+        if data_holder.enum_model == "CONSTRUCTION":
+            # No fallback to attributes: their fields are hidden in this mode,
+            # so falling back would only fail again with a less useful message.
+            model = hb.model_from_construction(
+                data_holder.construction,
+                openings=data_holder.openings,
                 context_collection=(
                     data_holder.context
                     if data_holder.context_mode == "COLLECTION"
@@ -400,9 +411,10 @@ class HoneybeeRadiance:
                     "use_optics": data_holder.use_optics,
                     "outermost": data_holder.layer_side == "OUTER",
                     "report": data_holder.report_optics,
+                    "glazing_pset": data_holder.glazing_pset,
                     "lights": data_holder.enum_lights,
                     "light_collection": data_holder.light_collection,
-                    "light_scope": data_holder.enum_light_scope,
+                    "light_pset": data_holder.light_pset,
                     "overrides": {
                         "reflectance": data_holder.reflectance_pset,
                         "transmittance": data_holder.transmittance_pset,
@@ -411,10 +423,7 @@ class HoneybeeRadiance:
                     },
                 },
             )
-            if model is None:
-                print("[RefOps.honeybee] Recorrendo aos atributos de face.")
-
-        if model is None:
+        else:
             model = hb.model_from_object(
             source,
             {
@@ -625,10 +634,10 @@ class HoneybeeRadiance:
     def _write_outputs(cls, target, domain, indices, data_holder, recipe_name,
                        outputs, project):
         """Annual Daylight writes four attributes at once; the others write one
-        under the user's chosen name."""
+        under the user's chosen name. Returns {attribute name: values}."""
         as_group = domain == "VERTEX_GROUP"
         blender_domain = "POINT" if domain in {"VERTEX", "VERTEX_GROUP"} else "FACE"
-        written = []
+        written = {}
         multiple = len(outputs) > 1
 
         for default_name, (output_key, folders) in outputs.items():
@@ -650,9 +659,9 @@ class HoneybeeRadiance:
             )
             if as_group:
                 if lb.write_vertex_group(target, name, values, indices):
-                    written.append(name)
+                    written[name] = values
             elif hb.write_face_values(target, name, values, indices, blender_domain):
-                written.append(name)
+                written[name] = values
         if not written:
             print("[RefOps.honeybee] Nenhum atributo escrito.")
         return written
@@ -676,5 +685,20 @@ class HoneybeeRadiance:
         obj["context_mode"] = data_holder.context_mode
         obj["result_geometry_mode"] = data_holder.result_geometry_mode
         obj["result_domain"] = domain
-        obj["refops_value_attribute"] = written[0] if written else ""
-        obj["refops_value_attributes"] = ",".join(written)
+        names = list(written)
+        obj["refops_value_attribute"] = names[0] if names else ""
+        obj["refops_value_attributes"] = ",".join(names)
+        # hb_value_* mirrors the Ladybug operators' lb_value_* for the primary
+        # attribute; Annual Daylight writes several, so each also gets its own.
+        for position, (name, values) in enumerate(written.items()):
+            stats = {
+                "min": round(min(values), 4),
+                "max": round(max(values), 4),
+                "mean": round(sum(values) / len(values), 4),
+            }
+            for key, value in stats.items():
+                obj[f"hb_{name}_{key}"] = value
+                if position == 0:
+                    obj[f"hb_value_{key}"] = value
+            if position == 0:
+                obj["hb_samples"] = len(values)
