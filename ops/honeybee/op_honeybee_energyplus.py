@@ -2,8 +2,9 @@
 
 The parent is the Room Reference: a closed mesh that IS the EnergyPlus zone.
 Its faces are matched to the real Bonsai elements for layers and boundary
-conditions, windows come from the Openings collection, and the results land on
-the engine's copy as uniform FACE float attributes:
+conditions, windows come from whatever elements carry Room=True in the
+Openings pset, and the results land on the engine's copy as uniform FACE
+float attributes:
 
     Room Reference + elements -> Honeybee Room -> EnergyPlus (x2) -> attributes
 
@@ -23,7 +24,6 @@ import bpy
 import refops_api
 
 hb = refops_api.honeybee_helpers
-lb = refops_api.ladybug_helpers
 bim = refops_api.bim_helpers
 
 AIR_TEMP = "air_temp_mean"
@@ -48,11 +48,19 @@ class HoneybeeEnergyPlus:
 
     props_definition = {
         "lbl_room": ("Label", {"text": "Parent = Room Reference (closed mesh)", "icon": "MESH_CUBE"}),
-        "construction": (
-            "Collection",
+        "room_name": (
+            "String",
             {
-                "name": "Construction",
-                "description": "Walls, slabs and roofs; layers and IsExternal are read from each",
+                "name": "Room",
+                "description": "Boolean property looked up by this name in each Room Pset below — not a Collection, so one element can serve more than one room",
+            },
+        ),
+        "construction_pset": (
+            "String",
+            {
+                "name": "Construction Pset",
+                "default": "PyOps_RoomConstruction",
+                "description": "Walls, slabs and roofs with Room=True in this pset; layers and IsExternal are read from each",
             },
         ),
         "layer_order": (
@@ -68,9 +76,13 @@ class HoneybeeEnergyPlus:
         ),
         "sep_openings": ("Separator", {}),
         "lbl_openings": ("Label", {"text": "Openings", "icon": "MOD_WIREFRAME"}),
-        "openings": (
-            "Collection",
-            {"name": "Openings", "description": "Windows and doors; matched to the voids by position"},
+        "openings_pset": (
+            "String",
+            {
+                "name": "Openings Pset",
+                "default": "PyOps_RoomOpenings",
+                "description": "Windows and doors with Room=True in this pset; matched to the voids by position",
+            },
         ),
         "opening_mode": (
             "Enum",
@@ -107,14 +119,19 @@ class HoneybeeEnergyPlus:
                 "name": "Lighting",
                 "items": [
                     ("NONE", "None", "No lighting load — the program's density is zeroed"),
-                    ("COLLECTION", "Collection", "Σ Wattage of the fixtures over the floor area"),
+                    ("ROOM_PSET", "Room Pset", "Σ Wattage of the fixtures with Room=True, over the floor area"),
                 ],
                 "default": "NONE",
             },
         ),
-        "light_collection": (
-            "Collection",
-            {"name": "Light Collection", "show_if": ("enum_lights", {"COLLECTION"})},
+        "light_room_pset": (
+            "String",
+            {
+                "name": "Lights Pset",
+                "default": "PyOps_RoomLights",
+                "description": "Fixtures with Room=True in this pset",
+                "show_if": ("enum_lights", {"ROOM_PSET"}),
+            },
         ),
         "light_pset": (
             "String",
@@ -122,7 +139,7 @@ class HoneybeeEnergyPlus:
                 "name": "Light Pset",
                 "default": "PyOps_Light",
                 "description": "Wattage (W), or LuminousFlux (lm) at 90 lm/W",
-                "show_if": ("enum_lights", {"COLLECTION"}),
+                "show_if": ("enum_lights", {"ROOM_PSET"}),
             },
         ),
         "sep_hvac": ("Separator", {}),
@@ -133,16 +150,21 @@ class HoneybeeEnergyPlus:
                 "name": "HVAC",
                 "items": [
                     ("IDEAL_AIR", "Ideal Air", "Unlimited capacity; electricity is lights + equipment only"),
-                    ("COLLECTION", "Collection", "Capacity and COP from the units' pset (approximate)"),
+                    ("ROOM_PSET", "Room Pset", "Capacity and COP from the units' pset (approximate)"),
                 ],
                 "default": "IDEAL_AIR",
             },
         ),
         "heating_setpoint": ("Float", {"name": "Heating Setpoint (°C)", "default": 20.0}),
         "cooling_setpoint": ("Float", {"name": "Cooling Setpoint (°C)", "default": 24.0}),
-        "hvac_collection": (
-            "Collection",
-            {"name": "HVAC Collection", "show_if": ("hvac_mode", {"COLLECTION"})},
+        "hvac_room_pset": (
+            "String",
+            {
+                "name": "HVAC Room Pset",
+                "default": "PyOps_RoomHVAC",
+                "description": "Units with Room=True in this pset",
+                "show_if": ("hvac_mode", {"ROOM_PSET"}),
+            },
         ),
         "hvac_pset": (
             "String",
@@ -150,7 +172,7 @@ class HoneybeeEnergyPlus:
                 "name": "HVAC Pset",
                 "default": "PyOps_HVAC",
                 "description": "CoolingCapacity, HeatingCapacity (W), COP_Cooling, COP_Heating",
-                "show_if": ("hvac_mode", {"COLLECTION"}),
+                "show_if": ("hvac_mode", {"ROOM_PSET"}),
             },
         ),
         "sep_comfort": ("Separator", {}),
@@ -231,13 +253,16 @@ class HoneybeeEnergyPlus:
         if program is None:
             return False
 
-        construction = lb.collection_meshes(data_holder.construction)
+        # Membership by Room pset, not Collection: a shared wall can be True
+        # for two rooms at once, so its object can serve both runs' lists
+        # without ever being moved between collections.
+        construction = bim.room_members(data_holder.construction_pset, data_holder.room_name)
         if not construction:
-            print("[RefOps.energyplus] Collection de Construction vazia — todas as faces genéricas.")
+            print("[RefOps.energyplus] Nenhum elemento de Construction marcado para este cômodo — todas as faces genéricas.")
         hb.match_room_faces(entries, construction)
         hb.apply_envelope(entries, data_holder.layer_order == "FIRST_OUTER")
 
-        openings = lb.collection_meshes(data_holder.openings)
+        openings = bim.room_members(data_holder.openings_pset, data_holder.room_name)
         if data_holder.opening_mode == "CUT":
             added = hb.openings_cut(entries, openings, data_holder.glazing_pset)
         else:
@@ -294,7 +319,8 @@ class HoneybeeEnergyPlus:
         if data_holder.enum_lights == "NONE":
             program.lighting = None
         else:
-            watts = hb.lighting_watts(data_holder.light_collection, data_holder.light_pset)
+            lights = bim.room_members(data_holder.light_room_pset, data_holder.room_name)
+            watts = hb.lighting_watts(lights, data_holder.light_pset)
             area = room.floor_area
             if area <= 0:
                 print("[RefOps.energyplus] Room sem piso — densidade de luz impossível.")
@@ -325,12 +351,13 @@ class HoneybeeEnergyPlus:
         if data_holder.hvac_mode == "IDEAL_AIR":
             return IdealAirSystem("refops_ideal_air"), (None, None)
 
+        hvac_objects = bim.room_members(data_holder.hvac_room_pset, data_holder.room_name)
         cooling, heating, cop_cool, cop_heat = hb.hvac_readings(
-            data_holder.hvac_collection, data_holder.hvac_pset
+            hvac_objects, data_holder.hvac_pset
         )
         if cooling <= 0 and heating <= 0:
             print(
-                f"[RefOps.energyplus] HVAC Collection sem CoolingCapacity/HeatingCapacity "
+                f"[RefOps.energyplus] Nenhum elemento HVAC deste cômodo com CoolingCapacity/HeatingCapacity "
                 f"em {data_holder.hvac_pset} — nada para simular."
             )
             return None
@@ -389,7 +416,7 @@ class HoneybeeEnergyPlus:
         summary = hb.summarise_energy(
             series, flags, months,
             occupied_only=data_holder.comfort_hours == "OCCUPIED",
-            cops=cops, hvac_electricity=data_holder.hvac_mode == "COLLECTION",
+            cops=cops, hvac_electricity=data_holder.hvac_mode == "ROOM_PSET",
         )
         if not summary:
             print(f"[RefOps.energyplus] passe '{name}' sem séries no .sql.")

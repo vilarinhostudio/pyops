@@ -155,6 +155,22 @@ class BonsaiTypeGeometry:
                 "show_if": ("enum_mode", {"MULTIPLE"}),
             },
         ),
+        "style_attr": (
+            "String",
+            {
+                "name": "Style Attr (point int)",
+                "search": "attribute",
+                "description": (
+                    "Index into the reference object's vertex groups, painted "
+                    "on vertices; the group's name becomes a material slot on "
+                    "the body, so one type can carry more than one "
+                    "Representation Item. Only names Blender materials — "
+                    "nothing here checks or needs an IFC Style, and the "
+                    "material is created if it doesn't exist yet. Blank "
+                    "leaves the body with whatever material it already has"
+                ),
+            },
+        ),
         "sep3": ("Separator", {}),
         "collection_name": (
             "String",
@@ -222,14 +238,14 @@ class BonsaiTypeGeometry:
                 base_name, contexts, collection_name, depsgraph,
             )
         return cls._run_single(
-            ifc_file, container_obj, data_holder, type_class, base_name,
+            ifc_file, container_obj, parent_obj, data_holder, type_class, base_name,
             contexts, collection_name, depsgraph,
         )
 
     # --- MODES ---
 
     @classmethod
-    def _run_single(cls, ifc_file, container_obj, data_holder, type_class,
+    def _run_single(cls, ifc_file, container_obj, parent_obj, data_holder, type_class,
                     base_name, contexts, collection_name, depsgraph):
         # The CONTAINER's mesh, not the parent's: it is the duplicate the engine
         # made with the parent's viewport modifiers baked in, so it carries the
@@ -240,6 +256,9 @@ class BonsaiTypeGeometry:
             return False
 
         body = container_obj.data.copy()
+        style_attr = (data_holder.style_attr or "").strip()
+        if style_attr:
+            cls._paint_styles_from_mesh(body, style_attr, parent_obj)
         # No grouping attribute in this mode, so every symbol object comes back
         # whole, under the None key.
         symbols = cls._symbol_meshes(data_holder, contexts, depsgraph, "")
@@ -267,6 +286,8 @@ class BonsaiTypeGeometry:
         groups = cls._groups(
             container_obj.data, group_attr,
             (data_holder.material_attr or "").strip(),
+            (data_holder.style_attr or "").strip(),
+            parent_obj,
         )
         if not groups:
             print("[RefOps] Nenhum grupo encontrado.")
@@ -391,7 +412,8 @@ class BonsaiTypeGeometry:
     # --- GEOMETRY SOURCES ---
 
     @classmethod
-    def _groups(cls, source, group_attr, material_attr="", fallback=True):
+    def _groups(cls, source, group_attr, material_attr="", style_attr="",
+               parent_obj=None, fallback=True):
         """One entry per type to build: {key: (mesh, material value)}.
 
         The grouping integer lives on POINTS. Faces would do for a body, but not
@@ -416,6 +438,7 @@ class BonsaiTypeGeometry:
         material_layer = (
             bm.verts.layers.int.get(material_attr) if material_attr else None
         )
+        style_layer = bm.verts.layers.int.get(style_attr) if style_attr else None
 
         faces_by_key = {}
         edges_by_key = {}
@@ -440,7 +463,9 @@ class BonsaiTypeGeometry:
         groups = {}
         for key in sorted(set(faces_by_key) | set(edges_by_key)):
             faces = faces_by_key.get(key, [])
-            mesh = cls._mesh_from_elements(faces, edges_by_key.get(key, []), source)
+            mesh = cls._mesh_from_elements(
+                faces, edges_by_key.get(key, []), source, style_layer, parent_obj
+            )
             if mesh is not None:
                 groups[key] = (mesh, cls._dominant_value(faces, material_layer))
         bm.free()
@@ -461,7 +486,7 @@ class BonsaiTypeGeometry:
         return max(sorted(counts), key=lambda value: counts[value])
 
     @classmethod
-    def _mesh_from_elements(cls, faces, edges, source):
+    def _mesh_from_elements(cls, faces, edges, source, style_layer=None, parent_obj=None):
         """A standalone mesh out of a face and loose-edge selection, in the
         reference object's own local space.
 
@@ -490,7 +515,50 @@ class BonsaiTypeGeometry:
         for material in source.materials:
             mesh.materials.append(material)
         mesh.update()
+        if style_layer is not None:
+            cls._paint_styles(mesh, faces, style_layer, parent_obj)
         return mesh
+
+    @classmethod
+    def _paint_styles(cls, mesh, faces, layer, parent_obj):
+        """Face material_index from a painted point attribute, through the
+        vertex group name table — one Representation Item per name, however
+        many a single type's body needs.
+
+        Only names a Blender material and creates it if missing: this has
+        nothing to do with an IfcMaterialConstituentSet or an IFC Style
+        already in the file — those are matched up by hand, separately, and
+        neither existing nor not existing here breaks anything."""
+        material_index = {}
+        for polygon, face in zip(mesh.polygons, faces):
+            name = cls._constituent_name(parent_obj, cls._element_value(face, layer))
+            if not name:
+                continue
+            if name not in material_index:
+                material = bpy.data.materials.get(name) or bpy.data.materials.new(name)
+                existing = [m.name for m in mesh.materials if m]
+                if material.name not in existing:
+                    mesh.materials.append(material)
+                    material_index[name] = len(mesh.materials) - 1
+                else:
+                    material_index[name] = existing.index(material.name)
+            polygon.material_index = material_index[name]
+
+    @classmethod
+    def _paint_styles_from_mesh(cls, mesh, style_attr, parent_obj):
+        """Same as _paint_styles, for a full mesh copy rather than a group
+        already split out of a bmesh — Single mode's body never goes through
+        _mesh_from_elements, so it needs its own bmesh pass to read the
+        attribute."""
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+        layer = bm.verts.layers.int.get(style_attr)
+        if layer is None:
+            print(f"[RefOps] '{style_attr}' não é atributo inteiro de ponto — Style ignorado.")
+            bm.free()
+            return
+        cls._paint_styles(mesh, list(bm.faces), layer, parent_obj)
+        bm.free()
 
     @classmethod
     def _dominant_value(cls, faces, layer):

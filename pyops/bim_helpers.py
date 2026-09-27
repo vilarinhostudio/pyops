@@ -470,6 +470,29 @@ def pset_value(element, path):
     return psets.get(pset_name, {}).get(property_name)
 
 
+def room_members(room_pset, room_name):
+    """Blender mesh objects flagged True for room_name inside room_pset.
+
+    Membership by pset instead of Collection: a wall shared by two rooms just
+    carries the boolean under both room names at once, which an exclusive
+    Collection can't express without moving the object back and forth."""
+    ifc_file = get_file()
+    if ifc_file is None or not room_pset or not room_name:
+        return []
+    objects = []
+    for element in ifc_file.by_type("IfcElement"):
+        try:
+            psets = ifcopenshell.util.element.get_psets(element)
+        except Exception:
+            continue
+        if not psets.get(room_pset, {}).get(room_name):
+            continue
+        obj = tool.Ifc.get_object(element)
+        if isinstance(obj, bpy.types.Object) and obj.type == "MESH":
+            objects.append(obj)
+    return objects
+
+
 def parametric_size(entity):
     """(width, height) read from a Bonsai parametric type's BBIM pset.
 

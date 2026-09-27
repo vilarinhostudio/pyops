@@ -1,9 +1,9 @@
 """Daylight analysis through Honeybee-Radiance, written onto Blender faces.
 
-The Honeybee model comes either from a collection of the real Bonsai elements
-(walls, slabs, roofs, with their voids already cut) or from face attributes
-painted on the parent. A recipe runs, and the numbers come back as FLOAT
-attributes on the sensor geometry:
+The Honeybee model comes either from the real Bonsai elements flagged Room=True
+in a pset (walls, slabs, roofs, with their voids already cut) or from face
+attributes painted on the parent. A recipe runs, and the numbers come back as
+FLOAT attributes on the sensor geometry:
 
     elements | face attributes -> Honeybee model -> Radiance -> attributes
 
@@ -24,6 +24,7 @@ import refops_api
 
 hb = refops_api.honeybee_helpers
 lb = refops_api.ladybug_helpers
+bim = refops_api.bim_helpers
 
 # Recipe name and the outputs each one produces. Adding an analysis is a row
 # here plus its metric names — the rest of the operator does not change.
@@ -105,19 +106,29 @@ class HoneybeeRadiance:
                 "default": "CONSTRUCTION",
             },
         ),
-        "construction": (
-            "Collection",
+        "room_name": (
+            "String",
             {
-                "name": "Construction",
-                "description": "Walls, slabs and roofs; each mesh is used as it is, voids included",
+                "name": "Room",
+                "description": "Boolean property looked up by this name in each Room Pset below — not a Collection, so one element can serve more than one room",
                 "show_if": ("enum_model", {"CONSTRUCTION"}),
             },
         ),
-        "openings": (
-            "Collection",
+        "construction_pset": (
+            "String",
             {
-                "name": "Openings",
-                "description": "Windows and doors; matched to the voids by position",
+                "name": "Construction Pset",
+                "default": "PyOps_RoomConstruction",
+                "description": "Walls, slabs and roofs with Room=True in this pset; each mesh is used as it is, voids included",
+                "show_if": ("enum_model", {"CONSTRUCTION"}),
+            },
+        ),
+        "openings_pset": (
+            "String",
+            {
+                "name": "Openings Pset",
+                "default": "PyOps_RoomOpenings",
+                "description": "Windows and doors with Room=True in this pset; matched to the voids by position",
                 "show_if": ("enum_model", {"CONSTRUCTION"}),
             },
         ),
@@ -237,18 +248,19 @@ class HoneybeeRadiance:
                 "name": "Sources",
                 "items": [
                     ("NONE", "None", "Daylight only"),
-                    ("COLLECTION", "Collection", "Fixtures from a collection, flux from a pset"),
+                    ("ROOM_PSET", "Room Pset", "Fixtures with Room=True in a pset, flux from another pset"),
                 ],
                 "default": "NONE",
                 "show_if": ("enum_model", {"CONSTRUCTION"}),
             },
         ),
-        "light_collection": (
-            "Collection",
+        "light_room_pset": (
+            "String",
             {
-                "name": "Light Collection",
-                "description": "Emitter is each fixture's largest face",
-                "show_if": [("enum_model", {"CONSTRUCTION"}), ("enum_lights", {"COLLECTION"})],
+                "name": "Lights Pset",
+                "default": "PyOps_RoomLights",
+                "description": "Fixtures with Room=True in this pset; emitter is each fixture's largest face",
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("enum_lights", {"ROOM_PSET"})],
             },
         ),
         "light_pset": (
@@ -257,7 +269,7 @@ class HoneybeeRadiance:
                 "name": "Light Pset",
                 "default": "PyOps_Light",
                 "description": "LuminousFlux (lm), or Wattage (W) at 90 lm/W",
-                "show_if": [("enum_model", {"CONSTRUCTION"}), ("enum_lights", {"COLLECTION"})],
+                "show_if": [("enum_model", {"CONSTRUCTION"}), ("enum_lights", {"ROOM_PSET"})],
             },
         ),
         "sep3": ("Separator", {}),
@@ -397,11 +409,25 @@ class HoneybeeRadiance:
             return False
 
         if data_holder.enum_model == "CONSTRUCTION":
+            # Membership by Room pset, not Collection: a shared wall can be
+            # True for two rooms at once, so its object can land in both
+            # runs' lists without ever being moved between collections.
+            construction_objects = bim.room_members(
+                data_holder.construction_pset, data_holder.room_name
+            )
+            opening_objects = bim.room_members(
+                data_holder.openings_pset, data_holder.room_name
+            )
+            light_objects = (
+                bim.room_members(data_holder.light_room_pset, data_holder.room_name)
+                if data_holder.enum_lights == "ROOM_PSET"
+                else []
+            )
             # No fallback to attributes: their fields are hidden in this mode,
             # so falling back would only fail again with a less useful message.
             model = hb.model_from_construction(
-                data_holder.construction,
-                openings=data_holder.openings,
+                construction_objects,
+                openings=opening_objects,
                 context_collection=(
                     data_holder.context
                     if data_holder.context_mode == "COLLECTION"
@@ -413,7 +439,7 @@ class HoneybeeRadiance:
                     "report": data_holder.report_optics,
                     "glazing_pset": data_holder.glazing_pset,
                     "lights": data_holder.enum_lights,
-                    "light_collection": data_holder.light_collection,
+                    "light_objects": light_objects,
                     "light_pset": data_holder.light_pset,
                     "overrides": {
                         "reflectance": data_holder.reflectance_pset,

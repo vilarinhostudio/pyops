@@ -563,6 +563,10 @@ def model_from_construction(construction, openings=None, context_collection=None
                             identifier="refops", options=None):
     """A Honeybee model built from the real walls, slabs and roofs.
 
+    construction and openings are plain lists of mesh objects — resolved by
+    the caller from a room pset, not a Collection — since one element (a
+    shared wall) can belong to more than one room's list at once.
+
     Each object's own mesh is the surface — already carrying the voids Bonsai
     cut with apply_openings=True — so nothing is matched against a proxy
     volume. Voids are found in the topology rather than through HasOpenings,
@@ -586,9 +590,9 @@ def model_from_construction(construction, openings=None, context_collection=None
     from honeybee.shade import Shade
     from honeybee.typing import clean_rad_string
 
-    objects = lb.collection_meshes(construction)
+    objects = construction or []
     if not objects:
-        print("[RefOps.honeybee] Collection de Construction vazia ou não informada.")
+        print("[RefOps.honeybee] Nenhum elemento de Construction marcado para este cômodo.")
         return None
     bim.ensure()
 
@@ -627,7 +631,7 @@ def model_from_construction(construction, openings=None, context_collection=None
     if not faces:
         return None
 
-    opening_objects = lb.collection_meshes(openings)
+    opening_objects = openings or []
     matches = match_openings(voids, opening_objects)
     pset_name = options.get("glazing_pset", "")
     report = options.get("report")
@@ -684,9 +688,9 @@ def model_from_construction(construction, openings=None, context_collection=None
     for position, face3d in enumerate(lb.collection_faces(context_collection)):
         shades.append(Shade(f"{identifier}_context_{position}", face3d))
 
-    if options.get("lights") == "COLLECTION":
+    if options.get("lights") == "ROOM_PSET":
         emitters, light_report = light_shades(
-            light_sources(options.get("light_collection"), options.get("light_pset", ""))
+            light_sources(options.get("light_objects") or [], options.get("light_pset", ""))
         )
         shades.extend(emitters)
         if light_report and report:
@@ -779,18 +783,17 @@ def radiance_modifier(element, name, overrides=None, outermost=True, defaults=No
 DEFAULT_EFFICACY = 90.0
 
 
-def light_readings(collection, pset_name):
-    """[(obj, LuminousFlux, Wattage)] for the fixtures in a collection, raw.
+def light_readings(objects, pset_name):
+    """[(obj, LuminousFlux, Wattage)] for the fixtures, raw.
 
     Radiance wants lumens and EnergyPlus wants watts; each caller converts the
     one it lacks and says so."""
     import refops_api
 
     bim = refops_api.bim_helpers
-    lb = refops_api.ladybug_helpers
 
     readings = []
-    for obj in lb.collection_meshes(collection):
+    for obj in objects:
         element = bim.entity(obj)
         flux = watts = None
         if element is not None and pset_name:
@@ -800,14 +803,14 @@ def light_readings(collection, pset_name):
     return readings
 
 
-def light_sources(collection, pset_name):
-    """[(name, Face3D, lumens, origin)] for the fixtures in a collection.
+def light_sources(objects, pset_name):
+    """[(name, Face3D, lumens, origin)] for the fixtures.
 
     Flux comes from the element's pset: LuminousFlux when present, otherwise
     Wattage at a stated efficacy — an assumption, carried in the origin so it
     shows in the report. The emitter is the fixture's largest planar region."""
     sources = []
-    for obj, flux, watts in light_readings(collection, pset_name):
+    for obj, flux, watts in light_readings(objects, pset_name):
         try:
             lumens, origin = float(flux), f"{pset_name}.LuminousFlux"
         except (TypeError, ValueError):
@@ -1787,10 +1790,10 @@ def program_type(identifier):
         return None
 
 
-def lighting_watts(collection, pset_name):
+def lighting_watts(objects, pset_name):
     """Σ Wattage of the fixtures, LuminousFlux / DEFAULT_EFFICACY where only flux is known."""
     total = 0.0
-    for obj, flux, watts in light_readings(collection, pset_name):
+    for obj, flux, watts in light_readings(objects, pset_name):
         try:
             total += float(watts)
             continue
@@ -1807,8 +1810,8 @@ def lighting_watts(collection, pset_name):
     return total
 
 
-def hvac_readings(collection, pset_name):
-    """(cooling W, heating W, COP cooling, COP heating) over the collection.
+def hvac_readings(objects, pset_name):
+    """(cooling W, heating W, COP cooling, COP heating) over the objects.
 
     Limits add up; each COP is the capacity-weighted harmonic mean,
     Σ Cap / Σ (Cap / COP) — what the units would draw together at full load.
@@ -1817,9 +1820,8 @@ def hvac_readings(collection, pset_name):
     import refops_api
 
     bim = refops_api.bim_helpers
-    lb = refops_api.ladybug_helpers
     totals = {"cool": [0.0, 0.0, 0.0], "heat": [0.0, 0.0, 0.0]}  # limit, Σcap w/ COP, Σcap/COP
-    for obj in lb.collection_meshes(collection):
+    for obj in objects:
         element = bim.entity(obj)
         if element is None:
             print(f"[RefOps.energyplus] HVAC '{obj.name}' não é elemento IFC — ignorado.")
