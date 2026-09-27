@@ -8,17 +8,17 @@
         "type": "tabs",
         "children": [
           {
-            "id": "3aa4a27bf4054c1c",
+            "id": "3eb5f7fde67d3774",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "STATUS.md",
-                "mode": "source",
+                "file": "SIMULACOES.md",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "STATUS"
+              "title": "SIMULACOES"
             }
           }
         ]
@@ -198,11 +198,16 @@
       "bases:Criar nova base": false
     }
   },
-  "active": "3aa4a27bf4054c1c",
+  "active": "3eb5f7fde67d3774",
   "lastOpenFiles": [
+    "Medida_Lux.png",
+    "PSETS.md",
+    "GOTCHAS.md.tmp.7032.8d1196a1e94d",
+    "SIMULACOES.md",
     "drawing-bonsai/assets/THEMES.md",
-    "Sem título.md",
     "STATUS.md",
+    "README.md",
+    "Sem título.md",
     "ops/bonsai/op_bim_type_geometry.py",
     "pyops.zip",
     "ops/bonsai/sedkmaIyI",
@@ -213,8 +218,6 @@
     "ops/bonsai/op_bim_slab.py.tmp.24592.08a994b4537e",
     "ops/bonsai/op_bim_wall.py.tmp.24592.c82721758c4d",
     "GOTCHAS.md",
-    "README.md",
-    "CLAUDE.md",
-    "files.zip"
+    "CLAUDE.md"
   ]
 }

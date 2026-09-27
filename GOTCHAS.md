@@ -73,6 +73,10 @@ Solução: não recentrar. A geometria do type vai no espaço local do objeto de
 Causa: a saída da árvore são **instâncias**, não malha. `modifier_apply` não realiza instância nenhuma, então não há o que assar — e o container do PyOps fica sem malha, o que derruba qualquer operação que leia dele.
 Solução: um nó *Realize Instances* no fim da árvore. Para separar o que era cada instância depois disso, pintar um atributo inteiro **de ponto** e agrupar por ele (é o que `op_bim_type_geometry` faz no modo Multiple) — instância realizada perde a identidade, atributo não. Ponto e não face porque o mesmo atributo agrupa os símbolos 2D, que são wireframe e não têm face para pintar.
 
+**Criar uma layer de atributo (`bm.verts.layers.bool.new(...)` etc.) depois de já ter construído geometria invalida toda referência Python a `BMFace`/`BMVert` seguradas antes — `ReferenceError: BMesh data ... has been removed` numa linha que só lê a lista.**
+Causa: não documentado na API do Blender; parece que adicionar uma layer realoca o bloco de custom data de todos os elementos existentes, e as referências Python antigas ficam apontando pro que foi liberado.
+Solução: criar TODAS as layers de atributo antes de construir qualquer vértice/face no bmesh, nunca depois.
+
 ## Honeybee / Radiance
 
 **Procurar "face com furo" na malha de uma parede com vão não acha nada.**
@@ -90,6 +94,14 @@ Solução: luminária como placa achatada; rodar à noite (ex.: 23h) para isolar
 **Campo *Pset.Prop* de sobrescrita óptica é ignorado, mas o valor chega mesmo assim.**
 Causa: `pset_value` separa no **primeiro** ponto e só lê Psets do elemento, nunca do material. O valor chega pela busca por nome no material, que roda depois. Não corrigido.
 Solução por ora: deixar os campos vazios e pôr as propriedades no material.
+
+**`PyOps_Glazing` (portas/janelas da collection Openings) no material não faz nada — só `VisibleTransmittance` padrão (vidro) aparece no resultado, mesmo numa porta de madeira opaca.**
+Causa: `glazing_values`/`glazing_modifier` leem `PyOps_Glazing` só via `bim.pset_value(element, ...)` → `ifcopenshell.util.element.get_psets(element)`, que **não** inclui propriedade de material nenhuma (confirmado empiricamente — diferente de `optical_properties`, usado pela Construction, que tem fallback pro material). Toda porta de Openings precisa do Pset no **elemento** (`IfcDoor`/`IfcWindow`), nunca no material.
+Solução: sem `VisibleTransmittance` explícita, a porta cai no padrão de vidro — se for opaca (madeira, muxarabi), setar `VisibleTransmittance=0.0` + `Reflectance` no elemento, ou ela "brilha" como vidro genérico no Point-in-Time.
+
+**Material errado recebe o Pset_MaterialOptical numa cena com múltiplos IfcProject linkados (Revit merge).**
+Causa: mais de um `IfcMaterial` pode ter o mesmo `Name` (um por projeto linkado — `CYH_edificios`, `CYH_edificios_vizinhos`, etc.), então resolver o material só pelo nome (`{m.Name: m for m in ifc.by_type("IfcMaterial")}`) pega uma entidade arbitrária, não necessariamente a que os objetos da sala realmente referenciam.
+Solução: resolver o material a partir do **objeto/elemento real** da collection (`ifcopenshell.util.element.get_material`), nunca por busca de nome solta no arquivo inteiro.
 
 **Material com cor definida, mas o log diz que nenhuma fonte óptica foi encontrada.**
 Causa: o estilo padrão do Bonsai é `IfcSurfaceStyleShading`; a leitura antiga só aceitava `IfcSurfaceStyleRendering`.

@@ -68,8 +68,8 @@ Materiais são os padrões do Radiance: vale para comparar janela, não para pro
 ### Térmico — `honeybee_energyplus` com construção genérica
 
 - **Parent = Room Reference** (malha fechada do ambiente crítico: o de maior fachada oeste, a cobertura, o dormitório mais exposto).
-- *Construction* vazia (todas as faces genéricas — o log avisa), *Voids From = Cut in Room Reference* *(não testado)* com os furos das janelas.
-- *HVAC = Ideal Air*, *Lighting = None*, *Criterion = ASHRAE-55 Adaptive*, *Period = Monthly* *(não testado)*.
+- *Construction* vazia (todas as faces genéricas — o log avisa), *Voids From = Cut in Room Reference* com os furos das janelas — mecanismo testado (ver STATUS.md), mas ainda sem um caso real com furo desenhado na própria Room Reference pra validar a detecção do vão.
+- *HVAC = Ideal Air*, *Lighting = None*, *Criterion = ASHRAE-55 Adaptive*, *Period = Monthly*.
 - Ler **`free_comfortable_hours_pct`** e **`free_air_temp_mean` mensal**: o passe *free* é o que mostra o efeito da janela e da proteção sem o ar condicionado mascarando.
 
 **Comparar:** mesma sala com janela maior/menor, com/sem brise (brise como objeto em *Context* não entra no EnergyPlus — ver limitações).
@@ -99,7 +99,7 @@ Checklist antes de rodar (cada item já custou uma rodada):
 ### Luz — `honeybee_radiance`, *Model = Construction*
 
 - *Construction* + *Openings* (mesmas collections), *Read from IFC* ligado para as refletâncias do acabamento.
-- **Annual Daylight** *(não testado)* nos ambientes de permanência; **Point-in-Time** nos solstícios para ver ofuscamento e mancha de sol.
+- **Annual Daylight** nos ambientes de permanência; **Point-in-Time** nos solstícios para ver ofuscamento e mancha de sol.
 - O vidro escolhido no térmico (SHGC baixo costuma vir com VT baixo) **tem de ser re-rodado aqui** — é o conflito clássico entre as duas simulações.
 
 ---
@@ -109,7 +109,7 @@ Checklist antes de rodar (cada item já custou uma rodada):
 **Objetivo:** confirmar que a solução escolhida entrega o desempenho pretendido.
 
 - Mesmas rodadas da fase 3, agora com **todos** os Psets reais — nenhum aviso de padrão no log (`sem valor, usando padrão`, `sem IsExternal`, `construção genérica`). Log limpo é o critério de pronto.
-- Paredes para ambiente vizinho condicionado: `IsExternal = False` → Adiabatic *(não testado)*.
+- Paredes para ambiente vizinho condicionado: `IsExternal = False` → Adiabatic.
 - Para laudo de norma, ver limitações abaixo: o PyOps **orienta**, não substitui o procedimento normativo.
 
 ---

@@ -30,6 +30,7 @@ _SUBMODULES = (
     "bim_profiles",
     "ladybug_helpers",
     "honeybee_helpers",
+    "scripting",
 )
 
 if "bpy" in locals():
@@ -52,6 +53,7 @@ from . import (
     ladybug_helpers,
     loader,
     properties,
+    scripting,
     search,
     ui,
 )
