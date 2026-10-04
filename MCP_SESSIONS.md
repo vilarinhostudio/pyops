@@ -35,3 +35,7 @@ O nome do pacote Bonsai (`bonsai` vs `bonsaiPR` vs `bl_ext.*`) pode mudar entre 
 ## bmesh
 
 Gotcha de layers (`bm.*.layers.*.new()` invalida referências já seguradas) documentado em GOTCHAS.md, seção Geometria e placement.
+
+## Refresh de um operador só via MCP
+
+`bpy.ops.mesh.procedural_refresh_selected()` cancela com "No procedural copies selected" no contexto do MCP — `context.selected_objects` não enxerga a seleção feita no mesmo script. O mesmo caminho que ele chama por dentro funciona: `registry.make_active(container)` e `bpy.ops.mesh.procedural_engine(is_refresh=True)`, só no container da operação (não a cena toda). Para saber se o código editado já está carregado, os arquivos de `ops/` são exec'd e `inspect.getsource` falha — olhar `cls.<método>.__func__.__code__.co_names`.

@@ -29,7 +29,7 @@ Estados:
 | `op_bim_wall.py`              | ok      |                                                              |
 | `op_bim_slab.py`              | ok      |                                                              |
 | `op_bim_face_component.py`    | ok      |                                                              |
-| `op_bim_panel.py`             | parcial | reteste pendente: mesma nomeação de type do `face_component` |
+| `op_bim_panel.py`             | parcial | 2026-10-02: material agora busca `IfcMaterialConstituentSet` existente pelo nome do vertex group (como `type_geometry`), sem criar set/material/estilo; o slot Blender vem do estilo do set (`set_blender_material`). Via MCP em 2026-10-02: set atribuído e slots corretos após refresh (23 placas); sem `IfcStyledItem` no item do corpo (o estilo vem só do material) e visual no viewport ==requer teste==. Reteste pendente também: nomeação de type do `face_component` |
 | `op_bim_type_geometry.py`     | parcial | 2026-09-27: `style_attr` (multi-material dentro de um type, ver [op_bim_type_geometry.md](op_bim_type_geometry.md)) — só `py_compile`, ==requer teste== no Blender. Resto do operador (Single/Multiple, símbolos 2D, Constituent Set) segue como estava antes, sem reteste motivado por isso. |
 | `op_bim_distribute.py`        | ok      |                                                              |
 | `op_bim_column.py`            | ok      |                                                              |
@@ -65,7 +65,7 @@ Estados:
 | `op_extrude.py` | ok     | exemplo/teste do motor, não gera IFC |
 | `op_bevel.py`   | ok     | exemplo/teste do motor, não gera IFC |
 
-## assets-bonsai (CSS/SVG)
+## drawing-bonsai/assets (CSS/SVG)
 
 | Item                                      | Estado | Nota                                      |
 | ----------------------------------------- | ------ | ----------------------------------------- |

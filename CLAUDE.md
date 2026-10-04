@@ -29,7 +29,7 @@ ops/             operações individuais (arquivos .py exec'd pelo loader)
   arch/          space_syntax (grafo espacial via decomposição volumétrica)
   basic/         extrude, bevel — exemplos/testes do motor, não-IFC
 
-assets-bonsai/   estilização SVG das plantas/cortes exportados pelo Bonsai
+drawing-bonsai/assets/   estilização SVG das plantas/cortes exportados pelo Bonsai
   patterns-source.svg   as 32 hachuras, desenhadas uma vez — fonte, não gerado
   patterns.svg          hachuras + variantes de cor, GERADO
   generate_hatches.py   gera patterns.svg + hatches.css a partir do source

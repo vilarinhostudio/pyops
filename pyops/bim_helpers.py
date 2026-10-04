@@ -1897,6 +1897,31 @@ def sync_material_style(ifc_file, ifc_material, blender_material, context):
         return None
 
 
+def set_blender_material(material_set):
+    """The Blender material behind the IfcSurfaceStyle of a constituent set's
+    first material, or None.
+
+    Read, never created: the set already carries its style, and Bonsai already
+    keeps a Blender material linked to that style. A fresh occurrence arrives
+    with no slots, so without this its colour is lost on every refresh. None
+    when the style has no Blender counterpart — an orphan style in the file —
+    which is a file problem, not something to paper over with a new material."""
+    if material_set is None or not ensure():
+        return None
+    for constituent in getattr(material_set, "MaterialConstituents", None) or []:
+        material = constituent.Material
+        for definition in getattr(material, "HasRepresentation", None) or []:
+            for representation in definition.Representations:
+                for item in representation.Items:
+                    for style in getattr(item, "Styles", None) or []:
+                        if style.is_a("IfcSurfaceStyle"):
+                            blender = tool.Ifc.get_object(style)
+                            if blender is not None:
+                                return blender
+        return None  # one constituent is all a panel carries
+    return None
+
+
 def assign_layer_set(ifc_file, type_entity, name, layers):
     """layers: iterable of (ifc_material, thickness). Walls and slabs."""
     layer_set = ifcopenshell.api.run(

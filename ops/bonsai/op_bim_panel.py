@@ -79,9 +79,9 @@ class BonsaiPanel:
                 "show_if": ("enum_profile_source", {"COLLECTION"}),
             },
         ),
-        # This operator BUILDS its own type and its constituent set, which is
-        # why it still has a Material section: the attribute is the only source
-        # for the name. Type-consuming operators have none.
+        # The attribute names an IfcMaterialConstituentSet that must ALREADY be
+        # in the file (same contract as Type Geometry). Minting one set per type
+        # name left sets nobody could organise, so nothing is created here.
         **bim.material_props("face"),
         "sep3": ("Separator", {}),
         "lbl_bim": ("Label", {"text": "BIM Properties", "icon": "OUTLINER_OB_GROUP_INSTANCE"}),
@@ -214,8 +214,7 @@ class BonsaiPanel:
             # One face is one panel here — nothing is ever merged — so the
             # vertex group table is read straight off it.
             mat_name = (
-                bim.vgroup_name_from_faces(parent_obj, [face], material_layer)
-                or "Default_Material"
+                bim.vgroup_name_from_faces(parent_obj, [face], material_layer) or ""
             )
             result = cls._build_panel(
                 ifc_file,
@@ -241,14 +240,13 @@ class BonsaiPanel:
                 key=key,
             )
             if result:
-                # (element, type index, resolved Blender material)
-                created.append(result + (bim.get_or_create_blender_material(mat_name),))
+                created.append(result)
 
-        for element, type_index, resolved_mat in created:
+        for element, type_index, body_material in created:
             obj = bim.object_for(element)
             if not obj:
                 continue
-            cls._apply_material_slots(obj, resolved_mat)
+            cls._apply_material_slots(obj, body_material)
             bim.set_type_index(obj, type_index)
 
         bm.free()
@@ -329,31 +327,34 @@ class BonsaiPanel:
             bpy.data.objects.remove(obj, do_unlink=True)
             return None
 
+        body_material = None
         comp_type = bim.find_type_by_name(ifc_file, type_class, type_name)
         if comp_type is None:
             _obj, comp_type = bim.create_type(ifc_file, type_class, type_name)
-            if comp_type:
-                ifc_mat = bim.get_or_create_material(ifc_file, mat_name)
-                bim.sync_material_style(
-                    ifc_file,
-                    ifc_mat,
-                    bim.get_or_create_blender_material(mat_name),
-                    body_context,
-                )
-                # Unconditional, where the layer set was guarded by
-                # `thickness > TOL`: a constituent set carries no thickness, so
-                # "Profile Only" — which has none — now gets a material too
-                # instead of coming out bare.
-                bim.assign_constituent_set(
-                    ifc_file, comp_type, type_name, mat_name
-                )
         if comp_type:
+            # Every run, not only on creation: repainting the index or renaming
+            # the set must reach a type that already exists. Never creates a set.
+            if mat_name:
+                material_set = bim.find_constituent_set(ifc_file, mat_name)
+                if material_set is None:
+                    print(
+                        f"[RefOps] Nenhum IfcMaterialConstituentSet '{mat_name}' "
+                        f"no arquivo — '{type_name}' fica sem material."
+                    )
+                else:
+                    bim.assign_material_set(ifc_file, comp_type, material_set)
+                    body_material = bim.set_blender_material(material_set)
+                    if body_material is None:
+                        print(
+                            f"[RefOps] O estilo de '{mat_name}' não tem material "
+                            f"Blender — '{type_name}' fica sem cor."
+                        )
             bim.assign_type(ifc_file, element, comp_type)
 
         bim.assign_container(ifc_file, element, storey)
         bim.tag_family(ifc_file, element, key)
         bim.file_object(obj)
-        return element, types.index(comp_type)
+        return element, types.index(comp_type), body_material
 
     @classmethod
     def _assemble_mesh(cls, name, outline, offset, thickness, profile_points,
@@ -556,7 +557,8 @@ class BonsaiPanel:
     def _type_name(cls, signature, point_count, thickness, mat_name, profile_obj):
         digest = hashlib.blake2b(repr(signature).encode(), digest_size=2).hexdigest()
         name = f"PNL-{point_count}pt-{digest}-{int(round(thickness * 1000))}mm"
-        name += f"_{mat_name}"
+        if mat_name:
+            name += f"_{mat_name}"
         if profile_obj:
             name += f"_{profile_obj.name}"
         return name
@@ -565,10 +567,11 @@ class BonsaiPanel:
 
     @classmethod
     def _apply_material_slots(cls, obj, body_material):
-        """One slot, the body material. The second slot only ever existed to
-        give the boolean cutter an index to write into."""
+        """One slot, the set's own Blender material. A new occurrence arrives
+        with none, so a refresh would otherwise drop the colour. Nothing to put
+        in the slot leaves the mesh as it is."""
         mesh = obj.data
-        if not mesh:
+        if not mesh or body_material is None:
             return
         mesh.materials.clear()
         mesh.materials.append(body_material)

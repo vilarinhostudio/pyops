@@ -51,6 +51,14 @@ Solução: **adotar**, nunca recriar. `link_object` cria o objeto e faz `tool.If
 Causa: o `name_callback` do Bonsai escreve o nome do objeto Blender **de volta** na entidade IFC. Um objeto criado com o nome nu (`Cube`) colide com o objeto de referência, o Blender resolve para `Cube.001`, e o callback renomeia o *type* para `Cube.001`. O refresh seguinte procura por `Cube`, não acha, e cria outro.
 Solução: nomear o objeto na convenção do próprio Bonsai, `"<Classe>/<Nome>"` — sem colisão e o callback lê de volta exatamente o nome pretendido (`link_object` em `bim_helpers.py`, e o rename final em `op_bim_type_geometry`).
 
+**Os painéis perdem a cor a cada Refresh, mesmo com o set de material certo.**
+Causa: uma ocorrência recriada nasce sem slots de material, e a cor no viewport vem do slot. O set atribuído ao type não basta.
+Solução: `op_bim_panel` grava um slot com `bim.set_blender_material(set)` — o material Blender já ligado ao estilo do material do set. Nada é criado: estilo sem material Blender vira aviso no console e painel sem cor.
+
+**Não consigo deletar nem salvar um `IfcSurfaceStyle` (aparece no Styles do Bonsai, mas o delete falha e trava o save).**
+Causa: estilo órfão — sem material Blender ligado (`tool.Ifc.get_object(style)` é `None`) e sem nenhuma referência no arquivo (`file.get_inverse(style)` vazio). Os botões do Bonsai trabalham pelo material Blender, então não o alcançam. Veio da versão antiga do painel (`sync_material_style`).
+Solução: confirmar `get_inverse` vazio e remover direto com `ifcopenshell.api.run("style.remove_style", f, style=style)`; reabrir o painel de estilos para limpar a lista. Hipótese não confirmada: o traceback real do save não foi lido.
+
 ## Geometria e placement
 
 **Um elemento simétrico parece girado 180° e "corrigir" girando mais 180° não resolve — ou espelha de novo.**
@@ -167,7 +175,7 @@ Solução: fechar o Blender antes de instalar; evitar instalar dentro de pasta s
 Causa: o OneDrive mantém o arquivo aberto durante sincronização; o `ifcopenshell` escreve num temporário e tenta substituir o original.
 Solução: salvar fora de pasta sincronizada, ou pausar a sincronização durante a sessão de trabalho.
 
-## CSS / SVG (assets-bonsai)
+## CSS / SVG (drawing-bonsai/assets)
 
 **Uma cor aplicada só à projeção (`pfillwarning3`) também aparece no corte, ou vice-versa.**
 Causa: `pfillwarning3` **contém** `fillwarning3` como substring — a regra sem prefixo casa a classe prefixada também.
@@ -188,3 +196,7 @@ Solução: entrada (`patterns-source.svg`) e saída (`patterns.svg`) são arquiv
 **Comentário de bloco em CSS gerado corta no meio e o resto vira regra solta.**
 Causa: `*/` fechando antes do fim pretendido do comentário, dentro do script gerador.
 Solução: ao editar comentários multi-linha gerados por script, contar aberturas e fechamentos antes de publicar.
+
+**A hachura de um FILL-AREA (`IfcAnnotation`, `PredefinedType-FILLAREA`) não aparece; sai só o fundo liso.**
+Causa: toda regra de hachura exige `material-` na classe, e o Bonsai só põe esse prefixo em corte/projeção. Numa anotação o nome do estilo vai cru (`diagonal1-fgwarning1-...`), então nenhum seletor casa e sobra `.PredefinedType-FILLAREA { fill: bg1 }`.
+Solução: o nome do estilo/material do FILL-AREA começa com `material-` (`material-diagonal1-fgwarning1-...`). Zero código, testado. O stroke/pen com prefixo `c` segue sem efeito em anotação — os seletores são escopados com `.cut`.
