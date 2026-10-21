@@ -1908,7 +1908,13 @@ def set_blender_material(material_set):
     which is a file problem, not something to paper over with a new material."""
     if material_set is None or not ensure():
         return None
-    for constituent in getattr(material_set, "MaterialConstituents", None) or []:
+    # A constituent set and a profile set both list members that carry .Material.
+    members = (
+        getattr(material_set, "MaterialConstituents", None)
+        or getattr(material_set, "MaterialProfiles", None)
+        or []
+    )
+    for constituent in members:
         material = constituent.Material
         for definition in getattr(material, "HasRepresentation", None) or []:
             for representation in definition.Representations:

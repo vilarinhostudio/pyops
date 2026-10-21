@@ -450,10 +450,11 @@ class EdgeComponent:
             if result:
                 created.append(result)
 
-        for element, type_index in created:
+        for element, type_index, body_material in created:
             obj = bim.object_for(element)
             if not obj:
                 continue
+            cls._apply_material_slots(obj, body_material)
             bim.set_type_index(obj, type_index)
 
         bm.free()
@@ -780,7 +781,28 @@ class EdgeComponent:
             )
         bim.assign_container(ifc_file, element, storey)
         bim.tag_family(ifc_file, element, key)
-        return element, types.index(comp_type)
+        body_material = bim.set_blender_material(
+            bim.resolve_type_material(comp_type, "IfcMaterialProfileSet")
+        )
+        return element, types.index(comp_type), body_material
+
+    @classmethod
+    def _apply_material_slots(cls, obj, body_material):
+        """One slot, the profile set's own Blender material. A new occurrence
+        arrives with none, so a refresh would otherwise drop the colour until
+        Bonsai's edit mode regenerates it. A slot linked to the OBJECT overrides
+        the mesh's material, hence the forced DATA link."""
+        mesh = obj.data
+        if not mesh or body_material is None:
+            return
+        mesh.materials.clear()
+        mesh.materials.append(body_material)
+        for slot in obj.material_slots:
+            if slot.link != "DATA":
+                slot.link = "DATA"
+        for poly in mesh.polygons:
+            poly.material_index = 0
+        mesh.update()
 
     @classmethod
     def _build_element(

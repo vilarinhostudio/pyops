@@ -58,6 +58,11 @@ class BonsaiDistributeOnPoints:
                         "IFC Component",
                         "Real occurrence placed freely, counted in schedules",
                     ),
+                    (
+                        "ANNOTATION",
+                        "IFC Annotation",
+                        "Copy of an annotation, assigned to a drawing",
+                    ),
                     ("BLENDER", "Blender Objects", "Plain objects, no IFC data"),
                 ],
                 "default": "FILLING",
@@ -216,7 +221,7 @@ class BonsaiDistributeOnPoints:
             {
                 "text": "Orientation",
                 "icon": "ORIENTATION_GIMBAL",
-                "show_if": ("enum_output", {"ELEMENT", "BLENDER"}),
+                "show_if": ("enum_output", {"ELEMENT", "BLENDER", "ANNOTATION"}),
             },
         ),
         "enum_orientation": (
@@ -234,7 +239,7 @@ class BonsaiDistributeOnPoints:
                     ("VECTOR", "Vector Attr", "Float-vector attribute on the vertex"),
                 ],
                 "default": "Z_UP",
-                "show_if": ("enum_output", {"ELEMENT", "BLENDER"}),
+                "show_if": ("enum_output", {"ELEMENT", "BLENDER", "ANNOTATION"}),
             },
         ),
         "angle_attr": (
@@ -242,9 +247,12 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Angle Attr (vert float, degrees)",
                 "search": "attribute",
-                "description": "Rotation about the up axis, in degrees",
+                "description": (
+                    "Rotation about the up axis, in degrees; for an annotation, "
+                    "about the drawing's view normal"
+                ),
                 "show_if": [
-                    ("enum_output", {"ELEMENT", "BLENDER"}),
+                    ("enum_output", {"ELEMENT", "BLENDER", "ANNOTATION"}),
                     ("enum_orientation", {"ANGLE"}),
                 ],
             },
@@ -261,6 +269,13 @@ class BonsaiDistributeOnPoints:
             },
         ),
         "sep3": ("Separator", {}),
+        "drawing_pointer": (
+            "Object",
+            {
+                "name": "Drawing (camera object)",
+                "show_if": ("enum_output", {"ANNOTATION"}),
+            },
+        ),
         "enum_storey": (
             "Enum",
             {
@@ -311,7 +326,7 @@ class BonsaiDistributeOnPoints:
         # Bonsai and an open project are demanded by the BIM path ONLY.
         # Scattering plain objects is pure Blender, and asking for an IFC file
         # to do it is what kept that half of the operator from ever running.
-        to_ifc = data_holder.enum_output in {"FILLING", "ELEMENT"}
+        to_ifc = data_holder.enum_output in {"FILLING", "ELEMENT", "ANNOTATION"}
         ifc_file = None
         if to_ifc:
             if not bim.ensure():
@@ -329,9 +344,16 @@ class BonsaiDistributeOnPoints:
 
         key = bim.family_key(container_obj, data_holder.point_attr)
         storey = None
+        drawing = None
+        if data_holder.enum_output == "ANNOTATION":
+            drawing = cls._drawing_target(data_holder)
+            if drawing is None:
+                return False
         if to_ifc:
             storey = bim.entity(data_holder.story_pointer)
-            bim.cleanup_family(ifc_file, "IfcElement", key)
+            # IfcAnnotation is not an IfcElement; both classes are swept so
+            # switching the output between runs does not strand the old copies.
+            bim.cleanup_family(ifc_file, ("IfcElement", "IfcAnnotation"), key)
         else:
             # A copy carries no pset, so the key written onto the object is the
             # only thing the next refresh can collect it by.
@@ -361,7 +383,18 @@ class BonsaiDistributeOnPoints:
 
         created = []
         for vert in points:
-            if to_ifc:
+            if drawing is not None:
+                placed = cls._place_annotation(
+                    ifc_file,
+                    vert=vert,
+                    layers=layers,
+                    weight_range=weight_range,
+                    source=source,
+                    data_holder=data_holder,
+                    drawing=drawing,
+                    key=key,
+                )
+            elif to_ifc:
                 placed = cls._place(
                     ifc_file,
                     vert=vert,
@@ -535,6 +568,76 @@ class BonsaiDistributeOnPoints:
                     bim.tag_family(ifc_file, opening, key)
                     bim.restore_finish(bim.object_for(host), host_finish)
 
+        return element
+
+    @classmethod
+    def _drawing_target(cls, data_holder):
+        """The drawing entity behind the pointed camera object, or None."""
+        drawing = bim.entity(data_holder.drawing_pointer)
+        if (
+            drawing is None
+            or not drawing.is_a("IfcAnnotation")
+            or drawing.ObjectType != "DRAWING"
+        ):
+            print("[RefOps] 'Drawing' deve apontar para a câmera de um drawing do Bonsai.")
+            return None
+        if not bim.tool.Drawing.get_drawing_group(drawing):
+            print("[RefOps] O drawing não tem grupo — não há onde atribuir a anotação.")
+            return None
+        return drawing
+
+    @classmethod
+    def _place_annotation(
+        cls, ifc_file, vert, layers, weight_range, source, data_holder, drawing, key
+    ):
+        """One copy of an annotation, assigned to the drawing and laid in its plane.
+
+        Bonsai's own Copy to Drawing is not called: it skips annotations already
+        in the target drawing, and a source living there is a normal case here.
+        The same steps are repeated instead."""
+        template = cls._pick_source(vert, layers, weight_range, data_holder)
+        entity = bim.entity(template) if template is not None else None
+        if entity is None or not entity.is_a("IfcAnnotation"):
+            print("[RefOps] A fonte deste ponto não é um IfcAnnotation.")
+            return None
+
+        camera = bim.object_for(drawing)
+        group = bim.tool.Drawing.get_drawing_group(drawing)
+        if camera is None:
+            print("[RefOps] O drawing não tem objeto de câmera na cena.")
+            return None
+
+        try:
+            old_to_new, _ = bim.tool.Geometry.duplicate_ifc_objects([template])
+            copies = [e for new in old_to_new.values() for e in new]
+        except Exception as error:
+            print(f"[RefOps] Falha ao duplicar a anotação (API do Bonsai mudou?): {error}")
+            return None
+        if not copies:
+            return None
+        element = copies[0]
+
+        old_group = bim.tool.Drawing.get_drawing_group(element)
+        if old_group:
+            bim.tool.Ifc.run("group.unassign_group", group=old_group, products=[element])
+        bim.tool.Ifc.run("group.assign_group", group=group, products=[element])
+
+        # Spin about the drawing's view normal, not world Z: in a section the
+        # plane is vertical and a world-Z turn would tilt the annotation out of it.
+        position = source.matrix_world @ vert.co
+        normal = camera.matrix_world.to_3x3().col[2].normalized()
+        angle = 0.0
+        if data_holder.enum_orientation == "ANGLE" and layers["angle"]:
+            angle = math.radians(float(vert[layers["angle"]]))
+        elif data_holder.enum_orientation in {"NORMAL", "VECTOR"}:
+            print("[RefOps] Anotação só usa Z_UP e ANGLE; orientação ignorada.")
+        obj = bim.object_for(element)
+        obj.matrix_world = mathutils.Matrix.Translation(position) @ (
+            mathutils.Matrix.Rotation(angle, 4, normal)
+        )
+        bim.tool.Drawing.ensure_annotation_in_drawing_plane(obj, camera)
+        bim.tool.Collector.assign(obj, should_clean_users_collection=True)
+        bim.tag_family(ifc_file, element, key)
         return element
 
     @classmethod

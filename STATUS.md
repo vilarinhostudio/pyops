@@ -31,10 +31,10 @@ Estados:
 | `op_bim_face_component.py`    | ok      |                                                              |
 | `op_bim_panel.py`             | parcial | 2026-10-02: material agora busca `IfcMaterialConstituentSet` existente pelo nome do vertex group (como `type_geometry`), sem criar set/material/estilo; o slot Blender vem do estilo do set (`set_blender_material`). Via MCP em 2026-10-02: set atribuído e slots corretos após refresh (23 placas); sem `IfcStyledItem` no item do corpo (o estilo vem só do material) e visual no viewport ==requer teste==. Reteste pendente também: nomeação de type do `face_component` |
 | `op_bim_type_geometry.py`     | parcial | 2026-09-27: `style_attr` (multi-material dentro de um type, ver [op_bim_type_geometry.md](op_bim_type_geometry.md)) — só `py_compile`, ==requer teste== no Blender. Resto do operador (Single/Multiple, símbolos 2D, Constituent Set) segue como estava antes, sem reteste motivado por isso. |
-| `op_bim_distribute.py`        | ok      |                                                              |
-| `op_bim_column.py`            | ok      |                                                              |
-| `op_bim_beam.py`              | ok      |                                                              |
-| `op_bim_profile_component.py` | ok      |                                                              |
+| `op_bim_distribute.py`        | ok      | 2026-10-21: saída `ANNOTATION` (cópia de IfcAnnotation para um drawing) testada por Arthur e confirmada. O cleanup agora varre também `IfcAnnotation` em todas as saídas. |
+| `op_bim_column.py`            | parcial | 2026-10-13: herda o slot de material do `EdgeComponent` (estilo do `IfcMaterialProfileSet` do type via `set_blender_material`); só testado no profile component, ==requer teste== aqui |
+| `op_bim_beam.py`              | parcial | 2026-10-13: idem coluna, ==requer teste== |
+| `op_bim_profile_component.py` | ok      | 2026-10-13: slot de material aplicado de primeira (antes só aparecia ao ligar/desligar a edição); testado no Blender |
 | `op_bim_space.py`             | ?       |                                                              |
 
 
