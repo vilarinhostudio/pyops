@@ -1,0 +1,21 @@
+schema_version = "1.0.0"
+
+id = "pyops"
+version = "1.7.0"
+name = "PyOps"
+tagline = "Atributos de malha viram elementos IFC reais"
+maintainer = "Arthur Vilarinho"
+type = "add-on"
+
+website = "https://github.com/vilarinhostudio/pyops"
+
+tags = ["Mesh", "Import-Export"]
+
+blender_version_min = "4.2.0"
+
+# GPL because the add-on links against bpy; confirm before the first public release.
+license = ["SPDX:GPL-3.0-or-later"]
+
+[permissions]
+files = "Grava bibliotecas Python externas e resultados de simulação"
+network = "Instala pacotes via pip (Ladybug, Honeybee)"

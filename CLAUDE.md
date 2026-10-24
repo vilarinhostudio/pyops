@@ -29,6 +29,11 @@ ops/             operações individuais (arquivos .py exec'd pelo loader)
   arch/          space_syntax (grafo espacial via decomposição volumétrica)
   basic/         extrude, bevel — exemplos/testes do motor, não-IFC
 
+tools/           energyplus_smoke.py (teste fora do Blender), build_release.py (zips + index.json)
+docs/            documentação escrita à mão
+.claude/         contexto para o Claude Code (STATUS, GOTCHAS, PSETS, SIMULACOES)
+workflows/       uso via MCP e projetos reais — não é o addon; sai para outro repositório
+
 drawing-bonsai/assets/   estilização SVG das plantas/cortes exportados pelo Bonsai
   patterns-source.svg   as 32 hachuras, desenhadas uma vez — fonte, não gerado
   patterns.svg          hachuras + variantes de cor, GERADO
@@ -50,7 +55,7 @@ Regras de nomenclatura que **não podem ser quebradas** sem regenerar tudo:
 
 ## Fase atual
 
-O motor e a maioria dos operadores Bonsai estão funcionando (parede, laje, abertura/distribuição, componente de perfil). Ladybug e Honeybee foram implementados mas **pouco testados** — dependem de instalação externa (pip + Radiance) que ainda está sendo configurada. Ver `STATUS.md` para o que está confirmado por operador.
+O motor e a maioria dos operadores Bonsai estão funcionando (parede, laje, abertura/distribuição, componente de perfil). Ladybug e Honeybee foram implementados mas **pouco testados** — dependem de instalação externa (pip + Radiance) que ainda está sendo configurada. Ver `.claude/STATUS.md` para o que está confirmado por operador.
 
 CSS de plantas/cortes está funcional e testado interativamente (inspetor do navegador), com prefixo `p`/`c` e paleta com níveis.
 
@@ -74,9 +79,9 @@ Os demais itens do roadmap anterior (Qto_*, Pset_PyOps de proveniência, util.se
 
 **Verifique antes de declarar pronto.** Rode o arquivo (import, lint, teste de sintaxe) antes de dizer que está corrigido. Se a verificação não é possível, diga explicitamente que não foi verificado.
 
-**Não invente assinatura de API.** Blender, Bonsai, IfcOpenShell, Ladybug e Honeybee mudam nome de operador/módulo entre versões sem aviso — isso já custou várias rodadas de correção nesta sessão. Quando a assinatura não está confirmada, ou pergunte, ou escreva o código para descobrir em tempo de execução (`find_operator` por palavra-chave, `try/except` com fallback) em vez de chutar o nome exato. Ver `GOTCHAS.md`.
+**Não invente assinatura de API.** Blender, Bonsai, IfcOpenShell, Ladybug e Honeybee mudam nome de operador/módulo entre versões sem aviso — isso já custou várias rodadas de correção nesta sessão. Quando a assinatura não está confirmada, ou pergunte, ou escreva o código para descobrir em tempo de execução (`find_operator` por palavra-chave, `try/except` com fallback) em vez de chutar o nome exato. Ver `.claude/GOTCHAS.md`.
 
-**Diga a razão, não só o quê.** Um comentário de código que explica *por que* uma decisão não-óbvia foi tomada vale mais que a decisão em si — principalmente quando a alternativa óbvia foi tentada e falhou. Isso é o que `GOTCHAS.md` documenta em nível de arquitetura; no código, uma linha de comentário basta.
+**Diga a razão, não só o quê.** Um comentário de código que explica *por que* uma decisão não-óbvia foi tomada vale mais que a decisão em si — principalmente quando a alternativa óbvia foi tentada e falhou. Isso é o que `.claude/GOTCHAS.md` documenta em nível de arquitetura; no código, uma linha de comentário basta.
 
 **Pergunte quando a mudança é ambígua ou grande.** Antes de implementar item de roadmap não aprovado, ou de mudar contrato entre operadores, confirme o escopo. Não expanda silenciosamente.
 
@@ -101,10 +106,19 @@ Os demais itens do roadmap anterior (Qto_*, Pset_PyOps de proveniência, util.se
 
 **Nunca decida silenciosamente uma convenção nova de nomenclatura CSS** sem atualizar este arquivo e regenerar `patterns.svg`/`hatches.css`/`theme-*.css` juntos — os três precisam ficar em sincronia.
 
+## Releases
+
+Tag `vX.Y.Z` dispara `.github/workflows/release.yml`: Release com `pyops.zip`, `ops.zip`, `drawing-bonsai.zip` (texto vindo de `CHANGELOG.md`) e repositório de extensões em GitHub Pages. Antes da tag: `version` em `pyops/blender_manifest.toml` **e** em `bl_info`, e seção nova no `CHANGELOG.md`. Teste local: `python tools/build_release.py`.
+
 ## Arquivos de apoio
 
-- `STATUS.md` — o que está testado, por operador
-- `GOTCHAS.md` — comportamentos descobertos na marra (sintoma → causa), para não redescobrir
-- `PSETS.md` — Psets lidos pelos operadores, com unidades
-- `SIMULACOES.md` — que simulação climática rodar em cada fase do projeto, e como
-- `MCP_SESSIONS.md` — hábitos de fluxo pra sessões via MCP do Blender (não sobre o addon)
+Em `.claude/`, importados abaixo; `docs/` é documentação escrita à mão (não carregar por padrão). Uso do Blender via MCP e projetos reais ficam em `workflows/` (será outro repositório) — fora do escopo daqui.
+
+- `.claude/STATUS.md` — o que está testado, por operador
+- `.claude/GOTCHAS.md` — comportamentos descobertos na marra (sintoma → causa), para não redescobrir
+- `.claude/PSETS.md` — Psets lidos pelos operadores, com unidades
+- `.claude/SIMULACOES.md` — que simulação climática rodar em cada fase do projeto, e como
+
+@.claude/STATUS.md
+@.claude/GOTCHAS.md
+@.claude/PSETS.md

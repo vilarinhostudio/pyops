@@ -6,3 +6,8 @@ desktop.ini
 
 # Obsidian
 .git/
+
+# Build artifacts
+/pyops.zip
+
+/dist/

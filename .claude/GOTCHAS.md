@@ -1,6 +1,6 @@
 ## Como usar
 
-Sintoma primeiro, causa depois — é como você vai lembrar disso daqui a um mês: pelo que viu na tela, não pelo nome técnico da causa. Ver também [CLAUDE.md](CLAUDE.md) para as regras que nasceram destes casos.
+Sintoma primeiro, causa depois — é como você vai lembrar disso daqui a um mês: pelo que viu na tela, não pelo nome técnico da causa. Ver também [CLAUDE.md](../CLAUDE.md) para as regras que nasceram destes casos.
 
 ## Bonsai / representação
 
@@ -58,6 +58,10 @@ Solução: `op_bim_panel` grava um slot com `bim.set_blender_material(set)` — 
 **Não consigo deletar nem salvar um `IfcSurfaceStyle` (aparece no Styles do Bonsai, mas o delete falha e trava o save).**
 Causa: estilo órfão — sem material Blender ligado (`tool.Ifc.get_object(style)` é `None`) e sem nenhuma referência no arquivo (`file.get_inverse(style)` vazio). Os botões do Bonsai trabalham pelo material Blender, então não o alcançam. Veio da versão antiga do painel (`sync_material_style`).
 Solução: confirmar `get_inverse` vazio e remover direto com `ifcopenshell.api.run("style.remove_style", f, style=style)`; reabrir o painel de estilos para limpar a lista. Hipótese não confirmada: o traceback real do save não foi lido.
+
+**Objetos `IfcMember/...` (ou qualquer `Ifc*/...`) que não deleta, console do Bonsai com erro, e o IFC não tem nenhum elemento daquela classe.**
+Causa: `.blend` e `.ifc` dessincronizados. O objeto Blender guarda `BIMObjectProperties.ifc_definition_id` (STEP ID) e o `.blend` salva isso; se o `.ifc` foi regenerado, não foi salvo junto ou foi revertido, os IDs mudam. O objeto passa a apontar para uma entidade de outra classe (`IfcMaterialConstituent`, `IfcAxis2Placement3D`, `IfcCartesianTransformationOperator3D`) ou para um ID inexistente — e o delete do Bonsai age sobre a entidade apontada, não sobre o que o nome do objeto diz. Dois objetos podem até dividir o mesmo ID. Ocorrido em 2026-10-21 com `Curt_Wall_Profile*` (7 fantasmas, `IfcMember` = 0 no arquivo). Não confirmado se o operador de profile component ou o ciclo salvar/fechar/abrir causou; o log original não foi visto.
+Solução: confirmar que é fantasma (`f.by_id(o.BIMObjectProperties.ifc_definition_id)` levanta ou devolve classe que não casa com o prefixo do nome) e remover **só pelo Blender**, `bpy.data.objects.remove(o, do_unlink=True)` + a malha órfã — nunca por `bim.delete_object`. Varrer o resto da cena com o mesmo teste. Prevenção: salvar `.blend` e `.ifc` juntos; ao reabrir, checar se os dois são do mesmo momento.
 
 ## Geometria e placement
 

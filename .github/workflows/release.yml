@@ -1,0 +1,60 @@
+name: Release
+
+# Tag vX.Y.Z -> GitHub Release (notes from CHANGELOG.md, ops/drawing-bonsai/pyops zips)
+# and the Blender Extensions repository on GitHub Pages.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Tag must match the manifest version
+        run: |
+          v=$(python -c "import tomllib;print(tomllib.load(open('pyops/blender_manifest.toml','rb'))['version'])")
+          [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "tag ${GITHUB_REF_NAME} != manifest v$v"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: python tools/build_release.py
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="$VERSION" '/^## \[/{p = index($0, "[" v "]")>0; next} p' CHANGELOG.md > notes.md
+          [ -s notes.md ] || { echo "CHANGELOG.md has no section for $VERSION"; exit 1; }
+
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp "dist/pyops-$VERSION.zip" dist/pyops.zip
+          gh release create "$GITHUB_REF_NAME" --title "PyOps $VERSION" --notes-file notes.md \
+            dist/pyops.zip dist/ops.zip dist/drawing-bonsai.zip
+
+      - name: Extensions repository (Pages)
+        run: |
+          mkdir site
+          cp "dist/pyops-$VERSION.zip" dist/index.json site/
+          cp dist/ops.zip dist/drawing-bonsai.zip site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
