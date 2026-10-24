@@ -64,16 +64,15 @@ def get_operations_callback(self, context):
 
 
 def _reset_enum(owner, prop_name):
-    """Dynamic enums store an int index; assigning an identifier is validated
-    against whatever the items callback returns at that instant, which can be
-    empty. Writing the raw index through the IDProperty layer never fails."""
+    """Put a dropdown back on its placeholder. Assign the identifier through RNA:
+    writing owner[prop_name] = 0 only touches an IDProperty the enum doesn't
+    read, so the old index survived, pointed past the new item list and the
+    dropdown showed blank. The placeholder is always item 0 of the callbacks, so
+    the assignment can't be rejected."""
     try:
-        owner[prop_name] = 0
+        setattr(owner, prop_name, NO_SELECTION)
     except Exception:
-        try:
-            owner.property_unset(prop_name)
-        except Exception:
-            pass
+        traceback.print_exc()
 
 
 def update_parent_dropdown(self, context):

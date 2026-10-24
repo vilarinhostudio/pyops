@@ -1,30 +1,38 @@
 # Changelog
 
-Cada versão vira uma Release no GitHub com o texto da sua seção. Para publicar: atualizar `version` em `pyops/blender_manifest.toml` (e `bl_info`), escrever a seção abaixo, commitar e criar a tag `vX.Y.Z`.
+Each version becomes a GitHub Release whose notes are its section below. To publish: bump `version` in `pyops/blender_manifest.toml` (and `bl_info`), write the section here, commit, and push a `vX.Y.Z` tag.
+
+## [1.7.3] - 2026-10-24
+
+### Fixed
+- Changing the parent object or the Category left a stale selection behind: the Operation dropdown showed blank instead of "Select an Operation...". Both dropdowns now return to their placeholder.
+
+### Changed
+- README, changelog and extension metadata are now in English.
 
 ## [1.7.2] - 2026-10-24
 
-### Corrigido
-- Os dropdowns Category e Operation enchiam o log do Blender com `current value '0' matches no enum` a cada redesenho (podia travar o Blender). O item de partida agora tem identificador `NONE` em vez de vazio.
+### Fixed
+- The Category and Operation dropdowns flooded the Blender log with `current value '0' matches no enum` on every redraw, which could freeze Blender. The placeholder item now has the identifier `NONE` instead of an empty one.
 
 ## [1.7.1] - 2026-10-24
 
-### Corrigido
-- Instalação como extensão acusava "Policy violation with top level module": o addon registrava um módulo de topo em `sys.modules`. Os arquivos de `ops/` agora recebem `pyops_api` direto no namespace; para scripts e MCP, `bpy.app.driver_namespace["pyops_api"]`.
+### Fixed
+- Installing as an extension reported "Policy violation with top level module": the add-on registered a top-level module in `sys.modules`. Files in `ops/` now get `pyops_api` directly in their namespace; scripts and MCP sessions use `bpy.app.driver_namespace["pyops_api"]`.
 
-### Alterado
-- Todo o prefixo `refops` virou `pyops` (classes, operadores, logs, atributos). A pasta padrão das bibliotecas passa a ser `C:\pyops_libs`: renomeie a antiga ou reinstale. Atributos com nome antigo em arquivos `.blend`/`.ifc` existentes não casam mais.
-- Operadores de `ops/` não fazem mais `import pyops_api`.
+### Changed
+- The `refops` prefix became `pyops` everywhere (classes, operators, logs, attributes). The default libraries folder is now `C:\pyops_libs`: rename the old one or reinstall. Attributes with the old name in existing `.blend`/`.ifc` files no longer match.
+- Operator files in `ops/` no longer `import pyops_api`.
 
 ## [1.7.0] - 2026-10-24
 
-Primeira versão publicada como Blender Extension.
+First version published as a Blender Extension.
 
-### Adicionado
-- Distribute: saída `IfcAnnotation` para desenhos (Bonsai).
-- Operador EnergyPlus (Honeybee) e ajustes em Radiance e `type_geometry`.
-- `blender_manifest.toml`: instalação e atualização pelo repositório de extensões.
+### Added
+- Distribute: `IfcAnnotation` output for drawings (Bonsai).
+- EnergyPlus operator (Honeybee) and improvements to Radiance and `type_geometry`.
+- `blender_manifest.toml`: install and update through the extensions repository.
 
-### Alterado
-- Operador `panel` melhorado.
-- Documentação e contexto reorganizados (`.claude/`, `docs/`).
+### Changed
+- Improved `panel` operator.
+- Documentation and context reorganized (`.claude/`, `docs/`).

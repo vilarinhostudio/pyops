@@ -1,9 +1,9 @@
 schema_version = "1.0.0"
 
 id = "pyops"
-version = "1.7.2"
+version = "1.7.3"
 name = "PyOps"
-tagline = "Atributos de malha viram elementos IFC reais"
+tagline = "Mesh attributes become real IFC elements"
 maintainer = "Arthur Vilarinho"
 type = "add-on"
 
@@ -17,5 +17,5 @@ blender_version_min = "4.2.0"
 license = ["SPDX:GPL-3.0-or-later"]
 
 [permissions]
-files = "Grava bibliotecas Python externas e resultados de simulação"
-network = "Instala pacotes via pip (Ladybug, Honeybee)"
+files = "Writes external Python libraries and simulation results"
+network = "Installs packages via pip (Ladybug, Honeybee)"
