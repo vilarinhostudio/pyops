@@ -1,7 +1,7 @@
 bl_info = {
     "name": "PyOps",
     "author": "Arthur Vilarinho",
-    "version": (1, 7, 1),
+    "version": (1, 7, 2),
     "blender": (4, 0, 0),
     "location": "View3D > Sidebar > Procedural Tab",
     "description": "Open architecture add-on that scans external python scripts to run reference-driven, non-destructive model updates",

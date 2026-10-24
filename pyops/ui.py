@@ -5,6 +5,7 @@ import bpy
 from . import dependencies
 from . import registry as registry_module
 from . import search
+from .callbacks import NO_SELECTION
 from .attributes import field_for, spec_for
 from .properties import resolve_alias
 from .registry import OPERATIONS, op_holder
@@ -195,7 +196,7 @@ class VIEW3D_PT_procedural_sidebar(bpy.types.Panel):
 
         if scn.ui_parent:
             box_add.prop(scn, "ui_category_dropdown", text="Category")
-            if scn.ui_category_dropdown:
+            if scn.ui_category_dropdown != NO_SELECTION:
                 box_add.prop(scn, "ui_op_dropdown", text="Operation")
             props = getattr(scn, "ui_factory_props", None)
             if scn.ui_op_dropdown in OPERATIONS and props and len(props) > 0:

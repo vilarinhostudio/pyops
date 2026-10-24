@@ -2,6 +2,11 @@
 
 Cada versão vira uma Release no GitHub com o texto da sua seção. Para publicar: atualizar `version` em `pyops/blender_manifest.toml` (e `bl_info`), escrever a seção abaixo, commitar e criar a tag `vX.Y.Z`.
 
+## [1.7.2] - 2026-10-24
+
+### Corrigido
+- Os dropdowns Category e Operation enchiam o log do Blender com `current value '0' matches no enum` a cada redesenho (podia travar o Blender). O item de partida agora tem identificador `NONE` em vez de vazio.
+
 ## [1.7.1] - 2026-10-24
 
 ### Corrigido

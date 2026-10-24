@@ -12,6 +12,13 @@ from . import registry
 from .registry import OPERATIONS, UI_ONLY_TYPES, accepts_object_type, op_holder
 
 
+# Identifier of the "nothing chosen" placeholder (index 0). It must be non-empty:
+# Blender skips items with an empty identifier when mapping a stored value back
+# to an item, so a placeholder with "" made value 0 match nothing and logged
+# "current value '0' matches no enum" on every redraw.
+NO_SELECTION = "NONE"
+
+
 def _cache_items(key, items):
     registry.enum_items_cache[key] = items
     return items
@@ -20,7 +27,7 @@ def _cache_items(key, items):
 def get_categories_callback(self, context):
     """First-level dropdown: distinct category_tag values (subfolder names) that
     have at least one operation applicable to the selected parent object's type."""
-    items = [("", "Select a Category...", "")]
+    items = [(NO_SELECTION, "Select a Category...", "")]
     try:
         scn = getattr(context, "scene", None)
         obj = getattr(scn, "ui_parent", None)
@@ -40,11 +47,11 @@ def get_categories_callback(self, context):
 def get_operations_callback(self, context):
     """Second-level dropdown: operations within the selected category, applicable
     to the selected parent object's type."""
-    items = [("", "Select an Operation...", "")]
+    items = [(NO_SELECTION, "Select an Operation...", "")]
     try:
         scn = getattr(context, "scene", None)
         obj = getattr(scn, "ui_parent", None)
-        category = getattr(scn, "ui_category_dropdown", "")
+        category = getattr(scn, "ui_category_dropdown", NO_SELECTION)
         if obj and category:
             for op_id, op_cls in OPERATIONS.items():
                 if getattr(op_cls, "category_tag", None) != category:
