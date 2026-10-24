@@ -1,11 +1,13 @@
 """Scans the user's scripts directory and registers operation classes.
 
-Files are exec'd, not imported — each gets a fresh namespace pre-seeded with the
-`refops_api` alias (registered in __init__) so operator files can reach shared
-helpers with a plain `import refops_api` regardless of the addon folder's name.
+Files are exec'd, not imported — each gets a fresh namespace pre-seeded with
+`pyops_api` (this package) so operator files reach shared helpers as
+`pyops_api.bim_helpers` without an import, regardless of where the add-on is
+installed.
 """
 
 import os
+import sys
 
 import bpy
 
@@ -31,7 +33,11 @@ def load_operations_from_disk():
                     with open(path, "r", encoding="utf-8") as f:
                         code = f.read()
 
-                    module_namespace = {"__file__": path, "__name__": filename[:-3]}
+                    module_namespace = {
+                        "__file__": path,
+                        "__name__": filename[:-3],
+                        "pyops_api": sys.modules[__package__],
+                    }
                     exec(compile(code, path, "exec"), module_namespace)
 
                     for attr in module_namespace.values():

@@ -1,12 +1,11 @@
-import refops_api
 
-EdgeComponent = refops_api.bim_profiles.EdgeComponent
+EdgeComponent = pyops_api.bim_profiles.EdgeComponent
 
 
 class BonsaiColumn(EdgeComponent):
     """Bonsai IFC Column.
 
-    Everything lives in refops_api.bim_profiles.EdgeComponent — only the IFC
+    Everything lives in pyops_api.bim_profiles.EdgeComponent — only the IFC
     identity and the axis rule differ between the three edge-driven components,
     so this file is the whole difference.
 

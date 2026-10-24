@@ -22,9 +22,8 @@ import math
 
 import bpy
 
-import refops_api
 
-lb = refops_api.ladybug_helpers
+lb = pyops_api.ladybug_helpers
 
 
 class LadybugGraphs:
@@ -453,7 +452,7 @@ class LadybugGraphs:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not lb.ensure():
-            print("[RefOps.ladybug] Ladybug Tools indisponível:")
+            print("[PyOps.ladybug] Ladybug Tools indisponível:")
             print(lb.IMPORT_ERROR)
             return False
 
@@ -498,7 +497,7 @@ class LadybugGraphs:
             # warning, not a failed operation.
             import traceback
 
-            print(f"[RefOps.ladybug] '{subtype}' falhou: {e}")
+            print(f"[PyOps.ladybug] '{subtype}' falhou: {e}")
             traceback.print_exc()
 
         if not output.objects:
@@ -512,7 +511,7 @@ class LadybugGraphs:
         if data_holder.as_grease_pencil:
             # Last, so every curve the builders produced is already collected.
             converted = output.to_grease_pencil()
-            print(f"[RefOps.ladybug] {converted} curvas convertidas em grease pencil.")
+            print(f"[PyOps.ladybug] {converted} curvas convertidas em grease pencil.")
 
         if data_holder.title:
             # Top-left of the reference, and NOT scaled with the graph: a wind
@@ -560,7 +559,7 @@ class LadybugGraphs:
         window as everything else."""
         block = bpy.data.texts.get(holder.data_text) if holder.data_text else None
         if block is None:
-            print("[RefOps.ladybug] Custom Data sem bloco de texto.")
+            print("[PyOps.ladybug] Custom Data sem bloco de texto.")
             return None
         try:
             values = [
@@ -570,7 +569,7 @@ class LadybugGraphs:
                 if token
             ]
         except ValueError as e:
-            print(f"[RefOps.ladybug] Bloco '{block.name}': {e}")
+            print(f"[PyOps.ladybug] Bloco '{block.name}': {e}")
             return None
 
         from ladybug.analysisperiod import AnalysisPeriod
@@ -581,7 +580,7 @@ class LadybugGraphs:
         period = AnalysisPeriod()
         if len(values) != len(period.hoys):
             print(
-                f"[RefOps.ladybug] Esperados {len(period.hoys)} valores, "
+                f"[PyOps.ladybug] Esperados {len(period.hoys)} valores, "
                 f"encontrados {len(values)}."
             )
             return None
@@ -651,7 +650,7 @@ class LadybugGraphs:
             for index, polyline in enumerate(polylines):
                 output.add_curve(f"monthly_line_{index}", polyline)
             if not polylines:
-                print("[RefOps.ladybug] Sem polilinhas: use BAR para esta coleção.")
+                print("[PyOps.ladybug] Sem polilinhas: use BAR para esta coleção.")
         else:
             for index, mesh in enumerate(chart.data_meshes):
                 output.add_mesh(
@@ -842,7 +841,7 @@ class LadybugGraphs:
                     holder.display_material,
                 )
             else:
-                print("[RefOps.ladybug] Este gráfico não expõe data_points.")
+                print("[PyOps.ladybug] Este gráfico não expõe data_points.")
 
         output.add_curve("psych_border", chart.chart_border, cyclic=False)
 
@@ -883,7 +882,7 @@ class LadybugGraphs:
     def _build_adaptive(cls, output, reference, holder):
         AdaptiveChart = lb.optional("ladybug_comfort.chart.adaptive", "AdaptiveChart")
         if AdaptiveChart is None:
-            print("[RefOps.ladybug] Adaptive Chart exige ladybug-comfort.")
+            print("[PyOps.ladybug] Adaptive Chart exige ladybug-comfort.")
             return
         epw = lb.load_epw(holder.epw)
         if epw is None:
@@ -1051,7 +1050,7 @@ class LadybugGraphs:
         if holder.comfort_chart_type == "PMV":
             PolygonPMV = lb.optional("ladybug_comfort.chart.polygonpmv", "PolygonPMV")
             if PolygonPMV is None:
-                print("[RefOps.ladybug] PMV exige ladybug-comfort.")
+                print("[PyOps.ladybug] PMV exige ladybug-comfort.")
                 return
             polygons = PolygonPMV(
                 chart,
@@ -1064,7 +1063,7 @@ class LadybugGraphs:
         else:
             PolygonUTCI = lb.optional("ladybug_comfort.chart.polygonutci", "PolygonUTCI")
             if PolygonUTCI is None:
-                print("[RefOps.ladybug] UTCI exige ladybug-comfort.")
+                print("[PyOps.ladybug] UTCI exige ladybug-comfort.")
                 return
             polygons = PolygonUTCI(
                 chart,
@@ -1105,7 +1104,7 @@ class LadybugGraphs:
                     ) if flags else 0.0,
                 )
         except Exception as e:
-            print(f"[RefOps.ladybug] métricas de conforto indisponíveis: {e}")
+            print(f"[PyOps.ladybug] métricas de conforto indisponíveis: {e}")
 
     # --- SKY & SOLAR ---
 
@@ -1117,7 +1116,7 @@ class LadybugGraphs:
 
         if lb.radiance is None:
             print(
-                "[RefOps.ladybug] Este gráfico exige ladybug-radiance, "
+                "[PyOps.ladybug] Este gráfico exige ladybug-radiance, "
                 "que não está instalado."
             )
             return
@@ -1265,7 +1264,7 @@ class LadybugGraphs:
             hoys = list(data.header.analysis_period.hoys)
             lookup = {round(hoy, 3): value for hoy, value in zip(hoys, data.values)}
         except Exception as e:
-            print(f"[RefOps.ladybug] valores por hora indisponíveis: {e}")
+            print(f"[PyOps.ladybug] valores por hora indisponíveis: {e}")
             return None
         values = [lookup.get(round(sun.hoy, 3)) for sun in suns]
         if any(value is None for value in values):
@@ -1584,7 +1583,7 @@ class LadybugGraphs:
             return None
         path = bpy.path.abspath(holder.epw) if holder.epw else ""
         if not path:
-            print("[RefOps.ladybug] Nenhum EPW informado.")
+            print("[PyOps.ladybug] Nenhum EPW informado.")
             return None
         try:
             from ladybug.wea import Wea
@@ -1595,8 +1594,8 @@ class LadybugGraphs:
                 wea = wea.filter_by_analysis_period(period)
             return SkyMatrix(wea, north=lb.NORTH_ANGLE)
         except Exception as e:
-            print(f"[RefOps.ladybug] SkyMatrix: {e}")
-            print("[RefOps.ladybug] Este gráfico requer o Radiance instalado (gendaymtx).")
+            print(f"[PyOps.ladybug] SkyMatrix: {e}")
+            print("[PyOps.ladybug] Este gráfico requer o Radiance instalado (gendaymtx).")
             return None
 
     # --- WIND ---
@@ -1673,7 +1672,7 @@ class LadybugGraphs:
                 max(holder.profile_height / 20.0, 0.5),
             )
         except TypeError as e:
-            print(f"[RefOps.ladybug] profile_polyline3d: {e}")
+            print(f"[PyOps.ladybug] profile_polyline3d: {e}")
             return
         # Returns (polyline, vectors, anchors) in some releases and a bare
         # polyline in others.

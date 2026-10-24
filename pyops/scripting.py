@@ -7,8 +7,8 @@ entry in `ui_factory_props` — see callbacks.py and engine.py. Driving that by
 hand from a Blender-MCP session means reverse-engineering the cascade every
 time; this wraps it in one call.
 
-    import refops_api
-    refops_api.scripting.run_operation(
+    pyops_api = bpy.app.driver_namespace["pyops_api"]
+    pyops_api.scripting.run_operation(
         parent_obj, "BIM_WALL_GENERATOR",
         bool_attr="sel_wall", wall_type_pointer=wall_type_obj,
     )

@@ -27,10 +27,9 @@ import bmesh
 import bpy
 import mathutils
 
-import refops_api
 
-bim = refops_api.bim_helpers
-prof = refops_api.bim_profiles
+bim = pyops_api.bim_helpers
+prof = pyops_api.bim_profiles
 
 TOL = bim.TOL
 
@@ -330,12 +329,12 @@ class BonsaiDistributeOnPoints:
         ifc_file = None
         if to_ifc:
             if not bim.ensure():
-                print("[RefOps] Bonsai indisponível:")
+                print("[PyOps] Bonsai indisponível:")
                 print(bim.IMPORT_ERROR)
                 return False
             ifc_file = bim.get_file()
             if not ifc_file:
-                print("[RefOps] Nenhum projeto IFC ativo.")
+                print("[PyOps] Nenhum projeto IFC ativo.")
                 return False
 
         container_obj.display_type = "WIRE"
@@ -373,7 +372,7 @@ class BonsaiDistributeOnPoints:
         points = [vert for vert in bm.verts if vert[layers["select"]]]
         if not points:
             bm.free()
-            print("[RefOps] Nenhum vértice marcado.")
+            print("[PyOps] Nenhum vértice marcado.")
             return False
 
         weight_range = None
@@ -418,7 +417,7 @@ class BonsaiDistributeOnPoints:
                 created.append(placed)
 
         bm.free()
-        print(f"[RefOps] {len(created)} de {len(points)} pontos preenchidos.")
+        print(f"[PyOps] {len(created)} de {len(points)} pontos preenchidos.")
         return bool(created)
 
     # --- ATTRIBUTES ---
@@ -427,7 +426,7 @@ class BonsaiDistributeOnPoints:
     def _layers(cls, bm, data_holder):
         select = bm.verts.layers.bool.get(data_holder.point_attr)
         if not select:
-            print(f"[RefOps] Atributo '{data_holder.point_attr}' não encontrado.")
+            print(f"[PyOps] Atributo '{data_holder.point_attr}' não encontrado.")
             return None
 
         def vert_int(name):
@@ -481,12 +480,12 @@ class BonsaiDistributeOnPoints:
     ):
         template = cls._pick_source(vert, layers, weight_range, data_holder)
         if template is None:
-            print("[RefOps] Nenhum objeto de origem para este ponto.")
+            print("[PyOps] Nenhum objeto de origem para este ponto.")
             return None
 
         entity = bim.entity(template)
         if entity is None:
-            print(f"[RefOps] '{template.name}' não é um elemento IFC.")
+            print(f"[PyOps] '{template.name}' não é um elemento IFC.")
             return None
 
         # The host comes FIRST now: the placement is built against the wall's
@@ -500,7 +499,7 @@ class BonsaiDistributeOnPoints:
                 ifc_file, source.matrix_world @ vert.co, data_holder.host_class
             )
             if host is None:
-                print("[RefOps] Nenhum hospedeiro encontrado para este ponto.")
+                print("[PyOps] Nenhum hospedeiro encontrado para este ponto.")
 
         matrix, cardinal_axis = cls._matrix_for(
             vert, layers, source, data_holder, host
@@ -513,7 +512,7 @@ class BonsaiDistributeOnPoints:
         element_type, _ifc_class = bim.filling_type_of(entity)
         obj, element = bim.occurrence_from_type(element_type, matrix)
         if element is None:
-            print(f"[RefOps] Não consegui instanciar o tipo de '{template.name}'.")
+            print(f"[PyOps] Não consegui instanciar o tipo de '{template.name}'.")
             return None
         obj.matrix_world = matrix
 
@@ -560,7 +559,7 @@ class BonsaiDistributeOnPoints:
                 # and tied the cardinal to the wall's alignment.
                 opening = bim.opening_from_object(host, obj, preserve_placement=True)
                 if opening is None:
-                    print("[RefOps] O vazio não foi criado.")
+                    print("[PyOps] O vazio não foi criado.")
                 else:
                     # Tagged like everything else this run produced. Untagged,
                     # the cleanup could not see it and every refresh piled
@@ -579,10 +578,10 @@ class BonsaiDistributeOnPoints:
             or not drawing.is_a("IfcAnnotation")
             or drawing.ObjectType != "DRAWING"
         ):
-            print("[RefOps] 'Drawing' deve apontar para a câmera de um drawing do Bonsai.")
+            print("[PyOps] 'Drawing' deve apontar para a câmera de um drawing do Bonsai.")
             return None
         if not bim.tool.Drawing.get_drawing_group(drawing):
-            print("[RefOps] O drawing não tem grupo — não há onde atribuir a anotação.")
+            print("[PyOps] O drawing não tem grupo — não há onde atribuir a anotação.")
             return None
         return drawing
 
@@ -598,20 +597,20 @@ class BonsaiDistributeOnPoints:
         template = cls._pick_source(vert, layers, weight_range, data_holder)
         entity = bim.entity(template) if template is not None else None
         if entity is None or not entity.is_a("IfcAnnotation"):
-            print("[RefOps] A fonte deste ponto não é um IfcAnnotation.")
+            print("[PyOps] A fonte deste ponto não é um IfcAnnotation.")
             return None
 
         camera = bim.object_for(drawing)
         group = bim.tool.Drawing.get_drawing_group(drawing)
         if camera is None:
-            print("[RefOps] O drawing não tem objeto de câmera na cena.")
+            print("[PyOps] O drawing não tem objeto de câmera na cena.")
             return None
 
         try:
             old_to_new, _ = bim.tool.Geometry.duplicate_ifc_objects([template])
             copies = [e for new in old_to_new.values() for e in new]
         except Exception as error:
-            print(f"[RefOps] Falha ao duplicar a anotação (API do Bonsai mudou?): {error}")
+            print(f"[PyOps] Falha ao duplicar a anotação (API do Bonsai mudou?): {error}")
             return None
         if not copies:
             return None
@@ -630,7 +629,7 @@ class BonsaiDistributeOnPoints:
         if data_holder.enum_orientation == "ANGLE" and layers["angle"]:
             angle = math.radians(float(vert[layers["angle"]]))
         elif data_holder.enum_orientation in {"NORMAL", "VECTOR"}:
-            print("[RefOps] Anotação só usa Z_UP e ANGLE; orientação ignorada.")
+            print("[PyOps] Anotação só usa Z_UP e ANGLE; orientação ignorada.")
         obj = bim.object_for(element)
         obj.matrix_world = mathutils.Matrix.Translation(position) @ (
             mathutils.Matrix.Rotation(angle, 4, normal)
@@ -778,7 +777,7 @@ class BonsaiDistributeOnPoints:
                 runs.append({"direction": direction, "length": span, "edges": [edge]})
 
         if not runs:
-            print("[RefOps] Ponto sem aresta horizontal — não dá para achar a parede.")
+            print("[PyOps] Ponto sem aresta horizontal — não dá para achar a parede.")
             return None
 
         run = max(runs, key=lambda item: item["length"])
@@ -821,7 +820,7 @@ class BonsaiDistributeOnPoints:
         IFC step: no type, no storey, no void cut into the host."""
         template = cls._pick_source(vert, layers, weight_range, data_holder)
         if template is None:
-            print("[RefOps] Nenhum objeto de origem para este ponto.")
+            print("[PyOps] Nenhum objeto de origem para este ponto.")
             return None
 
         matrix, _axis = cls._matrix_for(vert, layers, source, data_holder)
@@ -934,7 +933,7 @@ class BonsaiDistributeOnPoints:
         try:
             candidates = ifc_file.by_type(host_class or "IfcWall")
         except Exception:
-            print(f"[RefOps] '{host_class}' não existe no schema.")
+            print(f"[PyOps] '{host_class}' não existe no schema.")
             return None
 
         for element in candidates:

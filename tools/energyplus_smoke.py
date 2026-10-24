@@ -1,7 +1,7 @@
 r"""Standalone EnergyPlus smoke test for the honeybee-energy that PyOps uses.
 
 Runs outside Blender, against the same library folder the addon loads
-(C:\refops_libs), so a pass here means the Blender side can reach EnergyPlus.
+(C:\pyops_libs), so a pass here means the Blender side can reach EnergyPlus.
 No OpenStudio: model_to_idf + run_idf, the path the planned operator takes,
 which is why the HVAC is IdealAirSystem.
 
@@ -11,7 +11,7 @@ The IDF header mirrors honeybee_energy/cli/translate.py (Version + SimulationPar
 default and EnergyPlus aborts without design days.
 
 Usage (Blender's Python works, it only needs the library folder):
-    python tools/energyplus_smoke.py [EPW] [--libs C:\refops_libs]
+    python tools/energyplus_smoke.py [EPW] [--libs C:\pyops_libs]
 """
 import argparse
 import os
@@ -24,13 +24,13 @@ DEFAULT_EPW = r"C:\ladybug\BRA_Sao.Paulo-Congonhas.837800_SWERA\BRA_Sao.Paulo-Co
 
 
 def log(msg):
-    print(f"[RefOps.energyplus] {msg}")
+    print(f"[PyOps.energyplus] {msg}")
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("epw", nargs="?", default=DEFAULT_EPW)
-    parser.add_argument("--libs", default=r"C:\refops_libs")
+    parser.add_argument("--libs", default=r"C:\pyops_libs")
     args = parser.parse_args()
 
     # The addon's folder must win over any honeybee installed in this interpreter.

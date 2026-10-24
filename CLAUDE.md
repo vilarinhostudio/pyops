@@ -97,7 +97,7 @@ Os demais itens do roadmap anterior (Qto_*, Pset_PyOps de proveniência, util.se
 - docstrings de módulo e classe em inglês, explicando o *porquê* de decisões não-óbvias — não o *o quê*, que o código já diz
 - comentários no código também em inglês
 - respostas de chat e mensagens de commit em português
-- `print(f"[RefOps.<módulo>] ...")` para logs — prefixo por área (`bim`, `ladybug`, `honeybee`, `space`)
+- `print(f"[PyOps.<módulo>] ...")` para logs — prefixo por área (`bim`, `ladybug`, `honeybee`, `space`)
 - funções puras nos `*_helpers.py`, sem estado, quando possível
 - operadores individuais (`ops/**/op_*.py`) são finos: leem atributos, montam parâmetros, chamam helper
 - sempre tratar falha de API externa com mensagem de console explicando causa provável, nunca deixar exceção crua estourar pro usuário

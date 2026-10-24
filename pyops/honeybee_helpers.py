@@ -2,8 +2,8 @@
 
 Lives in the addon so the planned artificial-lighting and IES work can share it:
 
-    import refops_api
-    hb = refops_api.honeybee_helpers
+    import pyops_api
+    hb = pyops_api.honeybee_helpers
 
 Honeybee is resolved on FIRST USE, for the same reason as Bonsai and Ladybug —
 the packages may be installed into Blender's Python after the addon registered,
@@ -66,7 +66,7 @@ def ensure(force=False):
     except Exception as e:
         recipes = None
         RECIPES_AVAILABLE = False
-        print(f"[RefOps.honeybee] lbt-recipes indisponível: {e}")
+        print(f"[PyOps.honeybee] lbt-recipes indisponível: {e}")
 
     return True
 
@@ -92,7 +92,7 @@ def radiance_path():
 
 def status():
     """From the Blender console:
-    import refops_api; print(refops_api.honeybee_helpers.status())"""
+    import pyops_api; print(pyops_api.honeybee_helpers.status())"""
     ensure()
     return {
         "AVAILABLE": AVAILABLE,
@@ -106,13 +106,13 @@ def optional(module_path, attribute=None):
     try:
         module = __import__(module_path, fromlist=["_"])
     except Exception as e:
-        print(f"[RefOps.honeybee] '{module_path}' indisponível: {e}")
+        print(f"[PyOps.honeybee] '{module_path}' indisponível: {e}")
         return None
     if attribute is None:
         return module
     member = getattr(module, attribute, None)
     if member is None:
-        print(f"[RefOps.honeybee] '{module_path}.{attribute}' não existe.")
+        print(f"[PyOps.honeybee] '{module_path}.{attribute}' não existe.")
     return member
 
 
@@ -143,11 +143,11 @@ def classify_faces(obj, attributes):
             continue
         attribute = mesh.attributes.get(name)
         if attribute is None:
-            print(f"[RefOps.honeybee] Atributo '{name}' não existe.")
+            print(f"[PyOps.honeybee] Atributo '{name}' não existe.")
             continue
         if attribute.domain != "FACE" or attribute.data_type != "BOOLEAN":
             print(
-                f"[RefOps.honeybee] '{name}' é {attribute.data_type}/"
+                f"[PyOps.honeybee] '{name}' é {attribute.data_type}/"
                 f"{attribute.domain}; precisa ser BOOLEAN/FACE."
             )
             continue
@@ -164,7 +164,7 @@ def classify_faces(obj, attributes):
     return classified
 
 
-def model_from_object(obj, attributes, context_collection=None, identifier="refops"):
+def model_from_object(obj, attributes, context_collection=None, identifier="pyops"):
     """A Honeybee Model built from the object's faces and their attributes.
 
     Opaque faces become orphaned Faces; openings become Apertures attached to
@@ -181,13 +181,13 @@ def model_from_object(obj, attributes, context_collection=None, identifier="refo
     from honeybee.model import Model
     from honeybee.shade import Shade
 
-    import refops_api
+    import pyops_api
 
-    lb = refops_api.ladybug_helpers
+    lb = pyops_api.ladybug_helpers
 
     classified = classify_faces(obj, attributes)
     if not classified:
-        print("[RefOps.honeybee] Nenhuma face classificada pelos atributos.")
+        print("[PyOps.honeybee] Nenhuma face classificada pelos atributos.")
         return None
 
     geometry = {index: face for face, index in lb.faces_from_object(obj)}
@@ -224,7 +224,7 @@ def model_from_object(obj, attributes, context_collection=None, identifier="refo
             units="Meters",
         )
     except Exception as e:
-        print(f"[RefOps.honeybee] Model: {e}")
+        print(f"[PyOps.honeybee] Model: {e}")
         return None
 
 
@@ -364,7 +364,7 @@ def _face3d(outer, holes=None):
             return Face3D(convert(outer), holes=[convert(h) for h in holes])
         return Face3D(convert(outer))
     except Exception as e:
-        print(f"[RefOps.honeybee] contorno degenerado ignorado: {e}")
+        print(f"[PyOps.honeybee] contorno degenerado ignorado: {e}")
         return None
 
 
@@ -506,9 +506,9 @@ def glazing_values(obj, pset_name):
     Shared by Radiance (VT, Reflectance) and EnergyPlus (VT, U_Factor, SHGC):
     one pset describes the window for both, so the two studies cannot disagree
     about which glass is in it."""
-    import refops_api
+    import pyops_api
 
-    bim = refops_api.bim_helpers
+    bim = pyops_api.bim_helpers
     element = bim.entity(obj)
     names = {
         "vt": "VisibleTransmittance",
@@ -555,12 +555,12 @@ def glazing_modifier(obj, pset_name, name):
             origin += "; Reflectance padrão 0.5"
         return Plastic.from_single_reflectance(name, reflectance), origin + " (opaco)"
     except Exception as e:
-        print(f"[RefOps.honeybee] vidro '{obj.name}': {e}")
+        print(f"[PyOps.honeybee] vidro '{obj.name}': {e}")
         return None, origin
 
 
 def model_from_construction(construction, openings=None, context_collection=None,
-                            identifier="refops", options=None):
+                            identifier="pyops", options=None):
     """A Honeybee model built from the real walls, slabs and roofs.
 
     construction and openings are plain lists of mesh objects — resolved by
@@ -576,10 +576,10 @@ def model_from_construction(construction, openings=None, context_collection=None
     the glass is a separate orphaned Aperture lying in one of the two hole
     loops. Orphaned is fine here: the faces around it really are perforated,
     so light does not depend on the aperture belonging to them."""
-    import refops_api
+    import pyops_api
 
-    bim = refops_api.bim_helpers
-    lb = refops_api.ladybug_helpers
+    bim = pyops_api.bim_helpers
+    lb = pyops_api.ladybug_helpers
     options = options or {}
 
     if not AVAILABLE:
@@ -592,7 +592,7 @@ def model_from_construction(construction, openings=None, context_collection=None
 
     objects = construction or []
     if not objects:
-        print("[RefOps.honeybee] Nenhum elemento de Construction marcado para este cômodo.")
+        print("[PyOps.honeybee] Nenhum elemento de Construction marcado para este cômodo.")
         return None
     bim.ensure()
 
@@ -608,9 +608,9 @@ def model_from_construction(construction, openings=None, context_collection=None
             try:
                 object_faces.append(Face(f"{name}_f{index}", face3d))
             except Exception as e:
-                print(f"[RefOps.honeybee] face de '{obj.name}': {e}")
+                print(f"[PyOps.honeybee] face de '{obj.name}': {e}")
         if not object_faces:
-            print(f"[RefOps.honeybee] '{obj.name}' não gerou nenhuma face.")
+            print(f"[PyOps.honeybee] '{obj.name}' não gerou nenhuma face.")
             continue
         faces.extend(object_faces)
 
@@ -618,7 +618,7 @@ def model_from_construction(construction, openings=None, context_collection=None
             element = bim.entity(obj)
             if element is None:
                 print(
-                    f"[RefOps.honeybee] '{obj.name}' não é elemento IFC — "
+                    f"[PyOps.honeybee] '{obj.name}' não é elemento IFC — "
                     "refletância padrão do Radiance."
                 )
             else:
@@ -656,7 +656,7 @@ def model_from_construction(construction, openings=None, context_collection=None
         if obj is None:
             c = loop["centre"]
             print(
-                f"[RefOps.honeybee] Vão em '{void['host']}' ({c.x:.2f}, {c.y:.2f}, "
+                f"[PyOps.honeybee] Vão em '{void['host']}' ({c.x:.2f}, {c.y:.2f}, "
                 f"{c.z:.2f}) sem objeto de Openings — vidro genérico."
             )
         else:
@@ -675,7 +675,7 @@ def model_from_construction(construction, openings=None, context_collection=None
         if face3d is None:
             continue
         print(
-            f"[RefOps.honeybee] '{obj.name}' não casou com nenhum laço interno "
+            f"[PyOps.honeybee] '{obj.name}' não casou com nenhum laço interno "
             "(vão encostado na borda?) — abertura pela maior face do objeto."
         )
         aperture = Aperture(
@@ -694,7 +694,7 @@ def model_from_construction(construction, openings=None, context_collection=None
         )
         shades.extend(emitters)
         if light_report and report:
-            print(f"[RefOps.honeybee] Luzes: {light_report}")
+            print(f"[PyOps.honeybee] Luzes: {light_report}")
 
     try:
         return Model(
@@ -705,7 +705,7 @@ def model_from_construction(construction, openings=None, context_collection=None
             units="Meters",
         )
     except Exception as e:
-        print(f"[RefOps.honeybee] Model: {e}")
+        print(f"[PyOps.honeybee] Model: {e}")
         return None
 
 
@@ -716,10 +716,10 @@ def _apply_glazing(aperture, obj, pset_name, report):
     try:
         aperture.properties.radiance.modifier = modifier
     except Exception as e:
-        print(f"[RefOps.honeybee] modificador de vidro não aplicado: {e}")
+        print(f"[PyOps.honeybee] modificador de vidro não aplicado: {e}")
         return
     if report:
-        print(f"[RefOps.honeybee] vidro '{obj.name}': {origin}")
+        print(f"[PyOps.honeybee] vidro '{obj.name}': {origin}")
 
 
 def radiance_modifier(element, name, overrides=None, outermost=True, defaults=None):
@@ -733,9 +733,9 @@ def radiance_modifier(element, name, overrides=None, outermost=True, defaults=No
     Returns (modifier, sources) so the caller can report where each number came
     from; a value that quietly fell back to a default is the kind of thing that
     invalidates a study without anyone noticing."""
-    import refops_api
+    import pyops_api
 
-    bim = refops_api.bim_helpers
+    bim = pyops_api.bim_helpers
     if not AVAILABLE:
         return None, {}
 
@@ -773,7 +773,7 @@ def radiance_modifier(element, name, overrides=None, outermost=True, defaults=No
             sources,
         )
     except Exception as e:
-        print(f"[RefOps.honeybee] modificador '{name}': {e}")
+        print(f"[PyOps.honeybee] modificador '{name}': {e}")
         return None, sources
 
 
@@ -788,9 +788,9 @@ def light_readings(objects, pset_name):
 
     Radiance wants lumens and EnergyPlus wants watts; each caller converts the
     one it lacks and says so."""
-    import refops_api
+    import pyops_api
 
-    bim = refops_api.bim_helpers
+    bim = pyops_api.bim_helpers
 
     readings = []
     for obj in objects:
@@ -819,7 +819,7 @@ def light_sources(objects, pset_name):
                 origin = f"{pset_name}.Wattage × {DEFAULT_EFFICACY:g} lm/W"
             except (TypeError, ValueError):
                 print(
-                    f"[RefOps.honeybee] luz '{obj.name}' sem {pset_name}.LuminousFlux "
+                    f"[PyOps.honeybee] luz '{obj.name}' sem {pset_name}.LuminousFlux "
                     "nem Wattage — ignorada."
                 )
                 continue
@@ -833,7 +833,7 @@ def light_sources(objects, pset_name):
         # turned to face down rather than light the ceiling.
         if normal.z > 0.9:
             points = list(reversed(points))
-            print(f"[RefOps.honeybee] luz '{obj.name}': emissor virado para −Z.")
+            print(f"[PyOps.honeybee] luz '{obj.name}': emissor virado para −Z.")
         face3d = _face3d(points)
         if face3d is not None:
             sources.append((obj.name, face3d, lumens, origin))
@@ -872,7 +872,7 @@ def light_shades(sources, prefix="light"):
             shades.append(shade)
             report[name] = f"{lumens:.0f} lm ({origin})"
         except Exception as e:
-            print(f"[RefOps.honeybee] luz '{name}': {e}")
+            print(f"[PyOps.honeybee] luz '{name}': {e}")
     return shades, report
 
 
@@ -891,17 +891,17 @@ def _apply_modifier(targets, element, options):
         try:
             target.properties.radiance.modifier = modifier
         except Exception as e:
-            print(f"[RefOps.honeybee] modificador não aplicado: {e}")
+            print(f"[PyOps.honeybee] modificador não aplicado: {e}")
             return
     if not sources:
         # Printed even with Report Sources off: a study run on the 0.5 default
         # looks exactly like one run on measured values.
         print(
-            f"[RefOps.honeybee] {element.is_a()} {element.id()}: nenhuma fonte "
+            f"[PyOps.honeybee] {element.is_a()} {element.id()}: nenhuma fonte "
             "óptica (Pset, material ou estilo) — refletância padrão 0.5."
         )
     elif (options or {}).get("report"):
-        print(f"[RefOps.honeybee] {element.is_a()} {element.id()}: {sources}")
+        print(f"[PyOps.honeybee] {element.is_a()} {element.id()}: {sources}")
 
 
 def _attach_openings(faces, apertures, doors, tolerance=0.01):
@@ -923,7 +923,7 @@ def _attach_openings(faces, apertures, doors, tolerance=0.01):
                 else:
                     face.add_door(opening)
             except Exception as e:
-                print(f"[RefOps.honeybee] abertura não anexada: {e}")
+                print(f"[PyOps.honeybee] abertura não anexada: {e}")
             break
 
 
@@ -952,11 +952,11 @@ def run_recipe(name, inputs, folder=None, workers=None):
     Recipes shell out to Radiance, so this can take minutes; it is deliberately
     the only place that blocks."""
     if not RECIPES_AVAILABLE:
-        print("[RefOps.honeybee] lbt-recipes não está instalado.")
+        print("[PyOps.honeybee] lbt-recipes não está instalado.")
         return None
     if radiance_path() is None:
         print(
-            "[RefOps.honeybee] Radiance não encontrado no PATH — as receitas "
+            "[PyOps.honeybee] Radiance não encontrado no PATH — as receitas "
             "precisam dos executáveis, não só dos pacotes Python."
         )
         return None
@@ -982,7 +982,7 @@ def run_recipe(name, inputs, folder=None, workers=None):
         # recipe, so a missing handler fails before any simulation starts — and
         # the traceback points at recipe.py, not at the missing install.
         print(
-            f"[RefOps.honeybee] Falta o pacote '{e.name}'. Instale no console:\n"
+            f"[PyOps.honeybee] Falta o pacote '{e.name}'. Instale no console:\n"
             "    import subprocess, sys\n"
             "    subprocess.run([sys.executable, '-m', 'pip', 'install',\n"
             "        'pollination-handlers', 'honeybee-display',\n"
@@ -991,7 +991,7 @@ def run_recipe(name, inputs, folder=None, workers=None):
         )
         return None
     except Exception as e:
-        print(f"[RefOps.honeybee] receita '{name}' falhou: {e}")
+        print(f"[PyOps.honeybee] receita '{name}' falhou: {e}")
         traceback.print_exc()
         return None
 
@@ -1003,7 +1003,7 @@ def recipe_output(name, project_folder, output_name):
         recipe = recipes.Recipe(name)
         return recipe.output_value_by_name(output_name, project_folder)
     except Exception as e:
-        print(f"[RefOps.honeybee] saída '{output_name}': {e}")
+        print(f"[PyOps.honeybee] saída '{output_name}': {e}")
         return None
 
 
@@ -1042,17 +1042,17 @@ def describe_model(model, sensor_count=0):
         doors = len(model.doors)
         shades = len(model.shades)
     except Exception as e:
-        print(f"[RefOps.honeybee] modelo ilegível: {e}")
+        print(f"[PyOps.honeybee] modelo ilegível: {e}")
         return
     print(
-        f"[RefOps.honeybee] Modelo: {faces} faces, {apertures} aberturas, "
+        f"[PyOps.honeybee] Modelo: {faces} faces, {apertures} aberturas, "
         f"{doors} portas, {shades} sombras (contexto), {sensor_count} sensores."
     )
     if not shades:
-        print("[RefOps.honeybee] Sem geometria de contexto no modelo.")
+        print("[PyOps.honeybee] Sem geometria de contexto no modelo.")
     if not apertures:
         print(
-            "[RefOps.honeybee] Sem aberturas: um modelo fechado não recebe luz "
+            "[PyOps.honeybee] Sem aberturas: um modelo fechado não recebe luz "
             "e todo resultado sai zero."
         )
 
@@ -1110,7 +1110,7 @@ def read_result_file(path):
                 if token
             ]
     except Exception as e:
-        print(f"[RefOps.honeybee] resultado '{path}': {e}")
+        print(f"[PyOps.honeybee] resultado '{path}': {e}")
         return None
 
 
@@ -1247,7 +1247,7 @@ def energyplus_check():
     refuses an IDF without a Version it recognises."""
     if energyplus_path() is None:
         print(
-            "[RefOps.energyplus] EnergyPlus não encontrado. O honeybee-energy "
+            "[PyOps.energyplus] EnergyPlus não encontrado. O honeybee-energy "
             "procura C:\\EnergyPlusV*, o EnergyPlus do OpenStudio ou "
             "energyplus_path no config.json do honeybee_energy."
         )
@@ -1262,13 +1262,13 @@ def energyplus_check():
     match = re.search(r"Version,\s*([\d.]+)", header)
     if exe is None or match is None:
         print(
-            f"[RefOps.energyplus] Versão do EnergyPlus ilegível em "
+            f"[PyOps.energyplus] Versão do EnergyPlus ilegível em "
             f"{folders.energyplus_exe} — o executável não respondeu a --version."
         )
         return False
     if match.group(1) != ".".join(str(d) for d in exe):
         print(
-            f"[RefOps.energyplus] IDF escreveria Version {match.group(1)}, "
+            f"[PyOps.energyplus] IDF escreveria Version {match.group(1)}, "
             f"executável é {folders.energyplus_version_str}."
         )
         return False
@@ -1281,9 +1281,9 @@ def is_external(element):
     All three names are tried rather than chosen by class: a slab used as a
     roof keeps Pset_SlabCommon, and guessing the class wrong would read as
     'no pset' and silently default."""
-    import refops_api
+    import pyops_api
 
-    bim = refops_api.bim_helpers
+    bim = pyops_api.bim_helpers
     if element is None:
         return None
     for pset in ("Pset_WallCommon", "Pset_SlabCommon", "Pset_RoofCommon"):
@@ -1293,7 +1293,7 @@ def is_external(element):
     return None
 
 
-def energy_room(obj, identifier="refops_room", tolerance=0.01):
+def energy_room(obj, identifier="pyops_room", tolerance=0.01):
     """(Room, faces) from a closed Room Reference mesh, or (None, []).
 
     One honeybee Face per planar region, outer outline only: a hole in the
@@ -1316,7 +1316,7 @@ def energy_room(obj, identifier="refops_room", tolerance=0.01):
             face3ds.append(face3d)
             kept.append(region)
     if len(face3ds) < 4:
-        print(f"[RefOps.energyplus] '{obj.name}' tem {len(face3ds)} regiões planas — não é um volume.")
+        print(f"[PyOps.energyplus] '{obj.name}' tem {len(face3ds)} regiões planas — não é um volume.")
         return None, []
 
     polyface = Polyface3D.from_faces(face3ds, tolerance)
@@ -1324,13 +1324,13 @@ def energy_room(obj, identifier="refops_room", tolerance=0.01):
         polyface = polyface.merge_overlapping_edges(tolerance)
     if not polyface.is_solid:
         print(
-            f"[RefOps.energyplus] Room Reference '{obj.name}' não é sólido fechado "
+            f"[PyOps.energyplus] Room Reference '{obj.name}' não é sólido fechado "
             f"({len(polyface.naked_edges)} arestas nuas, "
             f"{len(polyface.non_manifold_edges)} não-manifold)."
         )
         return None, []
     if polyface.volume <= 0:
-        print(f"[RefOps.energyplus] Room Reference '{obj.name}' tem volume ≤ 0.")
+        print(f"[PyOps.energyplus] Room Reference '{obj.name}' tem volume ≤ 0.")
         return None, []
 
     faces, entries = [], []
@@ -1342,7 +1342,7 @@ def energy_room(obj, identifier="refops_room", tolerance=0.01):
         try:
             face = Face(f"{identifier}_f{index}", outward)
         except Exception as e:
-            print(f"[RefOps.energyplus] face {index} do Room: {e}")
+            print(f"[PyOps.energyplus] face {index} do Room: {e}")
             return None, []
         faces.append(face)
         entries.append(
@@ -1357,15 +1357,15 @@ def energy_room(obj, identifier="refops_room", tolerance=0.01):
     try:
         room = Room(identifier, faces, tolerance=tolerance, angle_tolerance=1.0)
     except Exception as e:
-        print(f"[RefOps.energyplus] Room: {e}")
+        print(f"[PyOps.energyplus] Room: {e}")
         return None, []
     return room, entries
 
 
 def element_thickness(element):
-    import refops_api
+    import pyops_api
 
-    return sum(t for t, _m in refops_api.bim_helpers.material_layers(element))
+    return sum(t for t, _m in pyops_api.bim_helpers.material_layers(element))
 
 
 def match_room_faces(entries, objects):
@@ -1383,9 +1383,9 @@ def match_room_faces(entries, objects):
     A second element that also passes, or whose region centre falls inside the
     same room face, means the face covers two elements; only the nearest
     counts, and it is reported."""
-    import refops_api
+    import pyops_api
 
-    bim = refops_api.bim_helpers
+    bim = pyops_api.bim_helpers
     candidates = []
     for obj in objects:
         element = bim.entity(obj)
@@ -1417,7 +1417,7 @@ def match_room_faces(entries, objects):
         others.discard(entry["obj"].name if entry["obj"] else None)
         if best and others:
             print(
-                f"[RefOps.energyplus] face {entry['face'].identifier} cobre mais de um "
+                f"[PyOps.energyplus] face {entry['face'].identifier} cobre mais de um "
                 f"elemento ({best[1].name}, {', '.join(sorted(others))}) — "
                 f"usando só {best[1].name}."
             )
@@ -1441,13 +1441,13 @@ def thermal_construction(element, first_outer=True, cache=None):
 
     Properties are read by name from any pset of the material: MassDensity lives
     in Pset_MaterialCommon in IFC4, the thermal ones in Pset_MaterialThermal."""
-    import refops_api
+    import pyops_api
 
     from honeybee.typing import clean_ep_string
     from honeybee_energy.construction.opaque import OpaqueConstruction
     from honeybee_energy.material.opaque import EnergyMaterial
 
-    bim = refops_api.bim_helpers
+    bim = pyops_api.bim_helpers
     layers = bim.material_layers(element)
     if not layers:
         return None
@@ -1463,11 +1463,11 @@ def thermal_construction(element, first_outer=True, cache=None):
     for thickness, material in layers:
         name = material.Name if material is not None else "unnamed"
         if thickness <= 0:
-            print(f"[RefOps.energyplus] camada '{name}' com espessura 0 ignorada.")
+            print(f"[PyOps.energyplus] camada '{name}' com espessura 0 ignorada.")
             continue
         if thickness > SUSPICIOUS_LAYER:
             print(
-                f"[RefOps.energyplus] camada '{name}' com {thickness:.2f} m — "
+                f"[PyOps.energyplus] camada '{name}' com {thickness:.2f} m — "
                 "unidade do IFC errada?"
             )
         properties = bim.material_properties(material)
@@ -1476,7 +1476,7 @@ def thermal_construction(element, first_outer=True, cache=None):
         density = _layer_property(properties, "MassDensity", DEFAULT_DENSITY, missing)
         specific_heat = _layer_property(properties, "SpecificHeatCapacity", DEFAULT_SPECIFIC_HEAT, missing)
         if missing:
-            print(f"[RefOps.energyplus] material '{name}' sem valor, usando padrão: {', '.join(missing)}.")
+            print(f"[PyOps.energyplus] material '{name}' sem valor, usando padrão: {', '.join(missing)}.")
         try:
             materials.append(
                 EnergyMaterial(
@@ -1485,7 +1485,7 @@ def thermal_construction(element, first_outer=True, cache=None):
                 )
             )
         except Exception as e:
-            print(f"[RefOps.energyplus] material '{name}': {e}")
+            print(f"[PyOps.energyplus] material '{name}': {e}")
             return None
     if not materials:
         return None
@@ -1495,11 +1495,11 @@ def thermal_construction(element, first_outer=True, cache=None):
         construction = OpaqueConstruction(
             # Named by position, not by element: the cache shares it across every
             # element with the same layers.
-            f"refops_layers_{len(cache)}",
+            f"pyops_layers_{len(cache)}",
             materials,
         )
     except Exception as e:
-        print(f"[RefOps.energyplus] construção de {element.is_a()} {element.id()}: {e}")
+        print(f"[PyOps.energyplus] construção de {element.is_a()} {element.id()}: {e}")
         return None
     cache[signature] = construction
     return construction
@@ -1519,14 +1519,14 @@ def apply_envelope(entries, first_outer=True):
         face, element = entry["face"], entry["element"]
         if element is None:
             print(
-                f"[RefOps.energyplus] face {face.identifier} ({face.type}) sem elemento "
+                f"[PyOps.energyplus] face {face.identifier} ({face.type}) sem elemento "
                 "de Construction casado — construção genérica."
             )
             continue
         construction = thermal_construction(element, first_outer, cache)
         if construction is None:
             print(
-                f"[RefOps.energyplus] {element.is_a()} '{entry['obj'].name}' sem "
+                f"[PyOps.energyplus] {element.is_a()} '{entry['obj'].name}' sem "
                 "IfcMaterialLayerSet utilizável — construção genérica."
             )
         else:
@@ -1535,7 +1535,7 @@ def apply_envelope(entries, first_outer=True):
         external = is_external(element)
         if external is None:
             print(
-                f"[RefOps.energyplus] '{entry['obj'].name}' sem IsExternal em "
+                f"[PyOps.energyplus] '{entry['obj'].name}' sem IsExternal em "
                 "Pset_Wall/Slab/RoofCommon — tratado como externo."
             )
         if external is False:
@@ -1583,7 +1583,7 @@ def energy_subface(name, face3d, obj, pset_name):
     vt, u, shgc, notes = _subface_values(obj, pset_name)
     label = obj.name if obj is not None else name
     if notes and obj is not None:
-        print(f"[RefOps.energyplus] abertura '{label}': {', '.join(notes)}.")
+        print(f"[PyOps.energyplus] abertura '{label}': {', '.join(notes)}.")
     ident = clean_ep_string(name)
     try:
         if vt > 0.01:
@@ -1597,7 +1597,7 @@ def energy_subface(name, face3d, obj, pset_name):
             sub.properties.energy.construction = OpaqueConstruction(f"{ident}_constr", [material])
         return sub
     except Exception as e:
-        print(f"[RefOps.energyplus] abertura '{label}': {e}")
+        print(f"[PyOps.energyplus] abertura '{label}': {e}")
         return None
 
 
@@ -1612,7 +1612,7 @@ def _add_subface(entry, points, obj, pset_name, name):
     outside = [p for p in points if not _inside_loop(p, entry["outline"], entry["normal"], PLANE_DISTANCE)]
     if outside:
         print(
-            f"[RefOps.energyplus] abertura '{obj.name if obj else name}' sai da face "
+            f"[PyOps.energyplus] abertura '{obj.name if obj else name}' sai da face "
             f"{face.identifier} — descartada (o EnergyPlus abortaria)."
         )
         return False
@@ -1629,7 +1629,7 @@ def _add_subface(entry, points, obj, pset_name, name):
 
     if not isinstance(face.boundary_condition, Outdoors):
         print(
-            f"[RefOps.energyplus] abertura '{obj.name if obj else name}' em face "
+            f"[PyOps.energyplus] abertura '{obj.name if obj else name}' em face "
             f"{face.boundary_condition} — ignorada (só faces Outdoors levam aberturas)."
         )
         return False
@@ -1639,7 +1639,7 @@ def _add_subface(entry, points, obj, pset_name, name):
         else:
             face.add_door(sub)
     except Exception as e:
-        print(f"[RefOps.energyplus] abertura não anexada: {e}")
+        print(f"[PyOps.energyplus] abertura não anexada: {e}")
         return False
     return True
 
@@ -1681,11 +1681,11 @@ def openings_cut(entries, opening_objects, pset_name):
         if obj is None:
             c = void["loops"][0]["centre"]
             print(
-                f"[RefOps.energyplus] furo em ({c.x:.2f}, {c.y:.2f}, {c.z:.2f}) sem objeto "
+                f"[PyOps.energyplus] furo em ({c.x:.2f}, {c.y:.2f}, {c.z:.2f}) sem objeto "
                 "de Openings — janela genérica."
             )
         points = void["loops"][0]["points"]
-        if _add_subface(entry, points, obj, pset_name, f"refops_cut_{index}"):
+        if _add_subface(entry, points, obj, pset_name, f"pyops_cut_{index}"):
             added += 1
     return added
 
@@ -1739,11 +1739,11 @@ def openings_projected(entries, construction_objects, opening_objects, pset_name
         if obj is None:
             c = loop["centre"]
             print(
-                f"[RefOps.energyplus] vão em '{host.name}' ({c.x:.2f}, {c.y:.2f}, "
+                f"[PyOps.energyplus] vão em '{host.name}' ({c.x:.2f}, {c.y:.2f}, "
                 f"{c.z:.2f}) sem objeto de Openings — janela genérica."
             )
         points = _project(loop["points"], entry)
-        if _add_subface(entry, points, obj, pset_name, f"refops_void_{index}"):
+        if _add_subface(entry, points, obj, pset_name, f"pyops_void_{index}"):
             added += 1
 
     # A filling whose void touches the element edge cuts a notch, not a loop.
@@ -1763,11 +1763,11 @@ def openings_projected(entries, construction_objects, opening_objects, pset_name
         if entry is None:
             continue
         print(
-            f"[RefOps.energyplus] '{obj.name}' não casou com laço interno — "
+            f"[PyOps.energyplus] '{obj.name}' não casou com laço interno — "
             "projetando a maior face do objeto."
         )
         if _add_subface(entry, _project(points, entry), obj, pset_name,
-                        f"refops_opening_{position}"):
+                        f"pyops_opening_{position}"):
             added += 1
     return added
 
@@ -1784,7 +1784,7 @@ def program_type(identifier):
     except Exception:
         close = difflib.get_close_matches(identifier or "", PROGRAM_TYPES, n=5, cutoff=0.0)
         print(
-            f"[RefOps.energyplus] Program '{identifier}' não existe. Mais próximos:\n    "
+            f"[PyOps.energyplus] Program '{identifier}' não existe. Mais próximos:\n    "
             + "\n    ".join(close)
         )
         return None
@@ -1802,11 +1802,11 @@ def lighting_watts(objects, pset_name):
         try:
             total += float(flux) / DEFAULT_EFFICACY
             print(
-                f"[RefOps.energyplus] luz '{obj.name}' só com LuminousFlux — "
+                f"[PyOps.energyplus] luz '{obj.name}' só com LuminousFlux — "
                 f"{float(flux) / DEFAULT_EFFICACY:.1f} W a {DEFAULT_EFFICACY:g} lm/W."
             )
         except (TypeError, ValueError):
-            print(f"[RefOps.energyplus] luz '{obj.name}' sem Wattage nem LuminousFlux — ignorada.")
+            print(f"[PyOps.energyplus] luz '{obj.name}' sem Wattage nem LuminousFlux — ignorada.")
     return total
 
 
@@ -1817,14 +1817,14 @@ def hvac_readings(objects, pset_name):
     Σ Cap / Σ (Cap / COP) — what the units would draw together at full load.
     A unit without a COP still counts towards the limit, not towards the COP.
     None where nothing could be aggregated."""
-    import refops_api
+    import pyops_api
 
-    bim = refops_api.bim_helpers
+    bim = pyops_api.bim_helpers
     totals = {"cool": [0.0, 0.0, 0.0], "heat": [0.0, 0.0, 0.0]}  # limit, Σcap w/ COP, Σcap/COP
     for obj in objects:
         element = bim.entity(obj)
         if element is None:
-            print(f"[RefOps.energyplus] HVAC '{obj.name}' não é elemento IFC — ignorado.")
+            print(f"[PyOps.energyplus] HVAC '{obj.name}' não é elemento IFC — ignorado.")
             continue
         for key, cap_name, cop_name in (
             ("cool", "CoolingCapacity", "COP_Cooling"),
@@ -1841,7 +1841,7 @@ def hvac_readings(objects, pset_name):
                     raise ValueError
             except (TypeError, ValueError):
                 if capacity > 0:
-                    print(f"[RefOps.energyplus] HVAC '{obj.name}' sem {cop_name} — fora do COP agregado.")
+                    print(f"[PyOps.energyplus] HVAC '{obj.name}' sem {cop_name} — fora do COP agregado.")
                 continue
             totals[key][1] += capacity
             totals[key][2] += capacity / cop
@@ -1898,7 +1898,7 @@ def simulate_energy(model, epw_path, folder, month=None):
                 epw.approximate_design_day("SummerDesignDay"),
             ]
         except Exception as e:
-            print(f"[RefOps.energyplus] design days: {e}")
+            print(f"[PyOps.energyplus] design days: {e}")
             return None
 
     if os.path.isdir(folder):
@@ -1909,7 +1909,7 @@ def simulate_energy(model, epw_path, folder, month=None):
             [energyplus_idf_version(), sim_par.to_idf(), model_to_idf(model)]
         )
     except Exception as e:
-        print(f"[RefOps.energyplus] IDF não gerado: {e}")
+        print(f"[PyOps.energyplus] IDF não gerado: {e}")
         traceback.print_exc()
         return None
     idf = os.path.join(folder, "in.idf")
@@ -1921,7 +1921,7 @@ def simulate_energy(model, epw_path, folder, month=None):
     try:
         sql, _zsz, _rdd, _html, err = run_idf(idf, epw_copy, silent=True)
     except Exception as e:
-        print(f"[RefOps.energyplus] run_idf: {e}")
+        print(f"[PyOps.energyplus] run_idf: {e}")
         return None
 
     text = ""
@@ -1929,7 +1929,7 @@ def simulate_energy(model, epw_path, folder, month=None):
         with open(err, errors="replace") as handle:
             text = handle.read()
     if sql is None or not os.path.isfile(sql) or "** Fatal" in text or "**  Fatal" in text:
-        print(f"[RefOps.energyplus] EnergyPlus falhou em {folder}.")
+        print(f"[PyOps.energyplus] EnergyPlus falhou em {folder}.")
         for line in text.splitlines():
             if "Severe" in line or "Fatal" in line or line.strip().startswith("**   ~~~"):
                 print("    " + line.strip())
@@ -1937,8 +1937,8 @@ def simulate_energy(model, epw_path, folder, month=None):
     severe = text.count("** Severe")
     warnings = text.count("** Warning")
     if severe:
-        print(f"[RefOps.energyplus] {severe} erro(s) Severe não fatais — ver {err}")
-    print(f"[RefOps.energyplus] simulação ok ({warnings} warnings): {folder}")
+        print(f"[PyOps.energyplus] {severe} erro(s) Severe não fatais — ver {err}")
+    print(f"[PyOps.energyplus] simulação ok ({warnings} warnings): {folder}")
     return sql
 
 
@@ -1952,7 +1952,7 @@ def energy_series(sql_path):
         try:
             collections = result.data_collections_by_output_name(name)
         except Exception as e:
-            print(f"[RefOps.energyplus] '{name}': {e}")
+            print(f"[PyOps.energyplus] '{name}': {e}")
             collections = []
         series[key] = collections[0] if collections else None
     return series
@@ -1965,7 +1965,7 @@ def comfortable_flags(series, epw_path, mode, low=None, high=None):
     EPW, so a single-month run still gets the right monthly mean."""
     operative = series.get("operative_temp")
     if operative is None:
-        print("[RefOps.energyplus] sem Zone Operative Temperature — conforto não calculado.")
+        print("[PyOps.energyplus] sem Zone Operative Temperature — conforto não calculado.")
         return None
     if mode == "FIXED":
         return [1 if low <= t <= high else 0 for t in operative.values]
@@ -1975,7 +1975,7 @@ def comfortable_flags(series, epw_path, mode, low=None, high=None):
 
         return list(Adaptive(EPW(epw_path).dry_bulb_temperature, operative).is_comfortable)
     except Exception as e:
-        print(f"[RefOps.energyplus] conforto adaptativo: {e}")
+        print(f"[PyOps.energyplus] conforto adaptativo: {e}")
         return None
 
 
@@ -1992,7 +1992,7 @@ def summarise_energy(series, flags, months=None, occupied_only=False, cops=None,
     datetimes = reference.datetimes
     occupants = series.get("occupants")
     if occupied_only and occupants is None:
-        print("[RefOps.energyplus] Program sem ocupação — conforto sobre todas as horas.")
+        print("[PyOps.energyplus] Program sem ocupação — conforto sobre todas as horas.")
         occupied_only = False
 
     def values(key):

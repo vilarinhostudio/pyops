@@ -1,6 +1,5 @@
-import refops_api
 
-EdgeComponent = refops_api.bim_profiles.EdgeComponent
+EdgeComponent = pyops_api.bim_profiles.EdgeComponent
 
 
 def with_ifc_class(props, default):
@@ -20,7 +19,7 @@ def with_ifc_class(props, default):
 class BonsaiProfileComponent(EdgeComponent):
     """Bonsai IFC Profile Component.
 
-    Everything lives in refops_api.bim_profiles.EdgeComponent — only the IFC
+    Everything lives in pyops_api.bim_profiles.EdgeComponent — only the IFC
     identity and the axis rule differ between the three edge-driven components,
     so this file is the whole difference.
 

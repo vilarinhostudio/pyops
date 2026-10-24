@@ -2,9 +2,8 @@ import bpy
 import bmesh
 import mathutils
 
-import refops_api
 
-bim = refops_api.bim_helpers
+bim = pyops_api.bim_helpers
 
 TOL = bim.TOL
 
@@ -167,7 +166,7 @@ class BonsaiFaceComponent:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not bim.ensure():
-            print("[RefOps] Bonsai indisponível:")
+            print("[PyOps] Bonsai indisponível:")
             print(bim.IMPORT_ERROR)
             return False
 
@@ -177,7 +176,7 @@ class BonsaiFaceComponent:
 
         ifc_file = bim.get_file()
         if not ifc_file:
-            print("[RefOps] Nenhum projeto IFC ativo.")
+            print("[PyOps] Nenhum projeto IFC ativo.")
             return False
 
         container_obj.display_type = "WIRE"
@@ -186,7 +185,7 @@ class BonsaiFaceComponent:
 
         ifc_class = (data_holder.ifc_class or "").strip()
         if not ifc_class.startswith("Ifc"):
-            print(f"[RefOps] '{ifc_class}' não parece uma classe IFC.")
+            print(f"[PyOps] '{ifc_class}' não parece uma classe IFC.")
             return False
         # Most element classes pair with <Class>Type. When they don't, create_type
         # reports it and the element simply comes out untyped.
@@ -214,7 +213,7 @@ class BonsaiFaceComponent:
         bool_layer = bm.faces.layers.bool.get(data_holder.bool_attr)
         if not bool_layer:
             bm.free()
-            print(f"[RefOps] Atributo booleano '{data_holder.bool_attr}' não encontrado.")
+            print(f"[PyOps] Atributo booleano '{data_holder.bool_attr}' não encontrado.")
             return False
 
         faces = [f for f in bm.faces if f[bool_layer]]
@@ -229,7 +228,7 @@ class BonsaiFaceComponent:
         )
         if data_holder.split_edge_attr and split_layer is None:
             print(
-                f"[RefOps] Atributo de corte '{data_holder.split_edge_attr}' "
+                f"[PyOps] Atributo de corte '{data_holder.split_edge_attr}' "
                 "não encontrado — nada será dividido."
             )
 
@@ -324,7 +323,7 @@ class BonsaiFaceComponent:
         if source == "FACE":
             layer = bm.faces.layers.float.get(data_holder.face_attr)
             if not layer:
-                print(f"[RefOps] Atributo de face '{data_holder.face_attr}' não encontrado.")
+                print(f"[PyOps] Atributo de face '{data_holder.face_attr}' não encontrado.")
                 return None
             buckets = {}
             for f in faces:
@@ -347,12 +346,12 @@ class BonsaiFaceComponent:
         if source == "VERTEX":
             layer = bm.verts.layers.float.get(data_holder.vertex_attr)
             if not layer:
-                print(f"[RefOps] Atributo de vértice '{data_holder.vertex_attr}' não encontrado.")
+                print(f"[PyOps] Atributo de vértice '{data_holder.vertex_attr}' não encontrado.")
                 return None
             values = [v[layer] for f in faces for v in f.verts]
             peak = max(values) if values else 0.0
             if peak <= 0:
-                print("[RefOps] Atributo de vértice sem valores positivos.")
+                print("[PyOps] Atributo de vértice sem valores positivos.")
                 return None
             # Weights are clamped to 0..1, so the attribute's own maximum becomes
             # the modifier thickness and every weight is a fraction of it. That
@@ -361,7 +360,7 @@ class BonsaiFaceComponent:
                 faces,
                 thickness=peak,
                 nominal=peak,
-                vgroup="RefOps Thickness",
+                vgroup="PyOps Thickness",
                 weight_of=lambda v: max(0.0, min(1.0, v[layer] / peak)),
                 name_of=name_of,
             )
@@ -370,14 +369,14 @@ class BonsaiFaceComponent:
             name = data_holder.vgroup_name
             deform = bm.verts.layers.deform.active
             if not name or deform is None:
-                print("[RefOps] Objeto de referência não tem vertex groups.")
+                print("[PyOps] Objeto de referência não tem vertex groups.")
                 return None
             group_index = cls._vgroup_index(data_holder, name)
             if group_index is None:
                 return None
             base = data_holder.base_thickness
             if base <= 0:
-                print("[RefOps] 'Weight = 1.0 Thickness' precisa ser maior que zero.")
+                print("[PyOps] 'Weight = 1.0 Thickness' precisa ser maior que zero.")
                 return None
             return cls._by_material(
                 faces,
@@ -399,7 +398,7 @@ class BonsaiFaceComponent:
         elif isinstance(owner, bpy.types.Scene):
             parent = getattr(owner, "ui_parent", None)
         if not parent or name not in parent.vertex_groups:
-            print(f"[RefOps] Vertex group '{name}' não existe no objeto de referência.")
+            print(f"[PyOps] Vertex group '{name}' não existe no objeto de referência.")
             return None
         return parent.vertex_groups[name].index
 
@@ -476,8 +475,8 @@ class BonsaiFaceComponent:
             cls._extrude_along_vector(obj, extrude_vector, thickness, vgroup, pos)
         else:
             if extrude_mode == "VECTOR":
-                print("[RefOps] Vetor nulo — usando a normal das faces.")
-            mod = obj.modifiers.new(name="RefOps Solidify", type="SOLIDIFY")
+                print("[PyOps] Vetor nulo — usando a normal das faces.")
+            mod = obj.modifiers.new(name="PyOps Solidify", type="SOLIDIFY")
             # EXTRUDE (Simple) is the mode that honours a vertex group;
             # NON_MANIFOLD ignores it, silently flattening every thickness to
             # the base value.
@@ -498,7 +497,7 @@ class BonsaiFaceComponent:
                     bim.select([obj], obj)
                     bpy.ops.object.modifier_apply(modifier=mod.name)
                 except RuntimeError as e:
-                    print(f"[RefOps] modifier_apply Solidify: {e}")
+                    print(f"[PyOps] modifier_apply Solidify: {e}")
 
         # add_representation reads the mesh datablock, so a Solidify left live
         # would not reach the IFC body — that's the trade-off behind the
@@ -622,7 +621,7 @@ class BonsaiFaceComponent:
             try:
                 return bim.vgroup_string(parent_obj, int(face[material_layer]))
             except ValueError as e:
-                print(f"[RefOps] {e}")
+                print(f"[PyOps] {e}")
                 return "Default_Material"
         materials = source.data.materials
         index = face.material_index

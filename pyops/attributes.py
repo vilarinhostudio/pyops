@@ -260,7 +260,7 @@ def _set_vector(item, values):
         bmesh.update_edit_mesh(obj.data)
 
 
-class REFOPS_PG_attribute_row(bpy.types.PropertyGroup):
+class PYOPS_PG_attribute_row(bpy.types.PropertyGroup):
     attr_name: bpy.props.StringProperty()
     domain: bpy.props.StringProperty()
     data_type: bpy.props.StringProperty()
@@ -349,4 +349,4 @@ class REFOPS_PG_attribute_row(bpy.types.PropertyGroup):
     )
 
 
-classes = (REFOPS_PG_attribute_row,)
+classes = (PYOPS_PG_attribute_row,)

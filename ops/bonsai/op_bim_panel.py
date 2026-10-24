@@ -4,10 +4,9 @@ import bmesh
 import bpy
 import mathutils
 
-import refops_api
 
-bim = refops_api.bim_helpers
-prof = refops_api.bim_profiles
+bim = pyops_api.bim_helpers
+prof = pyops_api.bim_profiles
 
 TOL = bim.TOL
 
@@ -119,7 +118,7 @@ class BonsaiPanel:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not bim.ensure():
-            print("[RefOps] Bonsai indisponível:")
+            print("[PyOps] Bonsai indisponível:")
             print(bim.IMPORT_ERROR)
             return False
 
@@ -129,12 +128,12 @@ class BonsaiPanel:
 
         ifc_file = bim.get_file()
         if not ifc_file:
-            print("[RefOps] Nenhum projeto IFC ativo.")
+            print("[PyOps] Nenhum projeto IFC ativo.")
             return False
 
         ifc_class = (data_holder.ifc_class or "").strip()
         if not ifc_class.startswith("Ifc"):
-            print(f"[RefOps] '{ifc_class}' não parece uma classe IFC.")
+            print(f"[PyOps] '{ifc_class}' não parece uma classe IFC.")
             return False
         type_class = f"{ifc_class}Type"
 
@@ -164,7 +163,7 @@ class BonsaiPanel:
         select = bm.faces.layers.bool.get(data_holder.bool_attr)
         if not select:
             bm.free()
-            print(f"[RefOps] Atributo booleano '{data_holder.bool_attr}' não encontrado.")
+            print(f"[PyOps] Atributo booleano '{data_holder.bool_attr}' não encontrado.")
             return False
 
         def layer(name):
@@ -208,7 +207,7 @@ class BonsaiPanel:
                     face, weight_layer, weight_range, data_holder
                 )
                 if not profile_obj:
-                    print("[RefOps] Nenhum perfil resolvido para esta face.")
+                    print("[PyOps] Nenhum perfil resolvido para esta face.")
                     continue
 
             # One face is one panel here — nothing is ever merged — so the
@@ -285,14 +284,14 @@ class BonsaiPanel:
         if inset > TOL:
             outline = cls._inset_polygon(outline, inset)
             if outline is None:
-                print("[RefOps] Inset maior que a face — painel descartado.")
+                print("[PyOps] Inset maior que a face — painel descartado.")
                 return None
 
         profile_points = None
         if wants_profile:
             profile_points = prof.polygon_from_object(profile_obj)
             if not profile_points:
-                print(f"[RefOps] '{profile_obj.name}' não deu um contorno utilizável.")
+                print(f"[PyOps] '{profile_obj.name}' não deu um contorno utilizável.")
                 return None
 
         signature = cls._shape_signature(outline, precision)
@@ -338,7 +337,7 @@ class BonsaiPanel:
                 material_set = bim.find_constituent_set(ifc_file, mat_name)
                 if material_set is None:
                     print(
-                        f"[RefOps] Nenhum IfcMaterialConstituentSet '{mat_name}' "
+                        f"[PyOps] Nenhum IfcMaterialConstituentSet '{mat_name}' "
                         f"no arquivo — '{type_name}' fica sem material."
                     )
                 else:
@@ -346,7 +345,7 @@ class BonsaiPanel:
                     body_material = bim.set_blender_material(material_set)
                     if body_material is None:
                         print(
-                            f"[RefOps] O estilo de '{mat_name}' não tem material "
+                            f"[PyOps] O estilo de '{mat_name}' não tem material "
                             f"Blender — '{type_name}' fica sem cor."
                         )
             bim.assign_type(ifc_file, element, comp_type)

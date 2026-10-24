@@ -2,10 +2,9 @@ import bpy
 import bmesh
 import mathutils
 
-import refops_api
 
-bim = refops_api.bim_helpers
-prof = refops_api.bim_profiles
+bim = pyops_api.bim_helpers
+prof = pyops_api.bim_profiles
 
 TOL = bim.TOL
 # 0/1/2 in the align attribute decides where the reference face sits relative to
@@ -136,7 +135,7 @@ class BonsaiSlab:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not bim.ensure():
-            print("[RefOps] Bonsai indisponível:")
+            print("[PyOps] Bonsai indisponível:")
             print(bim.IMPORT_ERROR)
             return False
 
@@ -148,7 +147,7 @@ class BonsaiSlab:
 
         ifc_file = bim.get_file()
         if not ifc_file:
-            print("[RefOps] Nenhum projeto IFC ativo.")
+            print("[PyOps] Nenhum projeto IFC ativo.")
             return False
 
         container_obj.display_type = "WIRE"
@@ -175,7 +174,7 @@ class BonsaiSlab:
         if not bool_layer:
             bm.free()
             print(
-                f"[RefOps] Atributo booleano '{data_holder.bool_attr}' não encontrado."
+                f"[PyOps] Atributo booleano '{data_holder.bool_attr}' não encontrado."
             )
             return False
 
@@ -188,7 +187,7 @@ class BonsaiSlab:
         slab_faces = [f for f in bm.faces if f[bool_layer]]
         if not slab_faces:
             bm.free()
-            print(f"[RefOps] Nenhuma face com '{data_holder.bool_attr}' verdadeiro.")
+            print(f"[PyOps] Nenhuma face com '{data_holder.bool_attr}' verdadeiro.")
             return False
 
         # Plane only — see the wall operator: attributes painted on
@@ -216,7 +215,7 @@ class BonsaiSlab:
         )
         if data_holder.split_edge_attr and split_layer is None:
             print(
-                f"[RefOps] Atributo de corte '{data_holder.split_edge_attr}' "
+                f"[PyOps] Atributo de corte '{data_holder.split_edge_attr}' "
                 "não encontrado — nada será dividido."
             )
 
@@ -252,7 +251,7 @@ class BonsaiSlab:
             thickness = bim.layer_set_thickness(material_set)
             if thickness <= 0:
                 print(
-                    f"[RefOps] O IfcMaterialLayerSet de "
+                    f"[PyOps] O IfcMaterialLayerSet de "
                     f"'{slab_type.Name}' soma espessura zero — laje ignorada."
                 )
                 continue
@@ -264,7 +263,7 @@ class BonsaiSlab:
                 regions.extend(bim.dissolve_regions(bm, island))
             if not regions:
                 print(
-                    f"[RefOps] Grupo de {len(group)} face(s) não dissolveu. "
+                    f"[PyOps] Grupo de {len(group)} face(s) não dissolveu. "
                     "Faces de laje presas na malha das paredes costumam falhar "
                     "aqui — separe-as ou verifique se são realmente coplanares."
                 )
@@ -296,7 +295,7 @@ class BonsaiSlab:
             )
             for opening in openings:
                 bim.tag_family(ifc_file, opening, key)
-            print(f"[RefOps] Vazio comum aplicado em {len(openings)} elementos.")
+            print(f"[PyOps] Vazio comum aplicado em {len(openings)} elementos.")
 
         for obj, type_index in created:
             bim.set_type_index(obj, type_index)
@@ -334,7 +333,7 @@ class BonsaiSlab:
             ALIGN_BOTTOM: 0.0,
         }.get(align_value)
         if z_offset is None:
-            print(f"[RefOps] Align '{align_value}' fora de 0/1/2 — usando TOP.")
+            print(f"[PyOps] Align '{align_value}' fora de 0/1/2 — usando TOP.")
             z_offset = -thickness
 
         transform = mathutils.Matrix.Translation(
@@ -367,20 +366,20 @@ class BonsaiSlab:
             # Picked per element by weight, the same mapping the profile
             # components use. The collection is the catalogue.
             if picked is None:
-                print("[RefOps] Nenhum tipo na collection para esta laje.")
+                print("[PyOps] Nenhum tipo na collection para esta laje.")
                 return None
             entity = bim.entity(picked)
             if entity is None or not entity.is_a("IfcSlabType"):
-                print(f"[RefOps] '{picked.name}' não é um IfcSlabType.")
+                print(f"[PyOps] '{picked.name}' não é um IfcSlabType.")
                 return None
             return entity
 
         if not type_pointer_obj:
-            print("[RefOps] Nenhum Slab Type Ref definido.")
+            print("[PyOps] Nenhum Slab Type Ref definido.")
             return None
         slab_type = bim.entity(type_pointer_obj)
         if slab_type is None or not slab_type.is_a("IfcSlabType"):
-            print(f"[RefOps] '{type_pointer_obj.name}' não é um IfcSlabType.")
+            print(f"[PyOps] '{type_pointer_obj.name}' não é um IfcSlabType.")
             return None
         return slab_type
 
@@ -466,7 +465,7 @@ class BonsaiSlab:
             return None
         normal.normalize()
         if abs(normal.z) < 0.5:
-            print("[RefOps] Face muito vertical para virar laje — ignorada.")
+            print("[PyOps] Face muito vertical para virar laje — ignorada.")
             return None
 
         verts_world = [matrix_world @ v.co for v in face.verts]

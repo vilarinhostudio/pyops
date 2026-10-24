@@ -1,7 +1,7 @@
 bl_info = {
     "name": "PyOps",
     "author": "Arthur Vilarinho",
-    "version": (1, 7, 0),
+    "version": (1, 7, 1),
     "blender": (4, 0, 0),
     "location": "View3D > Sidebar > Procedural Tab",
     "description": "Open architecture add-on that scans external python scripts to run reference-driven, non-destructive model updates",
@@ -58,10 +58,13 @@ from . import (
     ui,
 )
 
-# Stable import name for operator files, which are exec'd from a user-chosen
-# folder and can't use a relative import. Keeps them working if this folder is
-# renamed:  import refops_api;  bim = refops_api.bim_helpers
-API_ALIAS = "refops_api"
+# Handle to this package for operator files, which are exec'd from a user-chosen
+# folder and can't use a relative import. The loader pre-binds it as a global in
+# each operator file (`pyops_api.bim_helpers`); consoles and MCP scripts read it
+# from bpy.app.driver_namespace. Not sys.modules: Blender Extensions reject any
+# top-level module the add-on registers there ("Policy violation with top level
+# module"), and the package name itself varies with where it was installed.
+API_ALIAS = "pyops_api"
 
 
 def _all_classes():
@@ -77,7 +80,7 @@ def _all_classes():
 
 
 def register():
-    sys.modules[API_ALIAS] = sys.modules[__name__]
+    bpy.app.driver_namespace[API_ALIAS] = sys.modules[__name__]
 
     for cls in _all_classes():
         bpy.utils.register_class(cls)
@@ -112,16 +115,16 @@ def register():
         default=False,
     )
     bpy.types.Scene.ui_attr_rows = bpy.props.CollectionProperty(
-        type=attributes.REFOPS_PG_attribute_row
+        type=attributes.PYOPS_PG_attribute_row
     )
     # Mirror collection so custom-property fields can use prop_search, which
     # needs a real RNA collection and custom properties don't have one.
     bpy.types.Scene.ui_search_keys = bpy.props.CollectionProperty(
-        type=search.REFOPS_PG_search_name
+        type=search.PYOPS_PG_search_name
     )
     # A second mirror, for attribute names with the internal ones filtered out.
     bpy.types.Scene.ui_search_attributes = bpy.props.CollectionProperty(
-        type=search.REFOPS_PG_search_name
+        type=search.PYOPS_PG_search_name
     )
 
     bpy.types.Object.is_procedural_copy = bpy.props.BoolProperty(default=False)
@@ -208,7 +211,7 @@ def unregister():
         except RuntimeError:
             pass
 
-    sys.modules.pop(API_ALIAS, None)
+    bpy.app.driver_namespace.pop(API_ALIAS, None)
 
 
 if __name__ == "__main__":

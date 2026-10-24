@@ -5,8 +5,8 @@ else — profile resolution, placement, offsets, cardinal alignment, end
 components, type naming — lives here so the three operators stay identical
 where they should be.
 
-    import refops_api
-    class BonsaiColumn(refops_api.bim_profiles.EdgeComponent):
+    import pyops_api
+    class BonsaiColumn(pyops_api.bim_profiles.EdgeComponent):
         id = "BIM_COLUMN"
         IFC_CLASS = "IfcColumn"
         ...
@@ -359,7 +359,7 @@ class EdgeComponent:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not bim.ensure():
-            print("[RefOps] Bonsai indisponível:")
+            print("[PyOps] Bonsai indisponível:")
             print(bim.IMPORT_ERROR)
             return False
 
@@ -371,7 +371,7 @@ class EdgeComponent:
 
         ifc_file = bim.get_file()
         if not ifc_file:
-            print("[RefOps] Nenhum projeto IFC ativo.")
+            print("[PyOps] Nenhum projeto IFC ativo.")
             return False
 
         container_obj.display_type = "WIRE"
@@ -382,7 +382,7 @@ class EdgeComponent:
         # IfcColumn by definition, so it never offers the choice.
         ifc_class = (getattr(data_holder, "ifc_class", "") or cls.IFC_CLASS).strip()
         if not ifc_class.startswith("Ifc"):
-            print(f"[RefOps] '{ifc_class}' não parece uma classe IFC.")
+            print(f"[PyOps] '{ifc_class}' não parece uma classe IFC.")
             return False
         type_class = f"{ifc_class}Type"
 
@@ -539,7 +539,7 @@ class EdgeComponent:
         select = bm.edges.layers.bool.get(data_holder.bool_attr)
         if not select:
             print(
-                f"[RefOps] Atributo booleano de edge '{data_holder.bool_attr}' não encontrado."
+                f"[PyOps] Atributo booleano de edge '{data_holder.bool_attr}' não encontrado."
             )
             return None
 
@@ -681,18 +681,18 @@ class EdgeComponent:
                 edge, layers, weight_range, data_holder.type_collection
             )
             if picked is None:
-                print("[RefOps] Nenhum tipo na collection para esta aresta.")
+                print("[PyOps] Nenhum tipo na collection para esta aresta.")
                 return None
             source_obj = picked
         else:
             source_obj = data_holder.type_pointer
             if not source_obj:
-                print("[RefOps] Nenhum Type Ref definido.")
+                print("[PyOps] Nenhum Type Ref definido.")
                 return None
 
         comp_type = bim.entity(source_obj)
         if comp_type is None or not comp_type.is_a(type_class):
-            print(f"[RefOps] '{source_obj.name}' não é um {type_class}.")
+            print(f"[PyOps] '{source_obj.name}' não é um {type_class}.")
             return None
         return comp_type
 
@@ -703,7 +703,7 @@ class EdgeComponent:
         profile = bim.profile_of_type(comp_type)
         if profile is None:
             print(
-                f"[RefOps] '{comp_type.Name}' não tem IfcMaterialProfileSet — "
+                f"[PyOps] '{comp_type.Name}' não tem IfcMaterialProfileSet — "
                 "sem perfil para extrudar."
             )
             return None
@@ -828,4 +828,4 @@ class EdgeComponent:
             if usage and usage.is_a("IfcMaterialProfileSetUsage"):
                 usage.CardinalPoint = int(cardinal)
         except Exception as e:
-            print(f"[RefOps] CardinalPoint: {e}")
+            print(f"[PyOps] CardinalPoint: {e}")

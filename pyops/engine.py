@@ -125,6 +125,7 @@ class MESH_OT_procedural_engine(bpy.types.Operator):
             bpy.ops.object.mode_set(mode="OBJECT")
 
         preserved_data = None
+        kept_collections = None
         if self.is_refresh:
             preserved_data = snapshot_downstream_data(active_obj, obj1)
             for o in list(context.view_layer.objects):
@@ -133,6 +134,10 @@ class MESH_OT_procedural_engine(bpy.types.Operator):
                     and o.proc_parent_name == obj1.name
                     and o.procedural_op_type == op_id
                 ):
+                    # The duplicate below is born in the parent's collections;
+                    # remember where the user filed the old copy to put it back.
+                    if kept_collections is None:
+                        kept_collections = list(o.users_collection)
                     # Frees the mesh as well — see registry.remove_object.
                     registry.remove_object(o)
 
@@ -157,6 +162,16 @@ class MESH_OT_procedural_engine(bpy.types.Operator):
                 edit_prefs.use_duplicate_action = had_duplicate_action
 
         nova_copia = context.active_object
+        if kept_collections:
+            for collection in list(nova_copia.users_collection):
+                collection.objects.unlink(nova_copia)
+            for collection in kept_collections:
+                try:
+                    collection.objects.link(nova_copia)
+                except RuntimeError as e:
+                    print(f"[PyOps.engine] collection '{collection.name}': {e}")
+            if not nova_copia.users_collection:
+                context.scene.collection.objects.link(nova_copia)
         _strip_animation(nova_copia)
         nova_copia.is_procedural_copy = True
         nova_copia.procedural_op_type = op_id

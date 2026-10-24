@@ -1,6 +1,6 @@
 """Shared tables, type predicates and cross-module mutable state.
 
-Nothing here imports another RefOps module — this is the bottom of the
+Nothing here imports another PyOps module — this is the bottom of the
 dependency graph. The mutable globals (refresh_lock, pending_refresh) are
 read/written as `registry.refresh_lock` from other modules rather than
 `from .registry import refresh_lock`, because a `from` import binds a copy of

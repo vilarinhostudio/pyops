@@ -16,7 +16,7 @@ import bpy
 from .registry import INTERNAL_KEYS
 
 
-class REFOPS_PG_search_name(bpy.types.PropertyGroup):
+class PYOPS_PG_search_name(bpy.types.PropertyGroup):
     """Just the implicit `name` — a row in a mirror collection for prop_search."""
 
 
@@ -153,4 +153,4 @@ def refresh_mirrors(context):
 
 SEARCH_SOURCES = {"attribute", "vertex_group", "material", "custom_property", "text"}
 
-classes = (REFOPS_PG_search_name,)
+classes = (PYOPS_PG_search_name,)

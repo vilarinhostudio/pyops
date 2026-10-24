@@ -1,9 +1,8 @@
 import bpy
 import bmesh
 
-import refops_api
 
-bim = refops_api.bim_helpers
+bim = pyops_api.bim_helpers
 
 
 class BonsaiTypeGeometry:
@@ -188,7 +187,7 @@ class BonsaiTypeGeometry:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not bim.ensure():
-            print("[RefOps] Bonsai indisponível:")
+            print("[PyOps] Bonsai indisponível:")
             print(bim.IMPORT_ERROR)
             return False
 
@@ -198,12 +197,12 @@ class BonsaiTypeGeometry:
 
         ifc_file = bim.get_file()
         if not ifc_file:
-            print("[RefOps] Nenhum projeto IFC ativo.")
+            print("[PyOps] Nenhum projeto IFC ativo.")
             return False
 
         ifc_class = (data_holder.ifc_class or "").strip()
         if not ifc_class.startswith("Ifc"):
-            print(f"[RefOps] '{ifc_class}' não parece uma classe IFC.")
+            print(f"[PyOps] '{ifc_class}' não parece uma classe IFC.")
             return False
         type_class = ifc_class if ifc_class.endswith("Type") else f"{ifc_class}Type"
 
@@ -225,7 +224,7 @@ class BonsaiTypeGeometry:
             ),
         }
         if contexts["body"] is None:
-            print("[RefOps] Sem contexto Model/Body/MODEL_VIEW no projeto.")
+            print("[PyOps] Sem contexto Model/Body/MODEL_VIEW no projeto.")
             return False
 
         base_name = (data_holder.type_name or "").strip() or parent_obj.name
@@ -252,7 +251,7 @@ class BonsaiTypeGeometry:
         # Geometry Nodes output for the current frame. Copied because everything
         # handed to the IFC side is released at the end of the run.
         if not container_obj.data or not container_obj.data.polygons:
-            print("[RefOps] Objeto sem geometria de malha.")
+            print("[PyOps] Objeto sem geometria de malha.")
             return False
 
         body = container_obj.data.copy()
@@ -279,7 +278,7 @@ class BonsaiTypeGeometry:
         # never read here. See the class docstring: instanced output never gets
         # baked, so the painted attribute is what carries the grouping.
         if not container_obj.data or not container_obj.data.polygons:
-            print("[RefOps] Objeto sem geometria de malha.")
+            print("[PyOps] Objeto sem geometria de malha.")
             return False
 
         group_attr = (data_holder.group_attr or "").strip()
@@ -290,7 +289,7 @@ class BonsaiTypeGeometry:
             parent_obj,
         )
         if not groups:
-            print("[RefOps] Nenhum grupo encontrado.")
+            print("[PyOps] Nenhum grupo encontrado.")
             return False
 
         symbols = cls._symbol_meshes(data_holder, contexts, depsgraph, group_attr)
@@ -338,7 +337,7 @@ class BonsaiTypeGeometry:
             # element referencing its representation map.
             obj = bim.link_object(type_entity, name)
         if obj is None:
-            print(f"[RefOps] Type '{name}' sem objeto Blender — nada atualizado.")
+            print(f"[PyOps] Type '{name}' sem objeto Blender — nada atualizado.")
             return None
 
         body_rep = None
@@ -356,7 +355,7 @@ class BonsaiTypeGeometry:
                 # Silence here reads as "the operator worked" while Bonsai
                 # offers "No Geometry" when placing an occurrence — the two
                 # symptoms are far enough apart to be worth naming.
-                print(f"[RefOps] '{name}': representação {key} não foi criada.")
+                print(f"[PyOps] '{name}': representação {key} não foi criada.")
             if key == "body":
                 body_rep = rep
 
@@ -368,7 +367,7 @@ class BonsaiTypeGeometry:
             material_set = bim.find_constituent_set(ifc_file, constituent_name)
             if material_set is None:
                 print(
-                    f"[RefOps] Nenhum IfcMaterialConstituentSet '{constituent_name}' "
+                    f"[PyOps] Nenhum IfcMaterialConstituentSet '{constituent_name}' "
                     f"no arquivo — '{name}' fica sem material."
                 )
             else:
@@ -393,7 +392,7 @@ class BonsaiTypeGeometry:
         try:
             return bim.vgroup_string(parent_obj, index)
         except ValueError as e:
-            print(f"[RefOps] {e}")
+            print(f"[PyOps] {e}")
             return ""
 
     @classmethod
@@ -405,7 +404,7 @@ class BonsaiTypeGeometry:
         would bake the placement into the type. A type has no placement — its
         geometry sits at the origin of the representation map — so neither does
         the carrier."""
-        obj = bpy.data.objects.new("RefOps Type Carrier", mesh)
+        obj = bpy.data.objects.new("PyOps Type Carrier", mesh)
         bpy.context.scene.collection.objects.link(obj)
         return obj
 
@@ -454,7 +453,7 @@ class BonsaiTypeGeometry:
         elif fallback:
             if group_attr:
                 print(
-                    f"[RefOps] '{group_attr}' não é atributo inteiro de ponto — "
+                    f"[PyOps] '{group_attr}' não é atributo inteiro de ponto — "
                     f"agrupando por partes soltas."
                 )
             for index, island in enumerate(bim.split_islands(list(bm.faces))):
@@ -554,7 +553,7 @@ class BonsaiTypeGeometry:
         bm.from_mesh(mesh)
         layer = bm.verts.layers.int.get(style_attr)
         if layer is None:
-            print(f"[RefOps] '{style_attr}' não é atributo inteiro de ponto — Style ignorado.")
+            print(f"[PyOps] '{style_attr}' não é atributo inteiro de ponto — Style ignorado.")
             bm.free()
             return
         cls._paint_styles(mesh, list(bm.faces), layer, parent_obj)
@@ -610,7 +609,7 @@ class BonsaiTypeGeometry:
                 continue
             mesh = cls._bake(pointer.evaluated_get(depsgraph), depsgraph)
             if mesh is None:
-                print(f"[RefOps] '{pointer.name}' não produziu malha — {key} ignorado.")
+                print(f"[PyOps] '{pointer.name}' não produziu malha — {key} ignorado.")
                 contexts[key] = None
                 continue
             grouped = cls._groups(mesh, group_attr, fallback=False)
@@ -633,7 +632,7 @@ class BonsaiTypeGeometry:
                 evaluated_obj, preserve_all_data_layers=True, depsgraph=depsgraph
             )
         except Exception as e:
-            print(f"[RefOps] new_from_object em '{evaluated_obj.name}': {e}")
+            print(f"[PyOps] new_from_object em '{evaluated_obj.name}': {e}")
             return None
         if mesh is None:
             return None

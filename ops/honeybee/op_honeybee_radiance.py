@@ -20,11 +20,10 @@ import tempfile
 
 import bpy
 
-import refops_api
 
-hb = refops_api.honeybee_helpers
-lb = refops_api.ladybug_helpers
-bim = refops_api.bim_helpers
+hb = pyops_api.honeybee_helpers
+lb = pyops_api.ladybug_helpers
+bim = pyops_api.bim_helpers
 
 # Recipe name and the outputs each one produces. Adding an analysis is a row
 # here plus its metric names — the rest of the operator does not change.
@@ -379,12 +378,12 @@ class HoneybeeRadiance:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not hb.ensure():
-            print("[RefOps.honeybee] Honeybee indisponível:")
+            print("[PyOps.honeybee] Honeybee indisponível:")
             print(hb.IMPORT_ERROR)
             return False
         if hb.radiance_path() is None:
             print(
-                "[RefOps.honeybee] Radiance não encontrado. Os pacotes Python "
+                "[PyOps.honeybee] Radiance não encontrado. Os pacotes Python "
                 "não bastam — instale o Radiance e garanta que rtrace esteja no PATH."
             )
             return False
@@ -466,18 +465,18 @@ class HoneybeeRadiance:
 
         hb.describe_model(model, len(sensors))
 
-        grid = hb.sensor_grid("refops_grid", sensors)
+        grid = hb.sensor_grid("pyops_grid", sensors)
         if grid is None:
-            print("[RefOps.honeybee] Grade de sensores vazia.")
+            print("[PyOps.honeybee] Grade de sensores vazia.")
             return False
         try:
             model.properties.radiance.add_sensor_grid(grid)
         except Exception as e:
-            print(f"[RefOps.honeybee] grade não anexada ao modelo: {e}")
+            print(f"[PyOps.honeybee] grade não anexada ao modelo: {e}")
             return False
 
         recipe_name, outputs = RECIPES[data_holder.analysis_type]
-        folder = os.path.join(tempfile.gettempdir(), "refops_honeybee")
+        folder = os.path.join(tempfile.gettempdir(), "pyops_honeybee")
         inputs = cls._recipe_inputs(data_holder, model)
         if inputs is None:
             return False
@@ -495,7 +494,7 @@ class HoneybeeRadiance:
         # results from it produces "invalid result folder" and blames the path
         # for a simulation that never ran. The log decides which it was.
         if not hb.run_succeeded(project):
-            print("[RefOps.honeybee] A simulação falhou — nenhum resultado gerado.")
+            print("[PyOps.honeybee] A simulação falhou — nenhum resultado gerado.")
             cls._report_logs(project)
             return False
 
@@ -527,14 +526,14 @@ class HoneybeeRadiance:
                 continue
             if not tail:
                 continue
-            print(f"[RefOps.honeybee] --- {name} ---")
+            print(f"[PyOps.honeybee] --- {name} ---")
             print(tail)
             if "No such option" in tail or "no such command" in tail.lower():
                 # The recipe calls the honeybee-radiance CLI with flags that
                 # version doesn't have. Nothing in the model or the inputs can
                 # fix it — the two packages have to come from the same install.
                 print(
-                    "[RefOps.honeybee] A receita e o honeybee-radiance instalado "
+                    "[PyOps.honeybee] A receita e o honeybee-radiance instalado "
                     "são de versões incompatíveis. Reinstale o grupo Honeybee "
                     "pelo botão nas preferências (com dependências), não com "
                     "--no-deps."
@@ -557,7 +556,7 @@ class HoneybeeRadiance:
 
         path = bpy.path.abspath(data_holder.epw) if data_holder.epw else ""
         if not path or not os.path.isfile(path):
-            print("[RefOps.honeybee] EPW inválido ou não informado.")
+            print("[PyOps.honeybee] EPW inválido ou não informado.")
             return None
 
         if analysis in {"ANNUAL_DAYLIGHT", "ANNUAL_IRRADIANCE"}:
@@ -566,7 +565,7 @@ class HoneybeeRadiance:
 
                 inputs["wea"] = Wea.from_epw_file(path)
             except Exception as e:
-                print(f"[RefOps.honeybee] Wea: {e}")
+                print(f"[PyOps.honeybee] Wea: {e}")
                 return None
             return inputs
 
@@ -579,7 +578,7 @@ class HoneybeeRadiance:
             "honeybee_radiance.lightsource.sky.climatebased", "ClimateBased"
         )
         if ClimateBased is None:
-            print("[RefOps.honeybee] Céu pontual indisponível nesta versão.")
+            print("[PyOps.honeybee] Céu pontual indisponível nesta versão.")
             return None
         try:
             from ladybug.wea import Wea
@@ -594,7 +593,7 @@ class HoneybeeRadiance:
             inputs["sky"] = sky
             inputs["metric"] = "illuminance"
         except Exception as e:
-            print(f"[RefOps.honeybee] céu pontual: {e}")
+            print(f"[PyOps.honeybee] céu pontual: {e}")
             return None
         return inputs
 
@@ -611,7 +610,7 @@ class HoneybeeRadiance:
         if data_holder.result_geometry_mode == "OBJECT":
             target = data_holder.result_geometry
             if target is None or target.type != "MESH":
-                print("[RefOps.honeybee] Result Object vazio ou não é malha.")
+                print("[PyOps.honeybee] Result Object vazio ou não é malha.")
                 return None, "FACE", [], []
             if data_holder.result_domain in {"VERTEX", "VERTEX_GROUP"}:
                 sensors = lb.vertex_sensors(target, offset)
@@ -634,16 +633,16 @@ class HoneybeeRadiance:
     @classmethod
     def _selected_faces(cls, obj, attribute_name):
         if not attribute_name:
-            print("[RefOps.honeybee] Nenhum atributo de seleção informado.")
+            print("[PyOps.honeybee] Nenhum atributo de seleção informado.")
             return []
         mesh = obj.data
         attribute = mesh.attributes.get(attribute_name)
         if attribute is None:
-            print(f"[RefOps.honeybee] Atributo '{attribute_name}' não existe.")
+            print(f"[PyOps.honeybee] Atributo '{attribute_name}' não existe.")
             return []
         if attribute.domain != "FACE" or attribute.data_type != "BOOLEAN":
             print(
-                f"[RefOps.honeybee] '{attribute_name}' é {attribute.data_type}/"
+                f"[PyOps.honeybee] '{attribute_name}' é {attribute.data_type}/"
                 f"{attribute.domain}; precisa ser BOOLEAN/FACE."
             )
             return []
@@ -651,7 +650,7 @@ class HoneybeeRadiance:
         attribute.data.foreach_get("value", flags)
         selected = [index for index, flag in enumerate(flags) if flag]
         if not selected:
-            print("[RefOps.honeybee] Nenhuma face selecionada pelo atributo.")
+            print("[PyOps.honeybee] Nenhuma face selecionada pelo atributo.")
         return selected
 
     # --- OUTPUTS ---
@@ -676,7 +675,7 @@ class HoneybeeRadiance:
                 values = hb.read_grid_results(project, *folders)
             if not values:
                 print(
-                    f"[RefOps.honeybee] Sem resultados para '{default_name}'. "
+                    f"[PyOps.honeybee] Sem resultados para '{default_name}'. "
                     f"Procurei em: {', '.join(folders)}"
                 )
                 continue
@@ -689,7 +688,7 @@ class HoneybeeRadiance:
             elif hb.write_face_values(target, name, values, indices, blender_domain):
                 written[name] = values
         if not written:
-            print("[RefOps.honeybee] Nenhum atributo escrito.")
+            print("[PyOps.honeybee] Nenhum atributo escrito.")
         return written
 
     @classmethod
@@ -705,15 +704,15 @@ class HoneybeeRadiance:
 
     @classmethod
     def _write_metadata(cls, obj, data_holder, domain, written):
-        obj["refops_operator"] = "honeybee_radiance"
+        obj["pyops_operator"] = "honeybee_radiance"
         obj["analysis_type"] = data_holder.analysis_type
         obj["epw_path"] = data_holder.epw or ""
         obj["context_mode"] = data_holder.context_mode
         obj["result_geometry_mode"] = data_holder.result_geometry_mode
         obj["result_domain"] = domain
         names = list(written)
-        obj["refops_value_attribute"] = names[0] if names else ""
-        obj["refops_value_attributes"] = ",".join(names)
+        obj["pyops_value_attribute"] = names[0] if names else ""
+        obj["pyops_value_attributes"] = ",".join(names)
         # hb_value_* mirrors the Ladybug operators' lb_value_* for the primary
         # attribute; Annual Daylight writes several, so each also gets its own.
         for position, (name, values) in enumerate(written.items()):

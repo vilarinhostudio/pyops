@@ -46,10 +46,10 @@ HVAC Collection imprime aviso explícito: capacidade somada como limite, COP agr
 - Horas ocupadas vêm de `Zone People Occupant Count` > 0 pedido ao próprio EnergyPlus, não da agenda recalculada em Python — alinhamento garantido.
 - Luminárias com Program sem luz: agenda de ocupação; sem ocupação também: sempre ligadas (avisado).
 - Setpoints viram agendas constantes (perdem o setback do Program).
-- Resultados em `%TEMP%\refops_energyplus\free` e `\active`, apagados a cada execução.
+- Resultados em `%TEMP%\pyops_energyplus\free` e `\active`, apagados a cada execução.
 
 ## Pré-requisito verificado
 
-2026-09-16: `tools/energyplus_smoke.py` (sala caixa + Ideal Air + EPW de São Paulo, `model_to_idf` + `run_idf`, fora do Blender, contra `C:\refops_libs`) **roda**: honeybee-energy 1.123.10 + EnergyPlus 26.1.0 (`C:\EnergyPlusV26-1-0`, achado sem `config.json`), IDF `Version` = exe, 0 severe / 0 fatal, `.sql` gerado, ano inteiro em ~2 s. Warnings não fatais: sem `Site:GroundTemperature`, OA do Ideal Air excede limite, `Temperature out of range (PsyPsatFnTemp)` com 6383 °C no `CalcPurchAirLoads`, só no design day de entalpia (sizing, não no ano) — olhar antes de confiar em capacidade autodimensionada. Dentro do Blender (background, IFC simulado) também roda — ver STATUS.md. ladybug_tools tem honeybee-energy 1.104.3 (diferente), irrelevante aqui: E+ roda como exe.
+2026-09-16: `tools/energyplus_smoke.py` (sala caixa + Ideal Air + EPW de São Paulo, `model_to_idf` + `run_idf`, fora do Blender, contra `C:\pyops_libs`) **roda**: honeybee-energy 1.123.10 + EnergyPlus 26.1.0 (`C:\EnergyPlusV26-1-0`, achado sem `config.json`), IDF `Version` = exe, 0 severe / 0 fatal, `.sql` gerado, ano inteiro em ~2 s. Warnings não fatais: sem `Site:GroundTemperature`, OA do Ideal Air excede limite, `Temperature out of range (PsyPsatFnTemp)` com 6383 °C no `CalcPurchAirLoads`, só no design day de entalpia (sizing, não no ano) — olhar antes de confiar em capacidade autodimensionada. Dentro do Blender (background, IFC simulado) também roda — ver STATUS.md. ladybug_tools tem honeybee-energy 1.104.3 (diferente), irrelevante aqui: E+ roda como exe.
 
 Descoberto no caminho: `model_to_idf` não escreve `Version` nem `SimulationParameter` (o CLI concatena `energyplus_idf_version()` + `sim_par.to_idf()` + modelo), e o Ideal Air sai como `HVACTemplate:Zone:IdealLoadsAirSystem` → `run_idf` precisa de `expand_objects=True` (padrão). Zone sizing ligado por padrão exige design days (DDY ou aproximados do EPW).

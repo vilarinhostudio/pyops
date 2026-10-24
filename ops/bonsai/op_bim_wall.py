@@ -2,10 +2,9 @@ import bpy
 import bmesh
 import mathutils
 
-import refops_api
 
-bim = refops_api.bim_helpers
-prof = refops_api.bim_profiles
+bim = pyops_api.bim_helpers
+prof = pyops_api.bim_profiles
 
 TOL = bim.TOL
 
@@ -120,7 +119,7 @@ class BonsaiWall:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not bim.ensure():
-            print("[RefOps] Bonsai indisponível:")
+            print("[PyOps] Bonsai indisponível:")
             print(bim.IMPORT_ERROR)
             return False
 
@@ -132,7 +131,7 @@ class BonsaiWall:
 
         ifc_file = bim.get_file()
         if not ifc_file:
-            print("[RefOps] Nenhum projeto IFC ativo.")
+            print("[PyOps] Nenhum projeto IFC ativo.")
             return False
 
         container_obj.display_type = "WIRE"
@@ -162,7 +161,7 @@ class BonsaiWall:
         if not bool_layer:
             bm.free()
             print(
-                f"[RefOps] Atributo booleano '{data_holder.bool_attr}' não encontrado."
+                f"[PyOps] Atributo booleano '{data_holder.bool_attr}' não encontrado."
             )
             return False
 
@@ -195,7 +194,7 @@ class BonsaiWall:
         )
         if data_holder.split_edge_attr and split_layer is None:
             print(
-                f"[RefOps] Atributo de corte '{data_holder.split_edge_attr}' "
+                f"[PyOps] Atributo de corte '{data_holder.split_edge_attr}' "
                 "não encontrado — as paredes não serão divididas."
             )
 
@@ -279,7 +278,7 @@ class BonsaiWall:
             thickness = bim.layer_set_thickness(material_set)
             if thickness <= 0:
                 print(
-                    f"[RefOps] O IfcMaterialLayerSet de "
+                    f"[PyOps] O IfcMaterialLayerSet de "
                     f"'{wall_type.Name}' soma espessura zero — parede ignorada."
                 )
                 continue
@@ -320,7 +319,7 @@ class BonsaiWall:
             )
             for opening in openings:
                 bim.tag_family(ifc_file, opening, key)
-            print(f"[RefOps] Vazio comum aplicado em {len(openings)} elementos.")
+            print(f"[PyOps] Vazio comum aplicado em {len(openings)} elementos.")
 
         # LAST: offset_walls and join_walls_intersection both rebuild the mesh
         # from the IFC representation, so anything written on the object earlier
@@ -329,7 +328,7 @@ class BonsaiWall:
             obj = bim.object_for(element)
             if not obj:
                 # Bonsai removed it — a merge during the trim, most likely.
-                print("[RefOps] Uma parede sumiu durante o trim.")
+                print("[PyOps] Uma parede sumiu durante o trim.")
                 continue
             bim.set_type_index(obj, type_index)
 
@@ -399,20 +398,20 @@ class BonsaiWall:
             # Picked per element by weight, the same mapping the profile
             # components use. The collection is the catalogue.
             if picked is None:
-                print("[RefOps] Nenhum tipo na collection para este elemento.")
+                print("[PyOps] Nenhum tipo na collection para este elemento.")
                 return None
             entity = bim.entity(picked)
             if entity is None or not entity.is_a("IfcWallType"):
-                print(f"[RefOps] '{picked.name}' não é um IfcWallType.")
+                print(f"[PyOps] '{picked.name}' não é um IfcWallType.")
                 return None
             return entity
 
         if not type_pointer_obj:
-            print("[RefOps] Nenhum Wall Type Ref definido.")
+            print("[PyOps] Nenhum Wall Type Ref definido.")
             return None
         wall_type = bim.entity(type_pointer_obj)
         if wall_type is None or not wall_type.is_a("IfcWallType"):
-            print(f"[RefOps] '{type_pointer_obj.name}' não é um IfcWallType.")
+            print(f"[PyOps] '{type_pointer_obj.name}' não é um IfcWallType.")
             return None
         return wall_type
 
@@ -430,14 +429,14 @@ class BonsaiWall:
             offset_type = ALIGN_MAP.get(align_value)
             if not offset_type or not objs:
                 if objs:
-                    print(f"[RefOps] Align '{align_value}' fora de 0/1/2 — ignorado.")
+                    print(f"[PyOps] Align '{align_value}' fora de 0/1/2 — ignorado.")
                 continue
             try:
                 bim.select(objs)
                 props.offset_type_vertical = offset_type
                 bpy.ops.bim.offset_walls()
             except Exception as e:
-                print(f"[RefOps] offset_walls ({offset_type}): {e}")
+                print(f"[PyOps] offset_walls ({offset_type}): {e}")
         try:
             props.offset_type_vertical = previous
         except Exception:
@@ -513,7 +512,7 @@ class BonsaiWall:
                 bim.select(objs)
                 bpy.ops.bim.unjoin_walls()
             except Exception as e:
-                print(f"[RefOps] unjoin_walls: {e}")
+                print(f"[PyOps] unjoin_walls: {e}")
 
         # Corners first. I had this backwards: a corner extension changes where
         # the perimeter walls END, so a T trimmed before that meets a wall whose
@@ -525,7 +524,7 @@ class BonsaiWall:
         )
 
         if DEBUG_JUNCTIONS:
-            print(f"[RefOps] {len(ordered_junctions)} junções detectadas:")
+            print(f"[PyOps] {len(ordered_junctions)} junções detectadas:")
         for (name_a, name_b), kind in ordered_junctions:
             a, b = bpy.data.objects.get(name_a), bpy.data.objects.get(name_b)
             if not a or not b:
@@ -542,14 +541,14 @@ class BonsaiWall:
 
             if DEBUG_JUNCTIONS:
                 print(
-                    f"[RefOps]   {kind:8} {name_a} + {name_b} -> "
+                    f"[PyOps]   {kind:8} {name_a} + {name_b} -> "
                     f"{operator_name}, ativo={active.name}"
                 )
             try:
                 bim.select(selected, active)
                 getattr(bpy.ops.bim, operator_name)()
             except Exception as e:
-                print(f"[RefOps] {operator_name} {name_a}/{name_b}: {e}")
+                print(f"[PyOps] {operator_name} {name_a}/{name_b}: {e}")
 
     @classmethod
     def _junction_kind(cls, spans, name_a, name_b, point):
@@ -702,7 +701,7 @@ class BonsaiWall:
             # A horizontal face marked as wall — it has no facing to build from,
             # and the wall used to vanish without a word.
             print(
-                "[RefOps] Grupo de parede sem direção horizontal (face "
+                "[PyOps] Grupo de parede sem direção horizontal (face "
                 "horizontal marcada como parede) — ignorado."
             )
             return None
@@ -720,7 +719,7 @@ class BonsaiWall:
         length = high - low
         if length < TOL or height < TOL:
             print(
-                f"[RefOps] Parede descartada: comprimento {length:.4f}, "
+                f"[PyOps] Parede descartada: comprimento {length:.4f}, "
                 f"altura {height:.4f}."
             )
             return None

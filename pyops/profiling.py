@@ -77,7 +77,7 @@ class operation:
         record["runs"] += 1
         record["total"] += elapsed
         if enabled():
-            print(f"[RefOps.prof] {self.name}: {elapsed:.3f}s")
+            print(f"[PyOps.prof] {self.name}: {elapsed:.3f}s")
             cls_report_steps(self.name, elapsed)
         return False
 
@@ -99,25 +99,25 @@ def cls_report_steps(name, elapsed):
         share = (total / elapsed * 100.0) if elapsed else 0.0
         if share < 1.0:
             continue
-        print(f"[RefOps.prof]    {label}: {total:.3f}s em {count}x ({share:.0f}%)")
+        print(f"[PyOps.prof]    {label}: {total:.3f}s em {count}x ({share:.0f}%)")
 
 
 def report():
     """Everything measured so far, slowest operation first."""
     if not _records:
-        print("[RefOps.prof] Nada medido ainda.")
+        print("[PyOps.prof] Nada medido ainda.")
         return
-    print("[RefOps.prof] --- acumulado ---")
+    print("[PyOps.prof] --- acumulado ---")
     for name, record in sorted(_records.items(), key=lambda item: -item[1]["total"]):
         runs = record["runs"] or 1
         print(
-            f"[RefOps.prof] {name}: {record['total']:.3f}s em {record['runs']}x "
+            f"[PyOps.prof] {name}: {record['total']:.3f}s em {record['runs']}x "
             f"(média {record['total'] / runs:.3f}s)"
         )
         for label, (count, total) in sorted(
             record["steps"].items(), key=lambda item: -item[1][1]
         ):
-            print(f"[RefOps.prof]    {label}: {total:.3f}s em {count}x")
+            print(f"[PyOps.prof]    {label}: {total:.3f}s em {count}x")
 
 
 def reset():
@@ -125,8 +125,8 @@ def reset():
     _stack.clear()
 
 
-class REFOPS_OT_profile_report(bpy.types.Operator):
-    bl_idname = "refops.profile_report"
+class PYOPS_OT_profile_report(bpy.types.Operator):
+    bl_idname = "pyops.profile_report"
     bl_label = "Timing Report"
     bl_description = "Print accumulated timings to the console"
     bl_options = {"REGISTER"}
@@ -137,8 +137,8 @@ class REFOPS_OT_profile_report(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class REFOPS_OT_profile_reset(bpy.types.Operator):
-    bl_idname = "refops.profile_reset"
+class PYOPS_OT_profile_reset(bpy.types.Operator):
+    bl_idname = "pyops.profile_reset"
     bl_label = "Clear Timings"
     bl_options = {"REGISTER"}
 
@@ -148,4 +148,4 @@ class REFOPS_OT_profile_reset(bpy.types.Operator):
         return {"FINISHED"}
 
 
-classes = (REFOPS_OT_profile_report, REFOPS_OT_profile_reset)
+classes = (PYOPS_OT_profile_report, PYOPS_OT_profile_reset)

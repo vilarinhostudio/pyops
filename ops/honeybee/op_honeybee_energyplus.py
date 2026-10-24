@@ -21,10 +21,9 @@ import tempfile
 
 import bpy
 
-import refops_api
 
-hb = refops_api.honeybee_helpers
-bim = refops_api.bim_helpers
+hb = pyops_api.honeybee_helpers
+bim = pyops_api.bim_helpers
 
 AIR_TEMP = "air_temp_mean"
 COMFORT = "comfortable_hours_pct"
@@ -231,18 +230,18 @@ class HoneybeeEnergyPlus:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not hb.ensure_energy():
-            print("[RefOps.energyplus] honeybee-energy indisponível:")
+            print("[PyOps.energyplus] honeybee-energy indisponível:")
             print(hb.ENERGY_IMPORT_ERROR)
             return False
         if not hb.energyplus_check():
             return False
         if not bim.ensure():
-            print("[RefOps.energyplus] Bonsai indisponível — camadas e psets vêm do IFC.")
+            print("[PyOps.energyplus] Bonsai indisponível — camadas e psets vêm do IFC.")
             return False
 
         epw = bpy.path.abspath(data_holder.epw) if data_holder.epw else ""
         if not epw or not os.path.isfile(epw):
-            print("[RefOps.energyplus] EPW inválido ou não informado.")
+            print("[PyOps.energyplus] EPW inválido ou não informado.")
             return False
 
         # The container is the parent with modifiers baked; it is the room.
@@ -258,7 +257,7 @@ class HoneybeeEnergyPlus:
         # without ever being moved between collections.
         construction = bim.room_members(data_holder.construction_pset, data_holder.room_name)
         if not construction:
-            print("[RefOps.energyplus] Nenhum elemento de Construction marcado para este cômodo — todas as faces genéricas.")
+            print("[PyOps.energyplus] Nenhum elemento de Construction marcado para este cômodo — todas as faces genéricas.")
         hb.match_room_faces(entries, construction)
         hb.apply_envelope(entries, data_holder.layer_order == "FIRST_OUTER")
 
@@ -267,7 +266,7 @@ class HoneybeeEnergyPlus:
             added = hb.openings_cut(entries, openings, data_holder.glazing_pset)
         else:
             added = hb.openings_projected(entries, construction, openings, data_holder.glazing_pset)
-        print(f"[RefOps.energyplus] {len(entries)} faces, {added} aberturas no Room.")
+        print(f"[PyOps.energyplus] {len(entries)} faces, {added} aberturas no Room.")
 
         program = cls._program(program, room, data_holder)
         if program is None:
@@ -281,7 +280,7 @@ class HoneybeeEnergyPlus:
 
         months = list(range(1, 13)) if data_holder.granularity == "MONTHLY" else None
         month = data_holder.month if data_holder.granularity == "SINGLE_MONTH" else None
-        folder = os.path.join(tempfile.gettempdir(), "refops_energyplus")
+        folder = os.path.join(tempfile.gettempdir(), "pyops_energyplus")
 
         results = {}
         for name in ("free", "active"):
@@ -297,9 +296,9 @@ class HoneybeeEnergyPlus:
         if not written:
             return False
         cls._assign_material(container_obj, data_holder.display_material)
-        container_obj["refops_operator"] = "honeybee_energyplus"
+        container_obj["pyops_operator"] = "honeybee_energyplus"
         container_obj["epw_path"] = data_holder.epw or ""
-        container_obj["refops_value_attributes"] = ",".join(written)
+        container_obj["pyops_value_attributes"] = ",".join(written)
         return True
 
     # --- MODEL ---
@@ -315,7 +314,7 @@ class HoneybeeEnergyPlus:
         from honeybee_energy.load.setpoint import Setpoint
 
         program = base.duplicate()
-        program.identifier = f"{base.identifier}_refops"
+        program.identifier = f"{base.identifier}_pyops"
         if data_holder.enum_lights == "NONE":
             program.lighting = None
         else:
@@ -323,23 +322,23 @@ class HoneybeeEnergyPlus:
             watts = hb.lighting_watts(lights, data_holder.light_pset)
             area = room.floor_area
             if area <= 0:
-                print("[RefOps.energyplus] Room sem piso — densidade de luz impossível.")
+                print("[PyOps.energyplus] Room sem piso — densidade de luz impossível.")
                 return None
             if base.lighting is not None:
                 schedule = base.lighting.schedule
             elif base.people is not None:
                 schedule = base.people.occupancy_schedule
-                print("[RefOps.energyplus] Program sem luz — agenda de ocupação usada para as luminárias.")
+                print("[PyOps.energyplus] Program sem luz — agenda de ocupação usada para as luminárias.")
             else:
-                schedule = hb.constant_schedule("refops_lights_on", 1.0, "Fractional")
-                print("[RefOps.energyplus] Program sem luz nem ocupação — luminárias sempre ligadas.")
-            program.lighting = Lighting("refops_lighting", watts / area, schedule)
-            print(f"[RefOps.energyplus] Luz: {watts:.0f} W / {area:.1f} m² = {watts / area:.2f} W/m².")
+                schedule = hb.constant_schedule("pyops_lights_on", 1.0, "Fractional")
+                print("[PyOps.energyplus] Program sem luz nem ocupação — luminárias sempre ligadas.")
+            program.lighting = Lighting("pyops_lighting", watts / area, schedule)
+            print(f"[PyOps.energyplus] Luz: {watts:.0f} W / {area:.1f} m² = {watts / area:.2f} W/m².")
 
         program.setpoint = Setpoint(
-            "refops_setpoint",
-            hb.constant_schedule("refops_heating_sp", data_holder.heating_setpoint),
-            hb.constant_schedule("refops_cooling_sp", data_holder.cooling_setpoint),
+            "pyops_setpoint",
+            hb.constant_schedule("pyops_heating_sp", data_holder.heating_setpoint),
+            hb.constant_schedule("pyops_cooling_sp", data_holder.cooling_setpoint),
         )
         return program
 
@@ -349,7 +348,7 @@ class HoneybeeEnergyPlus:
         from honeybee_energy.hvac.idealair import IdealAirSystem
 
         if data_holder.hvac_mode == "IDEAL_AIR":
-            return IdealAirSystem("refops_ideal_air"), (None, None)
+            return IdealAirSystem("pyops_ideal_air"), (None, None)
 
         hvac_objects = bim.room_members(data_holder.hvac_room_pset, data_holder.room_name)
         cooling, heating, cop_cool, cop_heat = hb.hvac_readings(
@@ -357,26 +356,26 @@ class HoneybeeEnergyPlus:
         )
         if cooling <= 0 and heating <= 0:
             print(
-                f"[RefOps.energyplus] Nenhum elemento HVAC deste cômodo com CoolingCapacity/HeatingCapacity "
+                f"[PyOps.energyplus] Nenhum elemento HVAC deste cômodo com CoolingCapacity/HeatingCapacity "
                 f"em {data_holder.hvac_pset} — nada para simular."
             )
             return None
         print(
-            "[RefOps.energyplus] AVISO — HVAC Collection é aproximação: capacidade somada "
+            "[PyOps.energyplus] AVISO — HVAC Collection é aproximação: capacidade somada "
             "como limite do Ideal Air e COP agregado aplicado DEPOIS da simulação, sem "
             "variação com temperatura externa nem carga parcial. Compara aparelhos entre "
             "si; o consumo absoluto sai otimista."
         )
         print(
-            f"[RefOps.energyplus] HVAC: resfriamento {cooling:.0f} W (COP {f'{cop_cool:.2f}' if cop_cool else '—'}), "
+            f"[PyOps.energyplus] HVAC: resfriamento {cooling:.0f} W (COP {f'{cop_cool:.2f}' if cop_cool else '—'}), "
             f"aquecimento {heating:.0f} W (COP {f'{cop_heat:.2f}' if cop_heat else '—'})."
         )
         try:
             system = IdealAirSystem(
-                "refops_ideal_air", heating_limit=heating, cooling_limit=cooling
+                "pyops_ideal_air", heating_limit=heating, cooling_limit=cooling
             )
         except Exception as e:
-            print(f"[RefOps.energyplus] IdealAirSystem com limites: {e}")
+            print(f"[PyOps.energyplus] IdealAirSystem com limites: {e}")
             return None
         return system, (cop_cool, cop_heat)
 
@@ -398,13 +397,13 @@ class HoneybeeEnergyPlus:
         pass_room.properties.energy.hvac = ideal_air.duplicate() if active else None
 
         try:
-            model = Model(f"refops_{name}", rooms=[pass_room], units="Meters",
+            model = Model(f"pyops_{name}", rooms=[pass_room], units="Meters",
                           tolerance=0.01, angle_tolerance=1.0)
         except Exception as e:
-            print(f"[RefOps.energyplus] Model ({name}): {e}")
+            print(f"[PyOps.energyplus] Model ({name}): {e}")
             return None
 
-        print(f"[RefOps.energyplus] rodando passe '{name}'...")
+        print(f"[PyOps.energyplus] rodando passe '{name}'...")
         sql = hb.simulate_energy(model, epw, folder, month)
         if sql is None:
             return None
@@ -419,7 +418,7 @@ class HoneybeeEnergyPlus:
             cops=cops, hvac_electricity=data_holder.hvac_mode == "ROOM_PSET",
         )
         if not summary:
-            print(f"[RefOps.energyplus] passe '{name}' sem séries no .sql.")
+            print(f"[PyOps.energyplus] passe '{name}' sem séries no .sql.")
             return None
         return summary
 
@@ -455,9 +454,9 @@ class HoneybeeEnergyPlus:
                 obj[f"hb_{label}_max"] = round(max(series), 4)
                 obj[f"hb_{label}_mean"] = round(sum(series) / len(series), 4)
                 if data_holder.granularity != "MONTHLY":
-                    print(f"[RefOps.energyplus] {label} = {series[0]:.2f}")
+                    print(f"[PyOps.energyplus] {label} = {series[0]:.2f}")
         if not written:
-            print("[RefOps.energyplus] Nenhum atributo escrito.")
+            print("[PyOps.energyplus] Nenhum atributo escrito.")
         return written
 
     @classmethod

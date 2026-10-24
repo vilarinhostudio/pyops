@@ -118,7 +118,7 @@ def build_op_storage_class(op_cls):
         if prop is not None:
             annotations[prop_name] = prop
     return type(
-        "RefOpsProps_" + storage_attr(op_cls.id),
+        "PyOpsProps_" + storage_attr(op_cls.id),
         (bpy.types.PropertyGroup,),
         {"__annotations__": annotations},
     )

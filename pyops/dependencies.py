@@ -85,7 +85,7 @@ def install(group, folder):
     is usually a different version, and packages built for it will not import
     here."""
     if not folder:
-        print("[RefOps.deps] Nenhuma pasta externa definida.")
+        print("[PyOps.deps] Nenhuma pasta externa definida.")
         return False
 
     os.makedirs(folder, exist_ok=True)
@@ -100,11 +100,11 @@ def install(group, folder):
         folder,
         *packages,
     ]
-    print(f"[RefOps.deps] {' '.join(command)}")
+    print(f"[PyOps.deps] {' '.join(command)}")
     try:
         result = subprocess.run(command, capture_output=True, text=True, timeout=1800)
     except Exception as e:
-        print(f"[RefOps.deps] pip falhou: {e}")
+        print(f"[PyOps.deps] pip falhou: {e}")
         return False
 
     if result.stdout:
@@ -114,7 +114,7 @@ def install(group, folder):
         # pip reports failure when its cleanup step hits a locked file even
         # though the packages themselves landed, so this is a warning rather
         # than a verdict.
-        print("[RefOps.deps] pip terminou com erro — verifique o status abaixo.")
+        print("[PyOps.deps] pip terminou com erro — verifique o status abaixo.")
 
     _drop_shadowing(folder)
     activate(folder)
@@ -130,13 +130,13 @@ def _drop_shadowing(folder):
             path = os.path.join(folder, name)
             try:
                 shutil.rmtree(path) if os.path.isdir(path) else os.remove(path)
-                print(f"[RefOps.deps] removido (duplicaria o do Blender): {name}")
+                print(f"[PyOps.deps] removido (duplicaria o do Blender): {name}")
             except Exception as e:
-                print(f"[RefOps.deps] não removeu {name}: {e}")
+                print(f"[PyOps.deps] não removeu {name}: {e}")
 
 
-class REFOPS_OT_install_dependencies(bpy.types.Operator):
-    bl_idname = "refops.install_dependencies"
+class PYOPS_OT_install_dependencies(bpy.types.Operator):
+    bl_idname = "pyops.install_dependencies"
     bl_label = "Install"
     bl_description = "Install these packages into the external folder"
     bl_options = {"REGISTER"}
@@ -156,8 +156,8 @@ class REFOPS_OT_install_dependencies(bpy.types.Operator):
         return {"CANCELLED"}
 
 
-class REFOPS_OT_check_dependencies(bpy.types.Operator):
-    bl_idname = "refops.check_dependencies"
+class PYOPS_OT_check_dependencies(bpy.types.Operator):
+    bl_idname = "pyops.check_dependencies"
     bl_label = "Check"
     bl_description = "Print what is reachable right now to the console"
     bl_options = {"REGISTER"}
@@ -165,9 +165,9 @@ class REFOPS_OT_check_dependencies(bpy.types.Operator):
     def execute(self, context):
         activate()
         for name, ok in report().items():
-            print(f"[RefOps.deps] {name:24} {'OK' if ok else 'AUSENTE'}")
+            print(f"[PyOps.deps] {name:24} {'OK' if ok else 'AUSENTE'}")
         self.report({"INFO"}, "Resultado no console do sistema.")
         return {"FINISHED"}
 
 
-classes = (REFOPS_OT_install_dependencies, REFOPS_OT_check_dependencies)
+classes = (PYOPS_OT_install_dependencies, PYOPS_OT_check_dependencies)

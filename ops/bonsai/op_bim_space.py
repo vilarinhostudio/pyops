@@ -24,9 +24,8 @@ import bmesh
 import bpy
 import mathutils
 
-import refops_api
 
-bim = refops_api.bim_helpers
+bim = pyops_api.bim_helpers
 
 TOL = 1e-6
 
@@ -144,7 +143,7 @@ class BonsaiSpace:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not bim.ensure():
-            print("[RefOps] Bonsai indisponível:")
+            print("[PyOps] Bonsai indisponível:")
             print(bim.IMPORT_ERROR)
             return False
 
@@ -154,7 +153,7 @@ class BonsaiSpace:
 
         ifc_file = bim.get_file()
         if not ifc_file:
-            print("[RefOps] Nenhum projeto IFC ativo.")
+            print("[PyOps] Nenhum projeto IFC ativo.")
             return False
 
         container_obj.display_type = "WIRE"
@@ -174,7 +173,7 @@ class BonsaiSpace:
         naked = sum(1 for edge in bm.edges if len(edge.link_faces) < 2)
         if naked:
             print(
-                f"[RefOps] {naked} arestas soltas — os volumes vazam por elas e "
+                f"[PyOps] {naked} arestas soltas — os volumes vazam por elas e "
                 "alguns ambientes podem se fundir."
             )
 
@@ -186,7 +185,7 @@ class BonsaiSpace:
         cells = cls._decompose(bm, bounding)
         rooms = cls._measure(bm, cells, source.matrix_world, data_holder)
         if not rooms:
-            print("[RefOps] Nenhum volume acima do mínimo.")
+            print("[PyOps] Nenhum volume acima do mínimo.")
             bm.free()
             return False
 
@@ -217,7 +216,7 @@ class BonsaiSpace:
                 created.append(element)
 
         bm.free()
-        print(f"[RefOps] {len(created)} ambientes criados.")
+        print(f"[PyOps] {len(created)} ambientes criados.")
         return bool(created)
 
     # --- FACE SELECTION ---
@@ -243,12 +242,12 @@ class BonsaiSpace:
                 continue
             layer = bm.faces.layers.bool.get(attribute)
             if layer is None:
-                print(f"[RefOps] Atributo '{attribute}' não encontrado.")
+                print(f"[PyOps] Atributo '{attribute}' não encontrado.")
                 continue
             marked |= {face.index for face in bm.faces if face[layer]}
 
         if not marked:
-            print("[RefOps] Nenhuma face marcada como elemento construtivo.")
+            print("[PyOps] Nenhuma face marcada como elemento construtivo.")
             return None
         return marked
 
@@ -377,7 +376,7 @@ class BonsaiSpace:
 
             outline = cls._floor_outline(bm, floor_faces, matrix_world)
             if outline is None:
-                print("[RefOps] Ambiente sem piso reconhecível — ignorado.")
+                print("[PyOps] Ambiente sem piso reconhecível — ignorado.")
                 continue
 
             rooms.append(
@@ -465,7 +464,7 @@ class BonsaiSpace:
             layer = bm.faces.layers.int.get(data_holder.room_id_attribute)
             if layer is None:
                 print(
-                    f"[RefOps] Atributo '{data_holder.room_id_attribute}' "
+                    f"[PyOps] Atributo '{data_holder.room_id_attribute}' "
                     "não encontrado."
                 )
 
@@ -528,7 +527,7 @@ class BonsaiSpace:
                     relating_object=storey,
                 )
             except Exception as e:
-                print(f"[RefOps] aggregate.assign_object: {e}")
+                print(f"[PyOps] aggregate.assign_object: {e}")
                 bim.assign_container(ifc_file, element, storey)
 
         precision = data_holder.precision

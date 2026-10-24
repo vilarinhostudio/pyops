@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "pyops"
-version = "1.7.0"
+version = "1.7.1"
 name = "PyOps"
 tagline = "Atributos de malha viram elementos IFC reais"
 maintainer = "Arthur Vilarinho"

@@ -94,7 +94,7 @@ Checklist antes de rodar (cada item já custou uma rodada):
 - Ler os dois passes:
   - `free_*` — desempenho passivo, a métrica de decisão de envoltória;
   - `active_cooling_load_kwh` / `active_heating_load_kwh` — quanto a envoltória exige do condicionamento.
-- **Conferir o `in.idf`** (`%TEMP%\refops_energyplus\active`) na primeira rodada de cada envoltória nova: `Material` com os valores certos, todas as faces com `refops_layers_*`.
+- **Conferir o `in.idf`** (`%TEMP%\pyops_energyplus\active`) na primeira rodada de cada envoltória nova: `Material` com os valores certos, todas as faces com `pyops_layers_*`.
 
 ### Luz — `honeybee_radiance`, *Model = Construction*
 

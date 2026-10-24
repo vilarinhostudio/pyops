@@ -37,9 +37,8 @@ import bmesh
 import bpy
 import mathutils
 
-import refops_api
 
-bim = refops_api.bim_helpers
+bim = pyops_api.bim_helpers
 
 TOL = 1e-6
 
@@ -159,7 +158,7 @@ class SpaceSyntaxGraph:
     def execute(cls, container_obj, data_holder):
         source_mesh = container_obj.data
         if not source_mesh or not source_mesh.polygons:
-            print("[RefOps.space] Objeto sem faces.")
+            print("[PyOps.space] Objeto sem faces.")
             return False
 
         bm = bmesh.new()
@@ -171,7 +170,7 @@ class SpaceSyntaxGraph:
         naked = sum(1 for edge in bm.edges if len(edge.link_faces) < 2)
         if naked:
             print(
-                f"[RefOps.space] {naked} arestas soltas — os volumes vazam por elas "
+                f"[PyOps.space] {naked} arestas soltas — os volumes vazam por elas "
                 "e alguns espaços podem se fundir."
             )
 
@@ -181,13 +180,13 @@ class SpaceSyntaxGraph:
             return False
         cells = cls._decompose(bm, bounding)
         if not cells:
-            print("[RefOps.space] Nenhum volume fechado encontrado.")
+            print("[PyOps.space] Nenhum volume fechado encontrado.")
             bm.free()
             return False
 
         rooms = cls._measure(bm, cells, container_obj.matrix_world, data_holder)
         if not rooms:
-            print("[RefOps.space] Nenhum volume acima do mínimo.")
+            print("[PyOps.space] Nenhum volume acima do mínimo.")
             bm.free()
             return False
 
@@ -229,7 +228,7 @@ class SpaceSyntaxGraph:
         ):
             marked |= cls._marked_faces(bm, attribute)
         if not marked:
-            print("[RefOps.space] Nenhuma face marcada como elemento construtivo.")
+            print("[PyOps.space] Nenhuma face marcada como elemento construtivo.")
             return None
         return marked
 
@@ -448,18 +447,18 @@ class SpaceSyntaxGraph:
         Falls back to the attribute method when Bonsai or the IFC is absent, so
         the operator still works on a mesh alone."""
         if not bim.ensure():
-            print("[RefOps.space] Bonsai indisponível — usando atributos.")
+            print("[PyOps.space] Bonsai indisponível — usando atributos.")
             return {}
         ifc_file = bim.get_file()
         if ifc_file is None:
-            print("[RefOps.space] Nenhum projeto IFC — usando atributos.")
+            print("[PyOps.space] Nenhum projeto IFC — usando atributos.")
             return {}
 
         host_class = (data_holder.host_class or "IfcWall").strip()
         try:
             hosts = ifc_file.by_type(host_class)
         except Exception:
-            print(f"[RefOps.space] '{host_class}' não existe no schema.")
+            print(f"[PyOps.space] '{host_class}' não existe no schema.")
             return {}
 
         connections = {}
@@ -482,7 +481,7 @@ class SpaceSyntaxGraph:
                 connections.setdefault(pair, set()).add("DOOR")
 
         print(
-            f"[RefOps.space] {found} aberturas lidas, "
+            f"[PyOps.space] {found} aberturas lidas, "
             f"{len(connections)} conexões encontradas."
         )
         return connections
@@ -541,7 +540,7 @@ class SpaceSyntaxGraph:
             return set()
         layer = bm.faces.layers.bool.get(attribute_name)
         if layer is None:
-            print(f"[RefOps.space] Atributo booleano '{attribute_name}' não encontrado.")
+            print(f"[PyOps.space] Atributo booleano '{attribute_name}' não encontrado.")
             return set()
         return {face.index for face in bm.faces if face[layer]}
 
@@ -580,7 +579,7 @@ class SpaceSyntaxGraph:
             layer = bm.faces.layers.int.get(data_holder.room_id_attribute)
             if layer is None:
                 print(
-                    f"[RefOps.space] Atributo int "
+                    f"[PyOps.space] Atributo int "
                     f"'{data_holder.room_id_attribute}' não encontrado."
                 )
 
@@ -678,7 +677,7 @@ class SpaceSyntaxGraph:
             group = obj.vertex_groups.new(name=name)
             group.add([index], 1.0, "REPLACE")
 
-        obj["refops_operator"] = "space_syntax"
+        obj["pyops_operator"] = "space_syntax"
         obj["rooms"] = len(rooms)
         obj["connections"] = len(edges)
         obj["total_volume"] = round(sum(room["volume"] for room in rooms), 3)

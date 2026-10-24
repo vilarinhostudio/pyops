@@ -3,8 +3,8 @@
 Import it from an operator file through the addon's stable alias, so the code
 doesn't break if the addon folder is renamed:
 
-    import refops_api
-    bim = refops_api.bim_helpers
+    import pyops_api
+    bim = pyops_api.bim_helpers
 
 Everything degrades to a no-op or None when Bonsai isn't installed — check
 bim.AVAILABLE first and return False from your operation.
@@ -26,7 +26,7 @@ import bpy
 
 # Bonsai is resolved on FIRST USE, not at import time.
 #
-# RefOps registers when Blender starts. If Bonsai is enabled after that — which
+# PyOps registers when Blender starts. If Bonsai is enabled after that — which
 # it has to be when Bonsai errors during startup and you toggle it by hand — a
 # module-level `import bonsai.tool` here would already have failed, and Python
 # caches that failure in sys.modules for the rest of the session. The result is
@@ -125,7 +125,7 @@ def ensure(force=False):
 
 def status():
     """Diagnostic. From the Blender console:
-    import refops_api; print(refops_api.bim_helpers.status())"""
+    import pyops_api; print(pyops_api.bim_helpers.status())"""
     ensure()
     return {
         "AVAILABLE": AVAILABLE,
@@ -135,10 +135,10 @@ def status():
     }
 
 
-# Custom pset used to mark which RefOps container produced an element, so a
+# Custom pset used to mark which PyOps container produced an element, so a
 # refresh can find and remove its own output — including entities whose Blender
 # object has already been deleted.
-FAMILY_PSET = "RefOps"
+FAMILY_PSET = "PyOps"
 TOL = 1e-4
 
 
@@ -225,7 +225,7 @@ def instance_from_type(type_entity, matrix=None):
     try:
         props.relating_type_id = str(type_entity.id())
     except Exception as e:
-        print(f"[refops.bim] relating_type_id ({occurrence_class}): {e}")
+        print(f"[pyops.bim] relating_type_id ({occurrence_class}): {e}")
         if previous_class is not None and hasattr(props, "ifc_class"):
             try:
                 props.ifc_class = previous_class
@@ -239,17 +239,17 @@ def instance_from_type(type_entity, matrix=None):
         or find_operator("add", "constr")
     )
     if operator is None:
-        print("[refops.bim] Nenhum operador de instância de tipo nesta versão.")
+        print("[pyops.bim] Nenhum operador de instância de tipo nesta versão.")
         return None, None
 
     before = set(bpy.data.objects)
     try:
         result = operator()
         if "FINISHED" not in result:
-            print(f"[refops.bim] instância de tipo -> {result}")
+            print(f"[pyops.bim] instância de tipo -> {result}")
             return None, None
     except Exception as e:
-        print(f"[refops.bim] instância de tipo: {e}")
+        print(f"[pyops.bim] instância de tipo: {e}")
         return None, None
     finally:
         for attribute, value in (
@@ -309,7 +309,7 @@ def material_properties(material):
                 if name and value is not None:
                     values[name] = getattr(value, "wrappedValue", value)
     except Exception as e:
-        print(f"[refops.bim] propriedades do material: {e}")
+        print(f"[pyops.bim] propriedades do material: {e}")
     return values
 
 
@@ -572,7 +572,7 @@ def occurrence_from_type(type_entity, matrix=None, name=None):
             relating_type=type_entity,
         )
     except Exception as e:
-        print(f"[refops.bim] type.assign_type: {e}")
+        print(f"[pyops.bim] type.assign_type: {e}")
 
     # assign_type maps the type's representation onto the occurrence; the mesh
     # is built from whatever ended up there.
@@ -587,7 +587,7 @@ def occurrence_from_type(type_entity, matrix=None, name=None):
         set_representation(ifc_file, obj, element, representation)
     else:
         print(
-            f"[refops.bim] '{label}' ficou sem corpo: o tipo não tem "
+            f"[pyops.bim] '{label}' ficou sem corpo: o tipo não tem "
             "representação mapeada."
         )
         file_object(obj)
@@ -665,7 +665,7 @@ def file_in_collection(obj, name):
         except RuntimeError as e:
             # Already linked elsewhere in the tree — leave it there rather than
             # duplicating it under the types collection.
-            print(f"[RefOps.bim] coleção '{name}': {e}")
+            print(f"[PyOps.bim] coleção '{name}': {e}")
             child = None
     if child is None:
         return None
@@ -739,7 +739,7 @@ def link_object(element, name):
     try:
         tool.Ifc.link(element, obj)
     except Exception as e:
-        print(f"[RefOps.bim] tool.Ifc.link falhou para '{name}': {e}")
+        print(f"[PyOps.bim] tool.Ifc.link falhou para '{name}': {e}")
         bpy.data.objects.remove(obj, do_unlink=True)
         return None
     file_object(obj)
@@ -773,7 +773,7 @@ def create_type(ifc_file, ifc_class, name, predefined_type=None):
     except Exception as e:
         # An IFC class whose type counterpart doesn't exist in the schema —
         # the element is still valid, it just goes untyped.
-        print(f"[refops.bim] '{ifc_class}' não existe no schema: {e}")
+        print(f"[pyops.bim] '{ifc_class}' não existe no schema: {e}")
         return None, None
     if not entity:
         return None, None
@@ -814,7 +814,7 @@ def show_representation(obj, representation):
             apply_openings=True,
         )
     except Exception as e:
-        print(f"[RefOps.bim] switch_representation em '{obj.name}': {e}")
+        print(f"[PyOps.bim] switch_representation em '{obj.name}': {e}")
         return
     if placeholder and placeholder is not obj.data:
         try:
@@ -874,7 +874,7 @@ def mesh_representation(ifc_file, context, obj, mesh=None):
         # it raises (a bare assert, notably) has an empty message — "erro: "
         # with nothing after it is the one report that says nothing at all.
         print(
-            f"[RefOps.bim] add_representation "
+            f"[PyOps.bim] add_representation "
             f"({getattr(context, 'ContextIdentifier', '?')}/"
             f"{getattr(context, 'TargetView', '?')}): {e!r}"
         )
@@ -906,7 +906,7 @@ def set_mesh_representation(ifc_file, product, obj, context, mesh=None):
                 representation=new_rep,
             )
         except Exception as e:
-            print(f"[RefOps.bim] assign_representation: {e}")
+            print(f"[PyOps.bim] assign_representation: {e}")
             return None
         return new_rep
 
@@ -918,7 +918,7 @@ def set_mesh_representation(ifc_file, product, obj, context, mesh=None):
     try:
         ifc_file.remove(new_rep)
     except Exception as e:
-        print(f"[RefOps.bim] descartar representação temporária: {e}")
+        print(f"[PyOps.bim] descartar representação temporária: {e}")
     for item in old_items:
         # The styled item goes first: it holds an inverse reference to the
         # geometry, and remove_deep2 keeps whatever is still referenced — the
@@ -929,7 +929,7 @@ def set_mesh_representation(ifc_file, product, obj, context, mesh=None):
         try:
             ifcopenshell.util.element.remove_deep2(ifc_file, item)
         except Exception as e:
-            print(f"[RefOps.bim] remover item antigo: {e}")
+            print(f"[PyOps.bim] remover item antigo: {e}")
     return existing
 
 
@@ -1023,7 +1023,7 @@ def add_opening(ifc_file, opening, host):
                 opening,
             )
         except Exception as e:
-            print(f"[refops.bim] IfcRelVoidsElement: {e}")
+            print(f"[pyops.bim] IfcRelVoidsElement: {e}")
             return None
 
     rebuild_geometry(host)
@@ -1053,7 +1053,7 @@ def add_filling(ifc_file, opening, element):
                 element,
             )
         except Exception as e:
-            print(f"[refops.bim] IfcRelFillsElement: {e}")
+            print(f"[pyops.bim] IfcRelFillsElement: {e}")
             return None
 
     # The fill only snaps into its opening once this runs — which is exactly
@@ -1106,7 +1106,7 @@ def rebuild_geometry(element):
         )
         return True
     except Exception as e:
-        print(f"[refops.bim] rebuild_geometry: {e}")
+        print(f"[pyops.bim] rebuild_geometry: {e}")
         return False
 
 
@@ -1151,10 +1151,10 @@ def opening_from_object(host, obj, preserve_placement=False):
             # Older Bonsai without the flag: it always repositions.
             result = bpy.ops.bim.add_opening()
         if "FINISHED" not in result:
-            print(f"[refops.bim] bim.add_opening -> {result}")
+            print(f"[pyops.bim] bim.add_opening -> {result}")
             return None
     except Exception as e:
-        print(f"[refops.bim] bim.add_opening: {e}")
+        print(f"[pyops.bim] bim.add_opening: {e}")
         return None
 
     for relation in host.HasOpenings or []:
@@ -1186,7 +1186,7 @@ def regenerate_parametric(obj):
         cancel()
         return True
     except Exception as e:
-        print(f"[refops.bim] regenerate_parametric ({suffix}): {e}")
+        print(f"[pyops.bim] regenerate_parametric ({suffix}): {e}")
         return False
 
 
@@ -1201,7 +1201,7 @@ def toggle_door_swing(obj, flip_geometry=False):
         return False
     operator = find_operator("toggle", "swing")
     if operator is None:
-        print("[refops.bim] Nenhum operador de swing nesta versão.")
+        print("[pyops.bim] Nenhum operador de swing nesta versão.")
         return False
     try:
         select([obj], obj)
@@ -1210,14 +1210,14 @@ def toggle_door_swing(obj, flip_geometry=False):
         )
         if "FINISHED" in result:
             return True
-        print(f"[refops.bim] toggle_door_swing -> {result}")
+        print(f"[pyops.bim] toggle_door_swing -> {result}")
     except Exception as e:
-        print(f"[refops.bim] toggle_door_swing: {e}")
+        print(f"[pyops.bim] toggle_door_swing: {e}")
     return False
 
 
 def capture_finish(obj):
-    """Snapshot the material slots and the RefOps boolean of an object.
+    """Snapshot the material slots and the PyOps boolean of an object.
 
     Bonsai rebuilds an element's mesh whenever its representation changes —
     adding a void does exactly that — and the rebuilt mesh arrives bare. Slots
@@ -1300,7 +1300,7 @@ def restore_finish(obj, snapshot):
     return True
 
 
-def void_elements(void_obj, elements, name="RefOps Void"):
+def void_elements(void_obj, elements, name="PyOps Void"):
     """Cut ONE mesh into every element of a run, as real IFC openings.
 
     A Blender boolean modifier would leave the cut invisible to IFC. Bonsai's
@@ -1340,16 +1340,16 @@ def recalculate_fill(obj):
         return False
     operator = find_operator("recalculate", "fill")
     if operator is None:
-        print("[refops.bim] Nenhum operador de recalculate fill nesta versão.")
+        print("[pyops.bim] Nenhum operador de recalculate fill nesta versão.")
         return False
     try:
         select([obj], obj)
         result = operator()
         if "FINISHED" in result:
             return True
-        print(f"[refops.bim] recalculate_fill -> {result}")
+        print(f"[pyops.bim] recalculate_fill -> {result}")
     except Exception as e:
-        print(f"[refops.bim] recalculate_fill: {e}")
+        print(f"[pyops.bim] recalculate_fill: {e}")
     return False
 
 
@@ -1367,7 +1367,7 @@ def copy_type(ifc_file, type_entity, name):
             "root.copy_class", ifc_file, product=type_entity
         )
     except Exception as e:
-        print(f"[refops.bim] root.copy_class: {e}")
+        print(f"[pyops.bim] root.copy_class: {e}")
         return None
     new_type = copies[0] if isinstance(copies, (list, tuple)) else copies
     if new_type is None:
@@ -1383,7 +1383,7 @@ def copy_type(ifc_file, type_entity, name):
         try:
             new_type.Name = name
         except Exception as e:
-            print(f"[refops.bim] renomear type: {e}")
+            print(f"[pyops.bim] renomear type: {e}")
     obj = object_for(new_type)
     if obj is not None:
         obj.name = name
@@ -1415,7 +1415,7 @@ def set_parametric_size(ifc_file, entity, height=None, width=None):
         set_pset(ifc_file, entity, pset_name, values)
         return True
     except Exception as e:
-        print(f"[refops.bim] {pset_name}: {e}")
+        print(f"[pyops.bim] {pset_name}: {e}")
         return False
 
 
@@ -1529,7 +1529,7 @@ def storey_by_index(index, ifc_file=None, warn=True):
     if index >= len(storeys):
         if warn:
             print(
-                f"[refops.bim] Pavimento {index} não existe "
+                f"[pyops.bim] Pavimento {index} não existe "
                 f"({len(storeys)} no arquivo); usando o último."
             )
         index = len(storeys) - 1
@@ -1583,7 +1583,7 @@ def vgroup_string(obj, index):
     clamped = max(0, min(int(index), len(groups) - 1))
     if clamped != index:
         print(
-            f"[refops.bim] vertex group {index} não existe em "
+            f"[pyops.bim] vertex group {index} não existe em "
             f"'{obj.name}' ({len(groups)} grupo(s)); usando o último."
         )
     return groups[clamped].name
@@ -1653,7 +1653,7 @@ def resolve_type_material(type_entity, set_class):
     material_set = type_material_set(type_entity, set_class)
     if material_set is None:
         print(
-            f"[RefOps.bim] '{getattr(type_entity, 'Name', None) or '?'}' não "
+            f"[PyOps.bim] '{getattr(type_entity, 'Name', None) or '?'}' não "
             f"carrega um {set_class}. Defina esse set no Type antes de rodar "
             "esta operação — nada foi criado."
         )
@@ -1681,7 +1681,7 @@ def vgroup_name_from_faces(obj, faces, layer):
     try:
         return vgroup_string(obj, winner)
     except ValueError as e:
-        print(f"[RefOps.bim] {e}")
+        print(f"[PyOps.bim] {e}")
         return None
 
 
@@ -1725,7 +1725,7 @@ def material_layers(element):
 
         scale = ifc_unit.calculate_unit_scale(get_file())
     except Exception as e:
-        print(f"[RefOps.bim] escala de unidade ilegível ({e}); assumindo metros.")
+        print(f"[PyOps.bim] escala de unidade ilegível ({e}); assumindo metros.")
         scale = 1.0
     return [
         (float(layer.LayerThickness or 0.0) * scale, layer.Material)
@@ -1767,7 +1767,7 @@ def assign_constituent_set(ifc_file, type_entity, set_name, constituent_name):
             material=existing,
         )
     except Exception as e:
-        print(f"[RefOps.bim] atribuir IfcMaterialConstituentSet ao type: {e}")
+        print(f"[PyOps.bim] atribuir IfcMaterialConstituentSet ao type: {e}")
         return None
     return existing
 
@@ -1786,7 +1786,7 @@ def _create_constituent_set(ifc_file, set_name, constituent_name):
             MaterialConstituents=[constituent],
         )
     except Exception as e:
-        print(f"[RefOps.bim] criar IfcMaterialConstituentSet '{set_name}': {e}")
+        print(f"[PyOps.bim] criar IfcMaterialConstituentSet '{set_name}': {e}")
         return None
 
 
@@ -1829,7 +1829,7 @@ def assign_material_set(ifc_file, entity, material_set):
                 "material.unassign_material", ifc_file, products=[entity]
             )
         except Exception as e:
-            print(f"[RefOps.bim] material.unassign_material: {e}")
+            print(f"[PyOps.bim] material.unassign_material: {e}")
     try:
         ifcopenshell.api.run(
             "material.assign_material",
@@ -1839,7 +1839,7 @@ def assign_material_set(ifc_file, entity, material_set):
             material=material_set,
         )
     except Exception as e:
-        print(f"[RefOps.bim] material.assign_material: {e}")
+        print(f"[PyOps.bim] material.assign_material: {e}")
         return None
     return material_set
 
@@ -1893,7 +1893,7 @@ def sync_material_style(ifc_file, ifc_material, blender_material, context):
             )
         return style
     except Exception as e:
-        print(f"[refops.bim] style for '{blender_material.name}': {e}")
+        print(f"[pyops.bim] style for '{blender_material.name}': {e}")
         return None
 
 
@@ -1998,7 +1998,7 @@ def cleanup_family(ifc_file, ifc_classes, key):
             try:
                 ifcopenshell.api.run("root.remove_product", ifc_file, product=element)
             except Exception as e:
-                print(f"[refops.bim] remove_product: {e}")
+                print(f"[pyops.bim] remove_product: {e}")
             if isinstance(obj, bpy.types.Object):
                 remove_object(obj)
             removed += 1
@@ -2008,7 +2008,7 @@ def cleanup_family(ifc_file, ifc_classes, key):
 # Custom property carrying the family key on Blender objects that have no IFC
 # entity behind them — proxies, helpers. Those can't be found through the pset
 # sweep, and matching by name prefix has bitten this addon more than once.
-OWNER_KEY = "refops_family"
+OWNER_KEY = "pyops_family"
 
 
 class TypeIndexer:
@@ -2102,7 +2102,7 @@ def cleanup_orphan_objects(name_prefix, exclude=()):
     """Objects left behind by a run that failed after creating the object but
     before (or while) creating its entity.
 
-    Procedural copies are never candidates. A RefOps container is itself a
+    Procedural copies are never candidates. A PyOps container is itself a
     procedural copy with no IFC entity, so a prefix that happens to match its
     name would have this function delete the very object the operation is
     running on — and the data_holder lives on that object, so the next property
@@ -2309,7 +2309,7 @@ def dissolve_regions(bm, faces):
             or []
         )
     except Exception as e:
-        print(f"[refops.bim] dissolve_faces: {e}")
+        print(f"[pyops.bim] dissolve_faces: {e}")
         regions = []
     if regions:
         return regions
@@ -2318,7 +2318,7 @@ def dissolve_regions(bm, faces):
     # meant no element at all. The undissolved faces still describe the same
     # area, so each becomes its own element rather than none.
     print(
-        f"[refops.bim] Dissolve falhou em {len(faces)} face(s); "
+        f"[pyops.bim] Dissolve falhou em {len(faces)} face(s); "
         "usando as faces originais."
     )
     return list(faces)

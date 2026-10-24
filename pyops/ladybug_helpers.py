@@ -3,8 +3,8 @@
 Lives in the addon rather than in an operator file so both `ladybug_graphs`
 and the planned `ladybug_analysis` can share it:
 
-    import refops_api
-    lb = refops_api.ladybug_helpers
+    import pyops_api
+    lb = pyops_api.ladybug_helpers
 
 Two things shape this module.
 
@@ -86,7 +86,7 @@ def ensure(force=False):
 
 def status():
     """Diagnostic. From the Blender console:
-    import refops_api; print(refops_api.ladybug_helpers.status())"""
+    import pyops_api; print(pyops_api.ladybug_helpers.status())"""
     ensure()
     return {
         "AVAILABLE": AVAILABLE,
@@ -106,13 +106,13 @@ def optional(module_path, attribute=None):
     try:
         module = __import__(module_path, fromlist=["_"])
     except Exception as e:
-        print(f"[RefOps.ladybug] '{module_path}' indisponível: {e}")
+        print(f"[PyOps.ladybug] '{module_path}' indisponível: {e}")
         return None
     if attribute is None:
         return module
     member = getattr(module, attribute, None)
     if member is None:
-        print(f"[RefOps.ladybug] '{module_path}.{attribute}' não existe nesta versão.")
+        print(f"[PyOps.ladybug] '{module_path}.{attribute}' não existe nesta versão.")
     return member
 
 
@@ -311,7 +311,7 @@ def text_object(name, body, location, size=1.0, align="CENTER"):
     # The caller's matrix is applied to every object added to a GraphOutput, so
     # a location written here would be overwritten. It is carried on the object
     # instead and folded into the matrix at insertion time.
-    obj["refops_local_location"] = tuple(location)
+    obj["pyops_local_location"] = tuple(location)
     return obj
 
 
@@ -331,7 +331,7 @@ def legend_objects(prefix, lb_legend, text_size=None):
     try:
         segment_mesh = lb_legend.segment_mesh
     except Exception as e:
-        print(f"[RefOps.ladybug] legenda sem malha: {e}")
+        print(f"[PyOps.ladybug] legenda sem malha: {e}")
         return objects
 
     # The legend's own segment values, one per face, so the same display
@@ -355,7 +355,7 @@ def legend_objects(prefix, lb_legend, text_size=None):
             else:
                 values = list(numbers[:faces])
     except Exception as e:
-        print(f"[RefOps.ladybug] valores da legenda: {e}")
+        print(f"[PyOps.ladybug] valores da legenda: {e}")
 
     mesh = mesh_from_lb(f"{prefix}_legend", segment_mesh, values)
     colors = getattr(lb_legend, "segment_colors", None)
@@ -395,7 +395,7 @@ def legend_objects(prefix, lb_legend, text_size=None):
                 )
             )
     except Exception as e:
-        print(f"[RefOps.ladybug] rótulos da legenda: {e}")
+        print(f"[PyOps.ladybug] rótulos da legenda: {e}")
     return objects
 
 
@@ -490,8 +490,8 @@ class GraphOutput:
         self.scale = 1.0
         self.objects = []
         self.metrics = {}
-        self.collection["refops_operator"] = "ladybug_graphs"
-        self.collection["refops_parent"] = parent_obj.name
+        self.collection["pyops_operator"] = "ladybug_graphs"
+        self.collection["pyops_parent"] = parent_obj.name
         for key, value in (metadata or {}).items():
             if value is not None:
                 self.collection[key] = value
@@ -506,18 +506,18 @@ class GraphOutput:
         # the type came out a different size from every other chart's.
         if self.scale != 1.0 and scaled:
             matrix = matrix @ mathutils.Matrix.Scale(self.scale, 4)
-        local = obj.get("refops_local_location")
+        local = obj.get("pyops_local_location")
         if local is not None:
             # Meshes and curves carry their coordinates in the geometry; text
             # objects carry theirs on the object, so the offset is folded in
             # here instead of being flattened by the shared matrix.
             matrix = matrix @ mathutils.Matrix.Translation(tuple(local))
-            del obj["refops_local_location"]
+            del obj["pyops_local_location"]
         obj.matrix_world = matrix
         if material is not None and hasattr(obj.data, "materials"):
             obj.data.materials.append(material)
         if values_attribute:
-            obj["refops_value_attribute"] = values_attribute
+            obj["pyops_value_attribute"] = values_attribute
         self.objects.append(obj)
         return obj
 
@@ -568,7 +568,7 @@ class GraphOutput:
                         break
                 converted += 1
             except Exception as e:
-                print(f"[RefOps.ladybug] grease pencil '{obj.name}': {e}")
+                print(f"[PyOps.ladybug] grease pencil '{obj.name}': {e}")
         return converted
 
     def record(self, **metrics):
@@ -584,7 +584,7 @@ class GraphOutput:
     def publish(self, container_obj):
         for key, value in self.metrics.items():
             container_obj[key] = value
-        container_obj["refops_metrics"] = ",".join(sorted(self.metrics))
+        container_obj["pyops_metrics"] = ",".join(sorted(self.metrics))
 
 
 def cleanup_collections(parent_name, operator_id="ladybug_graphs"):
@@ -594,9 +594,9 @@ def cleanup_collections(parent_name, operator_id="ladybug_graphs"):
     than on names, which the user is free to change."""
     for collection in list(bpy.data.collections):
         try:
-            if collection.get("refops_operator") != operator_id:
+            if collection.get("pyops_operator") != operator_id:
                 continue
-            if collection.get("refops_parent") != parent_name:
+            if collection.get("pyops_parent") != parent_name:
                 continue
         except ReferenceError:
             continue
@@ -709,7 +709,7 @@ def write_vertex_group(obj, name, values, indices=None):
             break
         weight = (numbers[position] - low) / span
         group.add([index], max(0.0, min(1.0, weight)), "REPLACE")
-    obj["refops_group_range"] = (round(low, 4), round(high, 4))
+    obj["pyops_group_range"] = (round(low, 4), round(high, 4))
     return group
 
 
@@ -820,7 +820,7 @@ def obstacle_bvh(objects, epsilon=0.0):
             vertices, polygons, all_triangles=False, epsilon=epsilon
         )
     except Exception as e:
-        print(f"[RefOps.ladybug] BVH das obstruções: {e}")
+        print(f"[PyOps.ladybug] BVH das obstruções: {e}")
         return None
 
 
@@ -853,7 +853,7 @@ def is_blocked_bvh(bvh, origin, direction, distance=1e6):
 
 def load_epw(path):
     if not path:
-        print("[RefOps.ladybug] Nenhum arquivo EPW informado.")
+        print("[PyOps.ladybug] Nenhum arquivo EPW informado.")
         return None
     resolved = bpy.path.abspath(path)
     try:
@@ -861,7 +861,7 @@ def load_epw(path):
 
         return EPW(resolved)
     except Exception as e:
-        print(f"[RefOps.ladybug] EPW '{resolved}': {e}")
+        print(f"[PyOps.ladybug] EPW '{resolved}': {e}")
         return None
 
 
@@ -887,7 +887,7 @@ def analysis_period(holder):
             end_hour=int(holder.end_hour),
         )
     except Exception as e:
-        print(f"[RefOps.ladybug] Período inválido ({e}); usando o ano inteiro.")
+        print(f"[PyOps.ladybug] Período inválido ({e}); usando o ano inteiro.")
         return AnalysisPeriod()
 
 
@@ -909,7 +909,7 @@ def epw_field(epw, key):
         return None
     data = getattr(epw, attribute, None)
     if data is None:
-        print(f"[RefOps.ladybug] EPW sem '{attribute}' nesta versão.")
+        print(f"[PyOps.ladybug] EPW sem '{attribute}' nesta versão.")
     return data
 
 

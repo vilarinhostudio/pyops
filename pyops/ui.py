@@ -257,9 +257,9 @@ class VIEW3D_PT_procedural_sidebar(bpy.types.Panel):
                 refresh_btn.is_refresh = True
 
 
-class VIEW3D_PT_refops_commands(bpy.types.Panel):
+class VIEW3D_PT_pyops_commands(bpy.types.Panel):
     bl_label = "PyOps"
-    bl_idname = "VIEW3D_PT_refops_commands"
+    bl_idname = "VIEW3D_PT_pyops_commands"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Procedural"
@@ -298,8 +298,8 @@ class VIEW3D_PT_refops_commands(bpy.types.Panel):
             prefs = context.preferences.addons[__package__].preferences
             if prefs.profile_operations:
                 row = layout.row(align=True)
-                row.operator("refops.profile_report", icon="CONSOLE")
-                row.operator("refops.profile_reset", text="", icon="TRASH")
+                row.operator("pyops.profile_report", icon="CONSOLE")
+                row.operator("pyops.profile_reset", text="", icon="TRASH")
         except Exception:
             pass
 
@@ -362,7 +362,7 @@ class ProceduralAddonPreferences(bpy.types.AddonPreferences):
     external_libs: bpy.props.StringProperty(
         name="Library Folder",
         subtype="DIR_PATH",
-        default="C:\\refops_libs\\",
+        default="C:\\pyops_libs\\",
         description=(
             "Folder for Ladybug and Honeybee. Pick one you own — Blender's own "
             "site-packages often refuses writes"
@@ -388,7 +388,7 @@ class ProceduralAddonPreferences(bpy.types.AddonPreferences):
         box.prop(self, "external_libs")
         if not self.external_libs:
             box.label(
-                text="Set a folder outside Program Files, e.g. C:\\refops_libs",
+                text="Set a folder outside Program Files, e.g. C:\\pyops_libs",
                 icon="INFO",
             )
             return
@@ -400,7 +400,7 @@ class ProceduralAddonPreferences(bpy.types.AddonPreferences):
             row = box.row(align=True)
             row.label(text=label)
             row.operator(
-                "refops.install_dependencies", text="Install", icon="IMPORT"
+                "pyops.install_dependencies", text="Install", icon="IMPORT"
             ).group = group
 
         grid = box.grid_flow(columns=2, even_columns=True)
@@ -409,13 +409,13 @@ class ProceduralAddonPreferences(bpy.types.AddonPreferences):
                 text=name,
                 icon="CHECKMARK" if ok else "X",
             )
-        box.operator("refops.check_dependencies", icon="CONSOLE")
+        box.operator("pyops.check_dependencies", icon="CONSOLE")
         box.label(text="Restart Blender after installing.", icon="INFO")
 
 
 classes = (
     VIEW3D_PT_procedural_attributes,
     VIEW3D_PT_procedural_sidebar,
-    VIEW3D_PT_refops_commands,
+    VIEW3D_PT_pyops_commands,
     ProceduralAddonPreferences,
 )

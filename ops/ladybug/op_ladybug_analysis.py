@@ -20,9 +20,8 @@ import math
 
 import bpy
 
-import refops_api
 
-lb = refops_api.ladybug_helpers
+lb = pyops_api.ladybug_helpers
 
 
 class LadybugAnalysis:
@@ -231,7 +230,7 @@ class LadybugAnalysis:
     @classmethod
     def execute(cls, container_obj, data_holder):
         if not lb.ensure():
-            print("[RefOps.ladybug] Ladybug Tools indisponível:")
+            print("[PyOps.ladybug] Ladybug Tools indisponível:")
             print(lb.IMPORT_ERROR)
             return False
 
@@ -253,7 +252,7 @@ class LadybugAnalysis:
 
         output_name = (data_holder.output_attribute or "").strip()
         if not output_name:
-            print("[RefOps.ladybug] Nome do atributo de saída vazio.")
+            print("[PyOps.ladybug] Nome do atributo de saída vazio.")
             return False
 
         builder = {
@@ -272,7 +271,7 @@ class LadybugAnalysis:
         except Exception as e:
             import traceback
 
-            print(f"[RefOps.ladybug] '{data_holder.analysis_type}' falhou: {e}")
+            print(f"[PyOps.ladybug] '{data_holder.analysis_type}' falhou: {e}")
             traceback.print_exc()
             return False
 
@@ -286,7 +285,7 @@ class LadybugAnalysis:
                 target, output_name, list(results.values()), list(results.keys())
             ):
                 print(
-                    f"[RefOps.ladybug] Vertex group '{output_name}' não foi "
+                    f"[PyOps.ladybug] Vertex group '{output_name}' não foi "
                     f"escrito em '{target.name}'."
                 )
                 return False
@@ -311,7 +310,7 @@ class LadybugAnalysis:
         if data_holder.result_geometry_mode == "OBJECT":
             target = data_holder.result_geometry
             if target is None or target.type != "MESH":
-                print("[RefOps.ladybug] Result Object vazio ou não é malha.")
+                print("[PyOps.ladybug] Result Object vazio ou não é malha.")
                 return None, "FACE", []
             domain = data_holder.result_domain
             if domain in {"VERTEX", "VERTEX_GROUP"}:
@@ -320,7 +319,7 @@ class LadybugAnalysis:
                 indices = list(range(len(target.data.polygons)))
                 sensors = lb.face_sensors(target, indices)
             if not sensors:
-                print("[RefOps.ladybug] Result Object sem geometria utilizável.")
+                print("[PyOps.ladybug] Result Object sem geometria utilizável.")
             return target, domain, sensors
 
         if data_holder.result_face_mode == "ALL_FACES":
@@ -330,7 +329,7 @@ class LadybugAnalysis:
             if indices is None:
                 return None, "FACE", []
             if not indices:
-                print("[RefOps.ladybug] Nenhuma face selecionada pelo atributo.")
+                print("[PyOps.ladybug] Nenhuma face selecionada pelo atributo.")
                 return None, "FACE", []
         return source, "FACE", lb.face_sensors(source, indices)
 
@@ -341,16 +340,16 @@ class LadybugAnalysis:
         """Indices of the faces flagged True. None means the input is invalid,
         which is a different outcome from an empty selection."""
         if not attribute_name:
-            print("[RefOps.ladybug] Nenhum atributo de seleção informado.")
+            print("[PyOps.ladybug] Nenhum atributo de seleção informado.")
             return None
         mesh = obj.data
         attribute = mesh.attributes.get(attribute_name)
         if attribute is None:
-            print(f"[RefOps.ladybug] Atributo '{attribute_name}' não existe.")
+            print(f"[PyOps.ladybug] Atributo '{attribute_name}' não existe.")
             return None
         if attribute.domain != "FACE" or attribute.data_type != "BOOLEAN":
             print(
-                f"[RefOps.ladybug] '{attribute_name}' é "
+                f"[PyOps.ladybug] '{attribute_name}' é "
                 f"{attribute.data_type}/{attribute.domain}; precisa ser BOOLEAN/FACE."
             )
             return None
@@ -410,7 +409,7 @@ class LadybugAnalysis:
     def _direct_sun_hours(cls, source, sensors, data_holder):
         vectors, epw = cls._sun_vectors(data_holder)
         if not vectors:
-            print("[RefOps.ladybug] Nenhum sol no período selecionado.")
+            print("[PyOps.ladybug] Nenhum sol no período selecionado.")
             return None
 
         obstacles = cls._obstacles(source, data_holder)
@@ -442,12 +441,12 @@ class LadybugAnalysis:
         installed beyond the pip packages."""
         SkyMatrix = lb.optional("ladybug_radiance.skymatrix", "SkyMatrix")
         if SkyMatrix is None:
-            print("[RefOps.ladybug] Radiação solar exige ladybug-radiance.")
+            print("[PyOps.ladybug] Radiação solar exige ladybug-radiance.")
             return None
 
         path = bpy.path.abspath(data_holder.epw) if data_holder.epw else ""
         if not path:
-            print("[RefOps.ladybug] Nenhum EPW informado.")
+            print("[PyOps.ladybug] Nenhum EPW informado.")
             return None
 
         try:
@@ -459,8 +458,8 @@ class LadybugAnalysis:
             matrix = SkyMatrix(wea, north=lb.NORTH_ANGLE)
             patch_values, patch_vectors = cls._sky_patches(matrix)
         except Exception as e:
-            print(f"[RefOps.ladybug] SkyMatrix: {e}")
-            print("[RefOps.ladybug] Requer o Radiance instalado (gendaymtx).")
+            print(f"[PyOps.ladybug] SkyMatrix: {e}")
+            print("[PyOps.ladybug] Requer o Radiance instalado (gendaymtx).")
             return None
 
         if not patch_values:
@@ -507,7 +506,7 @@ class LadybugAnalysis:
                 break
         if values is None or vectors is None:
             print(
-                "[RefOps.ladybug] Não consegui ler os patches do SkyMatrix "
+                "[PyOps.ladybug] Não consegui ler os patches do SkyMatrix "
                 "nesta versão — rode a sonda e me mande a saída."
             )
             return None, None
@@ -530,7 +529,7 @@ class LadybugAnalysis:
         )
         comfort_function = lb.optional(module, function_name)
         if comfort_function is None:
-            print(f"[RefOps.ladybug] {model} exige ladybug-comfort.")
+            print(f"[PyOps.ladybug] {model} exige ladybug-comfort.")
             return None
 
         vectors, epw = cls._sun_vectors(data_holder)
@@ -587,7 +586,7 @@ class LadybugAnalysis:
                             )[0]
                         )
                 except Exception as e:
-                    print(f"[RefOps.ladybug] {model}: {e}")
+                    print(f"[PyOps.ladybug] {model}: {e}")
                     return None
             results[index] = cls._reduce_comfort(samples, metric, model)
         return results
@@ -611,7 +610,7 @@ class LadybugAnalysis:
     @classmethod
     def _radiance_only(cls, source, sensors, data_holder):
         print(
-            "[RefOps.ladybug] Daylight Factor e Illuminance exigem uma simulação "
+            "[PyOps.ladybug] Daylight Factor e Illuminance exigem uma simulação "
             "Radiance sobre um modelo com materiais e aberturas — pertencem ao "
             "operador honeybee_radiance, não a este."
         )
@@ -678,7 +677,7 @@ class LadybugAnalysis:
     @classmethod
     def _write_metadata(cls, obj, data_holder, output_name, results, domain="FACE"):
         values = list(results.values())
-        obj["refops_operator"] = "ladybug_analysis"
+        obj["pyops_operator"] = "ladybug_analysis"
         obj["analysis_type"] = data_holder.analysis_type
         obj["analysis_face_attribute"] = data_holder.analysis_face_attribute
         obj["output_attribute"] = output_name
@@ -687,7 +686,7 @@ class LadybugAnalysis:
         obj["context_mode"] = data_holder.context_mode
         obj["result_geometry_mode"] = data_holder.result_geometry_mode
         obj["result_domain"] = domain
-        obj["refops_value_attribute"] = output_name
+        obj["pyops_value_attribute"] = output_name
         if values:
             obj["lb_samples"] = len(values)
             obj["lb_value_min"] = round(min(values), 4)
