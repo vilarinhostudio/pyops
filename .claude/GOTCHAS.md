@@ -204,3 +204,17 @@ Solução: ao editar comentários multi-linha gerados por script, contar abertur
 **A hachura de um FILL-AREA (`IfcAnnotation`, `PredefinedType-FILLAREA`) não aparece; sai só o fundo liso.**
 Causa: toda regra de hachura exige `material-` na classe, e o Bonsai só põe esse prefixo em corte/projeção. Numa anotação o nome do estilo vai cru (`diagonal1-fgwarning1-...`), então nenhum seletor casa e sobra `.PredefinedType-FILLAREA { fill: bg1 }`.
 Solução: o nome do estilo/material do FILL-AREA começa com `material-` (`material-diagonal1-fgwarning1-...`). Zero código, testado. O stroke/pen com prefixo `c` segue sem efeito em anotação — os seletores são escopados com `.cut`.
+
+## Extension / enums dinâmicos
+
+**Instalado como extensão, o painel de preferências mostra `Policy violation with top level module: <nome>`.**
+Causa: o Blender Extensions proíbe o addon de registrar módulo de topo em `sys.modules`; o antigo alias `refops_api` fazia isso.
+Solução: o loader injeta `pyops_api` no namespace de cada arquivo de `ops/` (sem `import`); scripts e MCP leem `bpy.app.driver_namespace["pyops_api"]`.
+
+**O log do Blender enche de `current value '0' matches no enum in 'Scene', 'ui_op_dropdown'` e o Blender trava.**
+Causa: item de enum com identificador vazio (`""`) é ignorado ao mapear o valor guardado de volta; o placeholder "Select an Operation..." no índice 0 nunca casava.
+Solução: placeholder com identificador real (`NO_SELECTION = "NONE"` em `callbacks.py`).
+
+**Trocar de categoria deixa o dropdown de Operation em branco em vez do placeholder.**
+Causa: `scn["ui_op_dropdown"] = 0` grava num IDProperty que o enum não lê; o índice antigo continuava valendo, além do fim da lista nova.
+Solução: resetar por RNA, `setattr(scn, "ui_op_dropdown", NO_SELECTION)`.
