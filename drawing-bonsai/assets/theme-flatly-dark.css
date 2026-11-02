@@ -46,7 +46,7 @@ path.flush    { stroke: #ecf0f1; stroke-width: 0.10; stroke-opacity: 0.4; }
 .PredefinedType-SLOPEFRACTION { marker-end: url(#radius-marker-end); }
 .PredefinedType-DIAMETER { marker-start: url(#diameter-marker-start); marker-end: url(#diameter-marker-end); }
 .PredefinedType-STAIRARROW { marker-start: url(#stair-marker-start); marker-end: url(#stair-marker-end); }
-.PredefinedType-BOUNDARY { fill: none; stroke: #e74c3c; stroke-width: 1; stroke-dasharray: 12, 4, 3, 4, 3, 4; }
+.PredefinedType-BOUNDARY { fill: none; stroke: #f1c40f; stroke-width: 1; stroke-dasharray: 12, 4, 3, 4, 3, 4; }
 .PredefinedType-FILLAREA { fill: #1a252f; stroke: #ecf0f1; }
 .PredefinedType-BREAKLINE { fill: none; stroke: #ecf0f1; stroke-width: 0.25; marker-mid: url(#breakline-marker); }
 path.PredefinedType-TEXTLEADER { marker-end: url(#leader-marker); }
@@ -54,7 +54,6 @@ text.PredefinedType-TEXTLEADER, tspan.PredefinedType-TEXTLEADER { fill: #ecf0f1;
 .PredefinedType-STUD { stroke: #ecf0f1; stroke-width: 1; }
 .PredefinedType-SEALANT { fill: url(#crosshatch1-fgprincipal1); stroke-width: 0.25; }
 .IfcSpace { fill: none; stroke: none; }
-.PredefinedType-WOOD { fill: url(#wood-fgprincipal1); stroke: #ecf0f1; stroke-width: 0.5; }
 .PredefinedType-STEEL { fill: url(#steel-fgprincipal1); stroke: #ecf0f1; stroke-width: 0.5; }
 .PredefinedType-CONCRETE { fill: url(#concrete-fgprincipal1); stroke: #ecf0f1; stroke-width: 0.5; }
 .PredefinedType-PLASTERBOARD { fill: url(#sand-fgprincipal1); stroke: #ecf0f1; stroke-width: 0.25; }
@@ -118,18 +117,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="strokesurface1"]:not([class*="pstrokesurface1"]):not([class*="cstrokesurface1"]) { stroke: #2c3e50 !important; }
 [class*="strokesurface2"]:not([class*="pstrokesurface2"]):not([class*="cstrokesurface2"]) { stroke: #263645 !important; }
 [class*="strokesurface3"]:not([class*="pstrokesurface3"]):not([class*="cstrokesurface3"]) { stroke: #202e3a !important; }
-[class*="strokewarning1"]:not([class*="pstrokewarning1"]):not([class*="cstrokewarning1"]) { stroke: #e74c3c !important; }
-[class*="strokewarning2"]:not([class*="pstrokewarning2"]):not([class*="cstrokewarning2"]) { stroke: #a33f38 !important; }
-[class*="strokewarning3"]:not([class*="pstrokewarning3"]):not([class*="cstrokewarning3"]) { stroke: #603233 !important; }
+[class*="strokewarning1"]:not([class*="pstrokewarning1"]):not([class*="cstrokewarning1"]) { stroke: #f1c40f !important; }
+[class*="strokewarning2"]:not([class*="pstrokewarning2"]):not([class*="cstrokewarning2"]) { stroke: #aa901a !important; }
+[class*="strokewarning3"]:not([class*="pstrokewarning3"]):not([class*="cstrokewarning3"]) { stroke: #635b24 !important; }
 [class*="strokesuccess1"]:not([class*="pstrokesuccess1"]):not([class*="cstrokesuccess1"]) { stroke: #2ecc71 !important; }
 [class*="strokesuccess2"]:not([class*="pstrokesuccess2"]):not([class*="cstrokesuccess2"]) { stroke: #27955b !important; }
 [class*="strokesuccess3"]:not([class*="pstrokesuccess3"]):not([class*="cstrokesuccess3"]) { stroke: #215e45 !important; }
 [class*="strokeinfo1"]:not([class*="pstrokeinfo1"]):not([class*="cstrokeinfo1"]) { stroke: #3498db !important; }
 [class*="strokeinfo2"]:not([class*="pstrokeinfo2"]):not([class*="cstrokeinfo2"]) { stroke: #2b72a2 !important; }
 [class*="strokeinfo3"]:not([class*="pstrokeinfo3"]):not([class*="cstrokeinfo3"]) { stroke: #234c69 !important; }
-[class*="strokedanger1"]:not([class*="pstrokedanger1"]):not([class*="cstrokedanger1"]) { stroke: #f1c40f !important; }
-[class*="strokedanger2"]:not([class*="pstrokedanger2"]):not([class*="cstrokedanger2"]) { stroke: #aa901a !important; }
-[class*="strokedanger3"]:not([class*="pstrokedanger3"]):not([class*="cstrokedanger3"]) { stroke: #635b24 !important; }
+[class*="strokedanger1"]:not([class*="pstrokedanger1"]):not([class*="cstrokedanger1"]) { stroke: #e74c3c !important; }
+[class*="strokedanger2"]:not([class*="pstrokedanger2"]):not([class*="cstrokedanger2"]) { stroke: #a33f38 !important; }
+[class*="strokedanger3"]:not([class*="pstrokedanger3"]):not([class*="cstrokedanger3"]) { stroke: #603233 !important; }
 [class*="strokemuted1"]:not([class*="pstrokemuted1"]):not([class*="cstrokemuted1"]) { stroke: #5d6d7e !important; }
 [class*="strokemuted2"]:not([class*="pstrokemuted2"]):not([class*="cstrokemuted2"]) { stroke: #475564 !important; }
 [class*="strokemuted3"]:not([class*="pstrokemuted3"]):not([class*="cstrokemuted3"]) { stroke: #313d4a !important; }
@@ -148,18 +147,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 .projection[class*="pstrokesurface1"] { stroke: #2c3e50 !important; }
 .projection[class*="pstrokesurface2"] { stroke: #263645 !important; }
 .projection[class*="pstrokesurface3"] { stroke: #202e3a !important; }
-.projection[class*="pstrokewarning1"] { stroke: #e74c3c !important; }
-.projection[class*="pstrokewarning2"] { stroke: #a33f38 !important; }
-.projection[class*="pstrokewarning3"] { stroke: #603233 !important; }
+.projection[class*="pstrokewarning1"] { stroke: #f1c40f !important; }
+.projection[class*="pstrokewarning2"] { stroke: #aa901a !important; }
+.projection[class*="pstrokewarning3"] { stroke: #635b24 !important; }
 .projection[class*="pstrokesuccess1"] { stroke: #2ecc71 !important; }
 .projection[class*="pstrokesuccess2"] { stroke: #27955b !important; }
 .projection[class*="pstrokesuccess3"] { stroke: #215e45 !important; }
 .projection[class*="pstrokeinfo1"] { stroke: #3498db !important; }
 .projection[class*="pstrokeinfo2"] { stroke: #2b72a2 !important; }
 .projection[class*="pstrokeinfo3"] { stroke: #234c69 !important; }
-.projection[class*="pstrokedanger1"] { stroke: #f1c40f !important; }
-.projection[class*="pstrokedanger2"] { stroke: #aa901a !important; }
-.projection[class*="pstrokedanger3"] { stroke: #635b24 !important; }
+.projection[class*="pstrokedanger1"] { stroke: #e74c3c !important; }
+.projection[class*="pstrokedanger2"] { stroke: #a33f38 !important; }
+.projection[class*="pstrokedanger3"] { stroke: #603233 !important; }
 .projection[class*="pstrokemuted1"] { stroke: #5d6d7e !important; }
 .projection[class*="pstrokemuted2"] { stroke: #475564 !important; }
 .projection[class*="pstrokemuted3"] { stroke: #313d4a !important; }
@@ -178,18 +177,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 .cut[class*="cstrokesurface1"] { stroke: #2c3e50 !important; }
 .cut[class*="cstrokesurface2"] { stroke: #263645 !important; }
 .cut[class*="cstrokesurface3"] { stroke: #202e3a !important; }
-.cut[class*="cstrokewarning1"] { stroke: #e74c3c !important; }
-.cut[class*="cstrokewarning2"] { stroke: #a33f38 !important; }
-.cut[class*="cstrokewarning3"] { stroke: #603233 !important; }
+.cut[class*="cstrokewarning1"] { stroke: #f1c40f !important; }
+.cut[class*="cstrokewarning2"] { stroke: #aa901a !important; }
+.cut[class*="cstrokewarning3"] { stroke: #635b24 !important; }
 .cut[class*="cstrokesuccess1"] { stroke: #2ecc71 !important; }
 .cut[class*="cstrokesuccess2"] { stroke: #27955b !important; }
 .cut[class*="cstrokesuccess3"] { stroke: #215e45 !important; }
 .cut[class*="cstrokeinfo1"] { stroke: #3498db !important; }
 .cut[class*="cstrokeinfo2"] { stroke: #2b72a2 !important; }
 .cut[class*="cstrokeinfo3"] { stroke: #234c69 !important; }
-.cut[class*="cstrokedanger1"] { stroke: #f1c40f !important; }
-.cut[class*="cstrokedanger2"] { stroke: #aa901a !important; }
-.cut[class*="cstrokedanger3"] { stroke: #635b24 !important; }
+.cut[class*="cstrokedanger1"] { stroke: #e74c3c !important; }
+.cut[class*="cstrokedanger2"] { stroke: #a33f38 !important; }
+.cut[class*="cstrokedanger3"] { stroke: #603233 !important; }
 .cut[class*="cstrokemuted1"] { stroke: #5d6d7e !important; }
 .cut[class*="cstrokemuted2"] { stroke: #475564 !important; }
 .cut[class*="cstrokemuted3"] { stroke: #313d4a !important; }
@@ -208,18 +207,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="fillsurface1"]:not([class*="pfillsurface1"]):not([class*="cfillsurface1"]) { fill: #2c3e50 !important; }
 [class*="fillsurface2"]:not([class*="pfillsurface2"]):not([class*="cfillsurface2"]) { fill: #263645 !important; }
 [class*="fillsurface3"]:not([class*="pfillsurface3"]):not([class*="cfillsurface3"]) { fill: #202e3a !important; }
-[class*="fillwarning1"]:not([class*="pfillwarning1"]):not([class*="cfillwarning1"]) { fill: #e74c3c !important; }
-[class*="fillwarning2"]:not([class*="pfillwarning2"]):not([class*="cfillwarning2"]) { fill: #a33f38 !important; }
-[class*="fillwarning3"]:not([class*="pfillwarning3"]):not([class*="cfillwarning3"]) { fill: #603233 !important; }
+[class*="fillwarning1"]:not([class*="pfillwarning1"]):not([class*="cfillwarning1"]) { fill: #f1c40f !important; }
+[class*="fillwarning2"]:not([class*="pfillwarning2"]):not([class*="cfillwarning2"]) { fill: #aa901a !important; }
+[class*="fillwarning3"]:not([class*="pfillwarning3"]):not([class*="cfillwarning3"]) { fill: #635b24 !important; }
 [class*="fillsuccess1"]:not([class*="pfillsuccess1"]):not([class*="cfillsuccess1"]) { fill: #2ecc71 !important; }
 [class*="fillsuccess2"]:not([class*="pfillsuccess2"]):not([class*="cfillsuccess2"]) { fill: #27955b !important; }
 [class*="fillsuccess3"]:not([class*="pfillsuccess3"]):not([class*="cfillsuccess3"]) { fill: #215e45 !important; }
 [class*="fillinfo1"]:not([class*="pfillinfo1"]):not([class*="cfillinfo1"]) { fill: #3498db !important; }
 [class*="fillinfo2"]:not([class*="pfillinfo2"]):not([class*="cfillinfo2"]) { fill: #2b72a2 !important; }
 [class*="fillinfo3"]:not([class*="pfillinfo3"]):not([class*="cfillinfo3"]) { fill: #234c69 !important; }
-[class*="filldanger1"]:not([class*="pfilldanger1"]):not([class*="cfilldanger1"]) { fill: #f1c40f !important; }
-[class*="filldanger2"]:not([class*="pfilldanger2"]):not([class*="cfilldanger2"]) { fill: #aa901a !important; }
-[class*="filldanger3"]:not([class*="pfilldanger3"]):not([class*="cfilldanger3"]) { fill: #635b24 !important; }
+[class*="filldanger1"]:not([class*="pfilldanger1"]):not([class*="cfilldanger1"]) { fill: #e74c3c !important; }
+[class*="filldanger2"]:not([class*="pfilldanger2"]):not([class*="cfilldanger2"]) { fill: #a33f38 !important; }
+[class*="filldanger3"]:not([class*="pfilldanger3"]):not([class*="cfilldanger3"]) { fill: #603233 !important; }
 [class*="fillmuted1"]:not([class*="pfillmuted1"]):not([class*="cfillmuted1"]) { fill: #5d6d7e !important; }
 [class*="fillmuted2"]:not([class*="pfillmuted2"]):not([class*="cfillmuted2"]) { fill: #475564 !important; }
 [class*="fillmuted3"]:not([class*="pfillmuted3"]):not([class*="cfillmuted3"]) { fill: #313d4a !important; }
@@ -238,18 +237,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 .projection[class*="pfillsurface1"] { fill: #2c3e50 !important; }
 .projection[class*="pfillsurface2"] { fill: #263645 !important; }
 .projection[class*="pfillsurface3"] { fill: #202e3a !important; }
-.projection[class*="pfillwarning1"] { fill: #e74c3c !important; }
-.projection[class*="pfillwarning2"] { fill: #a33f38 !important; }
-.projection[class*="pfillwarning3"] { fill: #603233 !important; }
+.projection[class*="pfillwarning1"] { fill: #f1c40f !important; }
+.projection[class*="pfillwarning2"] { fill: #aa901a !important; }
+.projection[class*="pfillwarning3"] { fill: #635b24 !important; }
 .projection[class*="pfillsuccess1"] { fill: #2ecc71 !important; }
 .projection[class*="pfillsuccess2"] { fill: #27955b !important; }
 .projection[class*="pfillsuccess3"] { fill: #215e45 !important; }
 .projection[class*="pfillinfo1"] { fill: #3498db !important; }
 .projection[class*="pfillinfo2"] { fill: #2b72a2 !important; }
 .projection[class*="pfillinfo3"] { fill: #234c69 !important; }
-.projection[class*="pfilldanger1"] { fill: #f1c40f !important; }
-.projection[class*="pfilldanger2"] { fill: #aa901a !important; }
-.projection[class*="pfilldanger3"] { fill: #635b24 !important; }
+.projection[class*="pfilldanger1"] { fill: #e74c3c !important; }
+.projection[class*="pfilldanger2"] { fill: #a33f38 !important; }
+.projection[class*="pfilldanger3"] { fill: #603233 !important; }
 .projection[class*="pfillmuted1"] { fill: #5d6d7e !important; }
 .projection[class*="pfillmuted2"] { fill: #475564 !important; }
 .projection[class*="pfillmuted3"] { fill: #313d4a !important; }
@@ -268,18 +267,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 .cut[class*="cfillsurface1"] { fill: #2c3e50 !important; }
 .cut[class*="cfillsurface2"] { fill: #263645 !important; }
 .cut[class*="cfillsurface3"] { fill: #202e3a !important; }
-.cut[class*="cfillwarning1"] { fill: #e74c3c !important; }
-.cut[class*="cfillwarning2"] { fill: #a33f38 !important; }
-.cut[class*="cfillwarning3"] { fill: #603233 !important; }
+.cut[class*="cfillwarning1"] { fill: #f1c40f !important; }
+.cut[class*="cfillwarning2"] { fill: #aa901a !important; }
+.cut[class*="cfillwarning3"] { fill: #635b24 !important; }
 .cut[class*="cfillsuccess1"] { fill: #2ecc71 !important; }
 .cut[class*="cfillsuccess2"] { fill: #27955b !important; }
 .cut[class*="cfillsuccess3"] { fill: #215e45 !important; }
 .cut[class*="cfillinfo1"] { fill: #3498db !important; }
 .cut[class*="cfillinfo2"] { fill: #2b72a2 !important; }
 .cut[class*="cfillinfo3"] { fill: #234c69 !important; }
-.cut[class*="cfilldanger1"] { fill: #f1c40f !important; }
-.cut[class*="cfilldanger2"] { fill: #aa901a !important; }
-.cut[class*="cfilldanger3"] { fill: #635b24 !important; }
+.cut[class*="cfilldanger1"] { fill: #e74c3c !important; }
+.cut[class*="cfilldanger2"] { fill: #a33f38 !important; }
+.cut[class*="cfilldanger3"] { fill: #603233 !important; }
 .cut[class*="cfillmuted1"] { fill: #5d6d7e !important; }
 .cut[class*="cfillmuted2"] { fill: #475564 !important; }
 .cut[class*="cfillmuted3"] { fill: #313d4a !important; }
@@ -301,18 +300,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 .projection[class*="pstrokesurface1"] path { stroke: #2c3e50 !important; }
 .projection[class*="pstrokesurface2"] path { stroke: #263645 !important; }
 .projection[class*="pstrokesurface3"] path { stroke: #202e3a !important; }
-.projection[class*="pstrokewarning1"] path { stroke: #e74c3c !important; }
-.projection[class*="pstrokewarning2"] path { stroke: #a33f38 !important; }
-.projection[class*="pstrokewarning3"] path { stroke: #603233 !important; }
+.projection[class*="pstrokewarning1"] path { stroke: #f1c40f !important; }
+.projection[class*="pstrokewarning2"] path { stroke: #aa901a !important; }
+.projection[class*="pstrokewarning3"] path { stroke: #635b24 !important; }
 .projection[class*="pstrokesuccess1"] path { stroke: #2ecc71 !important; }
 .projection[class*="pstrokesuccess2"] path { stroke: #27955b !important; }
 .projection[class*="pstrokesuccess3"] path { stroke: #215e45 !important; }
 .projection[class*="pstrokeinfo1"] path { stroke: #3498db !important; }
 .projection[class*="pstrokeinfo2"] path { stroke: #2b72a2 !important; }
 .projection[class*="pstrokeinfo3"] path { stroke: #234c69 !important; }
-.projection[class*="pstrokedanger1"] path { stroke: #f1c40f !important; }
-.projection[class*="pstrokedanger2"] path { stroke: #aa901a !important; }
-.projection[class*="pstrokedanger3"] path { stroke: #635b24 !important; }
+.projection[class*="pstrokedanger1"] path { stroke: #e74c3c !important; }
+.projection[class*="pstrokedanger2"] path { stroke: #a33f38 !important; }
+.projection[class*="pstrokedanger3"] path { stroke: #603233 !important; }
 .projection[class*="pstrokemuted1"] path { stroke: #5d6d7e !important; }
 .projection[class*="pstrokemuted2"] path { stroke: #475564 !important; }
 .projection[class*="pstrokemuted3"] path { stroke: #313d4a !important; }
@@ -339,18 +338,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 .cut[class*="cstrokesurface1"] path { stroke: #2c3e50 !important; }
 .cut[class*="cstrokesurface2"] path { stroke: #263645 !important; }
 .cut[class*="cstrokesurface3"] path { stroke: #202e3a !important; }
-.cut[class*="cstrokewarning1"] path { stroke: #e74c3c !important; }
-.cut[class*="cstrokewarning2"] path { stroke: #a33f38 !important; }
-.cut[class*="cstrokewarning3"] path { stroke: #603233 !important; }
+.cut[class*="cstrokewarning1"] path { stroke: #f1c40f !important; }
+.cut[class*="cstrokewarning2"] path { stroke: #aa901a !important; }
+.cut[class*="cstrokewarning3"] path { stroke: #635b24 !important; }
 .cut[class*="cstrokesuccess1"] path { stroke: #2ecc71 !important; }
 .cut[class*="cstrokesuccess2"] path { stroke: #27955b !important; }
 .cut[class*="cstrokesuccess3"] path { stroke: #215e45 !important; }
 .cut[class*="cstrokeinfo1"] path { stroke: #3498db !important; }
 .cut[class*="cstrokeinfo2"] path { stroke: #2b72a2 !important; }
 .cut[class*="cstrokeinfo3"] path { stroke: #234c69 !important; }
-.cut[class*="cstrokedanger1"] path { stroke: #f1c40f !important; }
-.cut[class*="cstrokedanger2"] path { stroke: #aa901a !important; }
-.cut[class*="cstrokedanger3"] path { stroke: #635b24 !important; }
+.cut[class*="cstrokedanger1"] path { stroke: #e74c3c !important; }
+.cut[class*="cstrokedanger2"] path { stroke: #a33f38 !important; }
+.cut[class*="cstrokedanger3"] path { stroke: #603233 !important; }
 .cut[class*="cstrokemuted1"] path { stroke: #5d6d7e !important; }
 .cut[class*="cstrokemuted2"] path { stroke: #475564 !important; }
 .cut[class*="cstrokemuted3"] path { stroke: #313d4a !important; }
@@ -365,7 +364,6 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 
 /* Hachura sem cor declarada: 'brick' sozinho, sem fg. Seletor de
    classe exata, entao nao colide com material-brickfgprincipal1. */
-.material-demolish { fill: url(#demolish-fgprincipal1); }
 .material-steel { fill: url(#steel-fgprincipal1); }
 .material-diagonal1 { fill: url(#diagonal1-fgprincipal1); }
 .material-diagonal2 { fill: url(#diagonal2-fgprincipal1); }
@@ -376,9 +374,6 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 .material-recth1 { fill: url(#recth1-fgprincipal1); }
 .material-recth2 { fill: url(#recth2-fgprincipal1); }
 .material-recth3 { fill: url(#recth3-fgprincipal1); }
-.material-rectv1 { fill: url(#rectv1-fgprincipal1); }
-.material-rectv2 { fill: url(#rectv2-fgprincipal1); }
-.material-rectv3 { fill: url(#rectv3-fgprincipal1); }
 .material-tile1 { fill: url(#tile1-fgprincipal1); }
 .material-tile2 { fill: url(#tile2-fgprincipal1); }
 .material-tile3 { fill: url(#tile3-fgprincipal1); }
@@ -394,53 +389,28 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 .material-liquid { fill: url(#liquid-fgprincipal1); }
 .material-grass { fill: url(#grass-fgprincipal1); }
 .material-honeycomb { fill: url(#honeycomb-fgprincipal1); }
-.material-wood { fill: url(#wood-fgprincipal1); }
 .material-sand { fill: url(#sand-fgprincipal1); }
 .material-concrete { fill: url(#concrete-fgprincipal1); }
 
 /* Hachuras. As cores vivem no patterns SVG deste tema. */
-[class*="material-demolish"][class*="fgprincipal1"] { fill: url(#demolish-fgprincipal1); }
-.projection[class*="material-pdemolish"][class*="pfgprincipal1"] { fill: url(#demolish-fgprincipal1); }
-.cut[class*="material-cdemolish"][class*="cfgprincipal1"] { fill: url(#demolish-fgprincipal1); }
-[class*="material-demolish"][class*="fgprincipal1"][class*="bg25"] { fill: url(#demolish-fgprincipal1-bg25); }
-.projection[class*="material-pdemolish"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#demolish-fgprincipal1-bg25); }
-.cut[class*="material-cdemolish"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#demolish-fgprincipal1-bg25); }
-[class*="material-demolish"][class*="fgwarning1"] { fill: url(#demolish-fgwarning1); }
-.projection[class*="material-pdemolish"][class*="pfgwarning1"] { fill: url(#demolish-fgwarning1); }
-.cut[class*="material-cdemolish"][class*="cfgwarning1"] { fill: url(#demolish-fgwarning1); }
-[class*="material-demolish"][class*="fgwarning1"][class*="bg25"] { fill: url(#demolish-fgwarning1-bg25); }
-.projection[class*="material-pdemolish"][class*="pfgwarning1"][class*="bg25"] { fill: url(#demolish-fgwarning1-bg25); }
-.cut[class*="material-cdemolish"][class*="cfgwarning1"][class*="bg25"] { fill: url(#demolish-fgwarning1-bg25); }
-[class*="material-demolish"][class*="fgdanger1"] { fill: url(#demolish-fgdanger1); }
-.projection[class*="material-pdemolish"][class*="pfgdanger1"] { fill: url(#demolish-fgdanger1); }
-.cut[class*="material-cdemolish"][class*="cfgdanger1"] { fill: url(#demolish-fgdanger1); }
-[class*="material-demolish"][class*="fgdanger1"][class*="bg25"] { fill: url(#demolish-fgdanger1-bg25); }
-.projection[class*="material-pdemolish"][class*="pfgdanger1"][class*="bg25"] { fill: url(#demolish-fgdanger1-bg25); }
-.cut[class*="material-cdemolish"][class*="cfgdanger1"][class*="bg25"] { fill: url(#demolish-fgdanger1-bg25); }
-[class*="material-demolish"][class*="fginfo1"] { fill: url(#demolish-fginfo1); }
-.projection[class*="material-pdemolish"][class*="pfginfo1"] { fill: url(#demolish-fginfo1); }
-.cut[class*="material-cdemolish"][class*="cfginfo1"] { fill: url(#demolish-fginfo1); }
-[class*="material-demolish"][class*="fginfo1"][class*="bg25"] { fill: url(#demolish-fginfo1-bg25); }
-.projection[class*="material-pdemolish"][class*="pfginfo1"][class*="bg25"] { fill: url(#demolish-fginfo1-bg25); }
-.cut[class*="material-cdemolish"][class*="cfginfo1"][class*="bg25"] { fill: url(#demolish-fginfo1-bg25); }
-[class*="material-demolish"][class*="fgaccent1"] { fill: url(#demolish-fgaccent1); }
-.projection[class*="material-pdemolish"][class*="pfgaccent1"] { fill: url(#demolish-fgaccent1); }
-.cut[class*="material-cdemolish"][class*="cfgaccent1"] { fill: url(#demolish-fgaccent1); }
-[class*="material-demolish"][class*="fgaccent1"][class*="bg25"] { fill: url(#demolish-fgaccent1-bg25); }
-.projection[class*="material-pdemolish"][class*="pfgaccent1"][class*="bg25"] { fill: url(#demolish-fgaccent1-bg25); }
-.cut[class*="material-cdemolish"][class*="cfgaccent1"][class*="bg25"] { fill: url(#demolish-fgaccent1-bg25); }
-[class*="material-demolish"][class*="fgsuccess1"] { fill: url(#demolish-fgsuccess1); }
-.projection[class*="material-pdemolish"][class*="pfgsuccess1"] { fill: url(#demolish-fgsuccess1); }
-.cut[class*="material-cdemolish"][class*="cfgsuccess1"] { fill: url(#demolish-fgsuccess1); }
-[class*="material-demolish"][class*="fgsuccess1"][class*="bg25"] { fill: url(#demolish-fgsuccess1-bg25); }
-.projection[class*="material-pdemolish"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#demolish-fgsuccess1-bg25); }
-.cut[class*="material-cdemolish"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#demolish-fgsuccess1-bg25); }
 [class*="material-steel"][class*="fgprincipal1"] { fill: url(#steel-fgprincipal1); }
 .projection[class*="material-psteel"][class*="pfgprincipal1"] { fill: url(#steel-fgprincipal1); }
 .cut[class*="material-csteel"][class*="cfgprincipal1"] { fill: url(#steel-fgprincipal1); }
 [class*="material-steel"][class*="fgprincipal1"][class*="bg25"] { fill: url(#steel-fgprincipal1-bg25); }
 .projection[class*="material-psteel"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#steel-fgprincipal1-bg25); }
 .cut[class*="material-csteel"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#steel-fgprincipal1-bg25); }
+[class*="material-steel"][class*="fgsecondary1"] { fill: url(#steel-fgsecondary1); }
+.projection[class*="material-psteel"][class*="pfgsecondary1"] { fill: url(#steel-fgsecondary1); }
+.cut[class*="material-csteel"][class*="cfgsecondary1"] { fill: url(#steel-fgsecondary1); }
+[class*="material-steel"][class*="fgsecondary1"][class*="bg25"] { fill: url(#steel-fgsecondary1-bg25); }
+.projection[class*="material-psteel"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#steel-fgsecondary1-bg25); }
+.cut[class*="material-csteel"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#steel-fgsecondary1-bg25); }
+[class*="material-steel"][class*="fgmuted1"] { fill: url(#steel-fgmuted1); }
+.projection[class*="material-psteel"][class*="pfgmuted1"] { fill: url(#steel-fgmuted1); }
+.cut[class*="material-csteel"][class*="cfgmuted1"] { fill: url(#steel-fgmuted1); }
+[class*="material-steel"][class*="fgmuted1"][class*="bg25"] { fill: url(#steel-fgmuted1-bg25); }
+.projection[class*="material-psteel"][class*="pfgmuted1"][class*="bg25"] { fill: url(#steel-fgmuted1-bg25); }
+.cut[class*="material-csteel"][class*="cfgmuted1"][class*="bg25"] { fill: url(#steel-fgmuted1-bg25); }
 [class*="material-steel"][class*="fgwarning1"] { fill: url(#steel-fgwarning1); }
 .projection[class*="material-psteel"][class*="pfgwarning1"] { fill: url(#steel-fgwarning1); }
 .cut[class*="material-csteel"][class*="cfgwarning1"] { fill: url(#steel-fgwarning1); }
@@ -477,6 +447,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-diagonal1"][class*="fgprincipal1"][class*="bg25"] { fill: url(#diagonal1-fgprincipal1-bg25); }
 .projection[class*="material-pdiagonal1"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#diagonal1-fgprincipal1-bg25); }
 .cut[class*="material-cdiagonal1"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#diagonal1-fgprincipal1-bg25); }
+[class*="material-diagonal1"][class*="fgsecondary1"] { fill: url(#diagonal1-fgsecondary1); }
+.projection[class*="material-pdiagonal1"][class*="pfgsecondary1"] { fill: url(#diagonal1-fgsecondary1); }
+.cut[class*="material-cdiagonal1"][class*="cfgsecondary1"] { fill: url(#diagonal1-fgsecondary1); }
+[class*="material-diagonal1"][class*="fgsecondary1"][class*="bg25"] { fill: url(#diagonal1-fgsecondary1-bg25); }
+.projection[class*="material-pdiagonal1"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#diagonal1-fgsecondary1-bg25); }
+.cut[class*="material-cdiagonal1"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#diagonal1-fgsecondary1-bg25); }
+[class*="material-diagonal1"][class*="fgmuted1"] { fill: url(#diagonal1-fgmuted1); }
+.projection[class*="material-pdiagonal1"][class*="pfgmuted1"] { fill: url(#diagonal1-fgmuted1); }
+.cut[class*="material-cdiagonal1"][class*="cfgmuted1"] { fill: url(#diagonal1-fgmuted1); }
+[class*="material-diagonal1"][class*="fgmuted1"][class*="bg25"] { fill: url(#diagonal1-fgmuted1-bg25); }
+.projection[class*="material-pdiagonal1"][class*="pfgmuted1"][class*="bg25"] { fill: url(#diagonal1-fgmuted1-bg25); }
+.cut[class*="material-cdiagonal1"][class*="cfgmuted1"][class*="bg25"] { fill: url(#diagonal1-fgmuted1-bg25); }
 [class*="material-diagonal1"][class*="fgwarning1"] { fill: url(#diagonal1-fgwarning1); }
 .projection[class*="material-pdiagonal1"][class*="pfgwarning1"] { fill: url(#diagonal1-fgwarning1); }
 .cut[class*="material-cdiagonal1"][class*="cfgwarning1"] { fill: url(#diagonal1-fgwarning1); }
@@ -513,6 +495,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-diagonal2"][class*="fgprincipal1"][class*="bg25"] { fill: url(#diagonal2-fgprincipal1-bg25); }
 .projection[class*="material-pdiagonal2"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#diagonal2-fgprincipal1-bg25); }
 .cut[class*="material-cdiagonal2"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#diagonal2-fgprincipal1-bg25); }
+[class*="material-diagonal2"][class*="fgsecondary1"] { fill: url(#diagonal2-fgsecondary1); }
+.projection[class*="material-pdiagonal2"][class*="pfgsecondary1"] { fill: url(#diagonal2-fgsecondary1); }
+.cut[class*="material-cdiagonal2"][class*="cfgsecondary1"] { fill: url(#diagonal2-fgsecondary1); }
+[class*="material-diagonal2"][class*="fgsecondary1"][class*="bg25"] { fill: url(#diagonal2-fgsecondary1-bg25); }
+.projection[class*="material-pdiagonal2"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#diagonal2-fgsecondary1-bg25); }
+.cut[class*="material-cdiagonal2"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#diagonal2-fgsecondary1-bg25); }
+[class*="material-diagonal2"][class*="fgmuted1"] { fill: url(#diagonal2-fgmuted1); }
+.projection[class*="material-pdiagonal2"][class*="pfgmuted1"] { fill: url(#diagonal2-fgmuted1); }
+.cut[class*="material-cdiagonal2"][class*="cfgmuted1"] { fill: url(#diagonal2-fgmuted1); }
+[class*="material-diagonal2"][class*="fgmuted1"][class*="bg25"] { fill: url(#diagonal2-fgmuted1-bg25); }
+.projection[class*="material-pdiagonal2"][class*="pfgmuted1"][class*="bg25"] { fill: url(#diagonal2-fgmuted1-bg25); }
+.cut[class*="material-cdiagonal2"][class*="cfgmuted1"][class*="bg25"] { fill: url(#diagonal2-fgmuted1-bg25); }
 [class*="material-diagonal2"][class*="fgwarning1"] { fill: url(#diagonal2-fgwarning1); }
 .projection[class*="material-pdiagonal2"][class*="pfgwarning1"] { fill: url(#diagonal2-fgwarning1); }
 .cut[class*="material-cdiagonal2"][class*="cfgwarning1"] { fill: url(#diagonal2-fgwarning1); }
@@ -549,6 +543,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-diagonal3"][class*="fgprincipal1"][class*="bg25"] { fill: url(#diagonal3-fgprincipal1-bg25); }
 .projection[class*="material-pdiagonal3"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#diagonal3-fgprincipal1-bg25); }
 .cut[class*="material-cdiagonal3"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#diagonal3-fgprincipal1-bg25); }
+[class*="material-diagonal3"][class*="fgsecondary1"] { fill: url(#diagonal3-fgsecondary1); }
+.projection[class*="material-pdiagonal3"][class*="pfgsecondary1"] { fill: url(#diagonal3-fgsecondary1); }
+.cut[class*="material-cdiagonal3"][class*="cfgsecondary1"] { fill: url(#diagonal3-fgsecondary1); }
+[class*="material-diagonal3"][class*="fgsecondary1"][class*="bg25"] { fill: url(#diagonal3-fgsecondary1-bg25); }
+.projection[class*="material-pdiagonal3"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#diagonal3-fgsecondary1-bg25); }
+.cut[class*="material-cdiagonal3"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#diagonal3-fgsecondary1-bg25); }
+[class*="material-diagonal3"][class*="fgmuted1"] { fill: url(#diagonal3-fgmuted1); }
+.projection[class*="material-pdiagonal3"][class*="pfgmuted1"] { fill: url(#diagonal3-fgmuted1); }
+.cut[class*="material-cdiagonal3"][class*="cfgmuted1"] { fill: url(#diagonal3-fgmuted1); }
+[class*="material-diagonal3"][class*="fgmuted1"][class*="bg25"] { fill: url(#diagonal3-fgmuted1-bg25); }
+.projection[class*="material-pdiagonal3"][class*="pfgmuted1"][class*="bg25"] { fill: url(#diagonal3-fgmuted1-bg25); }
+.cut[class*="material-cdiagonal3"][class*="cfgmuted1"][class*="bg25"] { fill: url(#diagonal3-fgmuted1-bg25); }
 [class*="material-diagonal3"][class*="fgwarning1"] { fill: url(#diagonal3-fgwarning1); }
 .projection[class*="material-pdiagonal3"][class*="pfgwarning1"] { fill: url(#diagonal3-fgwarning1); }
 .cut[class*="material-cdiagonal3"][class*="cfgwarning1"] { fill: url(#diagonal3-fgwarning1); }
@@ -585,6 +591,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-square1"][class*="fgprincipal1"][class*="bg25"] { fill: url(#square1-fgprincipal1-bg25); }
 .projection[class*="material-psquare1"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#square1-fgprincipal1-bg25); }
 .cut[class*="material-csquare1"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#square1-fgprincipal1-bg25); }
+[class*="material-square1"][class*="fgsecondary1"] { fill: url(#square1-fgsecondary1); }
+.projection[class*="material-psquare1"][class*="pfgsecondary1"] { fill: url(#square1-fgsecondary1); }
+.cut[class*="material-csquare1"][class*="cfgsecondary1"] { fill: url(#square1-fgsecondary1); }
+[class*="material-square1"][class*="fgsecondary1"][class*="bg25"] { fill: url(#square1-fgsecondary1-bg25); }
+.projection[class*="material-psquare1"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#square1-fgsecondary1-bg25); }
+.cut[class*="material-csquare1"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#square1-fgsecondary1-bg25); }
+[class*="material-square1"][class*="fgmuted1"] { fill: url(#square1-fgmuted1); }
+.projection[class*="material-psquare1"][class*="pfgmuted1"] { fill: url(#square1-fgmuted1); }
+.cut[class*="material-csquare1"][class*="cfgmuted1"] { fill: url(#square1-fgmuted1); }
+[class*="material-square1"][class*="fgmuted1"][class*="bg25"] { fill: url(#square1-fgmuted1-bg25); }
+.projection[class*="material-psquare1"][class*="pfgmuted1"][class*="bg25"] { fill: url(#square1-fgmuted1-bg25); }
+.cut[class*="material-csquare1"][class*="cfgmuted1"][class*="bg25"] { fill: url(#square1-fgmuted1-bg25); }
 [class*="material-square1"][class*="fgwarning1"] { fill: url(#square1-fgwarning1); }
 .projection[class*="material-psquare1"][class*="pfgwarning1"] { fill: url(#square1-fgwarning1); }
 .cut[class*="material-csquare1"][class*="cfgwarning1"] { fill: url(#square1-fgwarning1); }
@@ -621,6 +639,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-square2"][class*="fgprincipal1"][class*="bg25"] { fill: url(#square2-fgprincipal1-bg25); }
 .projection[class*="material-psquare2"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#square2-fgprincipal1-bg25); }
 .cut[class*="material-csquare2"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#square2-fgprincipal1-bg25); }
+[class*="material-square2"][class*="fgsecondary1"] { fill: url(#square2-fgsecondary1); }
+.projection[class*="material-psquare2"][class*="pfgsecondary1"] { fill: url(#square2-fgsecondary1); }
+.cut[class*="material-csquare2"][class*="cfgsecondary1"] { fill: url(#square2-fgsecondary1); }
+[class*="material-square2"][class*="fgsecondary1"][class*="bg25"] { fill: url(#square2-fgsecondary1-bg25); }
+.projection[class*="material-psquare2"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#square2-fgsecondary1-bg25); }
+.cut[class*="material-csquare2"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#square2-fgsecondary1-bg25); }
+[class*="material-square2"][class*="fgmuted1"] { fill: url(#square2-fgmuted1); }
+.projection[class*="material-psquare2"][class*="pfgmuted1"] { fill: url(#square2-fgmuted1); }
+.cut[class*="material-csquare2"][class*="cfgmuted1"] { fill: url(#square2-fgmuted1); }
+[class*="material-square2"][class*="fgmuted1"][class*="bg25"] { fill: url(#square2-fgmuted1-bg25); }
+.projection[class*="material-psquare2"][class*="pfgmuted1"][class*="bg25"] { fill: url(#square2-fgmuted1-bg25); }
+.cut[class*="material-csquare2"][class*="cfgmuted1"][class*="bg25"] { fill: url(#square2-fgmuted1-bg25); }
 [class*="material-square2"][class*="fgwarning1"] { fill: url(#square2-fgwarning1); }
 .projection[class*="material-psquare2"][class*="pfgwarning1"] { fill: url(#square2-fgwarning1); }
 .cut[class*="material-csquare2"][class*="cfgwarning1"] { fill: url(#square2-fgwarning1); }
@@ -657,6 +687,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-square3"][class*="fgprincipal1"][class*="bg25"] { fill: url(#square3-fgprincipal1-bg25); }
 .projection[class*="material-psquare3"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#square3-fgprincipal1-bg25); }
 .cut[class*="material-csquare3"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#square3-fgprincipal1-bg25); }
+[class*="material-square3"][class*="fgsecondary1"] { fill: url(#square3-fgsecondary1); }
+.projection[class*="material-psquare3"][class*="pfgsecondary1"] { fill: url(#square3-fgsecondary1); }
+.cut[class*="material-csquare3"][class*="cfgsecondary1"] { fill: url(#square3-fgsecondary1); }
+[class*="material-square3"][class*="fgsecondary1"][class*="bg25"] { fill: url(#square3-fgsecondary1-bg25); }
+.projection[class*="material-psquare3"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#square3-fgsecondary1-bg25); }
+.cut[class*="material-csquare3"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#square3-fgsecondary1-bg25); }
+[class*="material-square3"][class*="fgmuted1"] { fill: url(#square3-fgmuted1); }
+.projection[class*="material-psquare3"][class*="pfgmuted1"] { fill: url(#square3-fgmuted1); }
+.cut[class*="material-csquare3"][class*="cfgmuted1"] { fill: url(#square3-fgmuted1); }
+[class*="material-square3"][class*="fgmuted1"][class*="bg25"] { fill: url(#square3-fgmuted1-bg25); }
+.projection[class*="material-psquare3"][class*="pfgmuted1"][class*="bg25"] { fill: url(#square3-fgmuted1-bg25); }
+.cut[class*="material-csquare3"][class*="cfgmuted1"][class*="bg25"] { fill: url(#square3-fgmuted1-bg25); }
 [class*="material-square3"][class*="fgwarning1"] { fill: url(#square3-fgwarning1); }
 .projection[class*="material-psquare3"][class*="pfgwarning1"] { fill: url(#square3-fgwarning1); }
 .cut[class*="material-csquare3"][class*="cfgwarning1"] { fill: url(#square3-fgwarning1); }
@@ -693,6 +735,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-recth1"][class*="fgprincipal1"][class*="bg25"] { fill: url(#recth1-fgprincipal1-bg25); }
 .projection[class*="material-precth1"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#recth1-fgprincipal1-bg25); }
 .cut[class*="material-crecth1"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#recth1-fgprincipal1-bg25); }
+[class*="material-recth1"][class*="fgsecondary1"] { fill: url(#recth1-fgsecondary1); }
+.projection[class*="material-precth1"][class*="pfgsecondary1"] { fill: url(#recth1-fgsecondary1); }
+.cut[class*="material-crecth1"][class*="cfgsecondary1"] { fill: url(#recth1-fgsecondary1); }
+[class*="material-recth1"][class*="fgsecondary1"][class*="bg25"] { fill: url(#recth1-fgsecondary1-bg25); }
+.projection[class*="material-precth1"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#recth1-fgsecondary1-bg25); }
+.cut[class*="material-crecth1"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#recth1-fgsecondary1-bg25); }
+[class*="material-recth1"][class*="fgmuted1"] { fill: url(#recth1-fgmuted1); }
+.projection[class*="material-precth1"][class*="pfgmuted1"] { fill: url(#recth1-fgmuted1); }
+.cut[class*="material-crecth1"][class*="cfgmuted1"] { fill: url(#recth1-fgmuted1); }
+[class*="material-recth1"][class*="fgmuted1"][class*="bg25"] { fill: url(#recth1-fgmuted1-bg25); }
+.projection[class*="material-precth1"][class*="pfgmuted1"][class*="bg25"] { fill: url(#recth1-fgmuted1-bg25); }
+.cut[class*="material-crecth1"][class*="cfgmuted1"][class*="bg25"] { fill: url(#recth1-fgmuted1-bg25); }
 [class*="material-recth1"][class*="fgwarning1"] { fill: url(#recth1-fgwarning1); }
 .projection[class*="material-precth1"][class*="pfgwarning1"] { fill: url(#recth1-fgwarning1); }
 .cut[class*="material-crecth1"][class*="cfgwarning1"] { fill: url(#recth1-fgwarning1); }
@@ -729,6 +783,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-recth2"][class*="fgprincipal1"][class*="bg25"] { fill: url(#recth2-fgprincipal1-bg25); }
 .projection[class*="material-precth2"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#recth2-fgprincipal1-bg25); }
 .cut[class*="material-crecth2"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#recth2-fgprincipal1-bg25); }
+[class*="material-recth2"][class*="fgsecondary1"] { fill: url(#recth2-fgsecondary1); }
+.projection[class*="material-precth2"][class*="pfgsecondary1"] { fill: url(#recth2-fgsecondary1); }
+.cut[class*="material-crecth2"][class*="cfgsecondary1"] { fill: url(#recth2-fgsecondary1); }
+[class*="material-recth2"][class*="fgsecondary1"][class*="bg25"] { fill: url(#recth2-fgsecondary1-bg25); }
+.projection[class*="material-precth2"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#recth2-fgsecondary1-bg25); }
+.cut[class*="material-crecth2"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#recth2-fgsecondary1-bg25); }
+[class*="material-recth2"][class*="fgmuted1"] { fill: url(#recth2-fgmuted1); }
+.projection[class*="material-precth2"][class*="pfgmuted1"] { fill: url(#recth2-fgmuted1); }
+.cut[class*="material-crecth2"][class*="cfgmuted1"] { fill: url(#recth2-fgmuted1); }
+[class*="material-recth2"][class*="fgmuted1"][class*="bg25"] { fill: url(#recth2-fgmuted1-bg25); }
+.projection[class*="material-precth2"][class*="pfgmuted1"][class*="bg25"] { fill: url(#recth2-fgmuted1-bg25); }
+.cut[class*="material-crecth2"][class*="cfgmuted1"][class*="bg25"] { fill: url(#recth2-fgmuted1-bg25); }
 [class*="material-recth2"][class*="fgwarning1"] { fill: url(#recth2-fgwarning1); }
 .projection[class*="material-precth2"][class*="pfgwarning1"] { fill: url(#recth2-fgwarning1); }
 .cut[class*="material-crecth2"][class*="cfgwarning1"] { fill: url(#recth2-fgwarning1); }
@@ -765,6 +831,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-recth3"][class*="fgprincipal1"][class*="bg25"] { fill: url(#recth3-fgprincipal1-bg25); }
 .projection[class*="material-precth3"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#recth3-fgprincipal1-bg25); }
 .cut[class*="material-crecth3"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#recth3-fgprincipal1-bg25); }
+[class*="material-recth3"][class*="fgsecondary1"] { fill: url(#recth3-fgsecondary1); }
+.projection[class*="material-precth3"][class*="pfgsecondary1"] { fill: url(#recth3-fgsecondary1); }
+.cut[class*="material-crecth3"][class*="cfgsecondary1"] { fill: url(#recth3-fgsecondary1); }
+[class*="material-recth3"][class*="fgsecondary1"][class*="bg25"] { fill: url(#recth3-fgsecondary1-bg25); }
+.projection[class*="material-precth3"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#recth3-fgsecondary1-bg25); }
+.cut[class*="material-crecth3"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#recth3-fgsecondary1-bg25); }
+[class*="material-recth3"][class*="fgmuted1"] { fill: url(#recth3-fgmuted1); }
+.projection[class*="material-precth3"][class*="pfgmuted1"] { fill: url(#recth3-fgmuted1); }
+.cut[class*="material-crecth3"][class*="cfgmuted1"] { fill: url(#recth3-fgmuted1); }
+[class*="material-recth3"][class*="fgmuted1"][class*="bg25"] { fill: url(#recth3-fgmuted1-bg25); }
+.projection[class*="material-precth3"][class*="pfgmuted1"][class*="bg25"] { fill: url(#recth3-fgmuted1-bg25); }
+.cut[class*="material-crecth3"][class*="cfgmuted1"][class*="bg25"] { fill: url(#recth3-fgmuted1-bg25); }
 [class*="material-recth3"][class*="fgwarning1"] { fill: url(#recth3-fgwarning1); }
 .projection[class*="material-precth3"][class*="pfgwarning1"] { fill: url(#recth3-fgwarning1); }
 .cut[class*="material-crecth3"][class*="cfgwarning1"] { fill: url(#recth3-fgwarning1); }
@@ -795,120 +873,24 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-recth3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#recth3-fgsuccess1-bg25); }
 .projection[class*="material-precth3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#recth3-fgsuccess1-bg25); }
 .cut[class*="material-crecth3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#recth3-fgsuccess1-bg25); }
-[class*="material-rectv1"][class*="fgprincipal1"] { fill: url(#rectv1-fgprincipal1); }
-.projection[class*="material-prectv1"][class*="pfgprincipal1"] { fill: url(#rectv1-fgprincipal1); }
-.cut[class*="material-crectv1"][class*="cfgprincipal1"] { fill: url(#rectv1-fgprincipal1); }
-[class*="material-rectv1"][class*="fgprincipal1"][class*="bg25"] { fill: url(#rectv1-fgprincipal1-bg25); }
-.projection[class*="material-prectv1"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#rectv1-fgprincipal1-bg25); }
-.cut[class*="material-crectv1"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#rectv1-fgprincipal1-bg25); }
-[class*="material-rectv1"][class*="fgwarning1"] { fill: url(#rectv1-fgwarning1); }
-.projection[class*="material-prectv1"][class*="pfgwarning1"] { fill: url(#rectv1-fgwarning1); }
-.cut[class*="material-crectv1"][class*="cfgwarning1"] { fill: url(#rectv1-fgwarning1); }
-[class*="material-rectv1"][class*="fgwarning1"][class*="bg25"] { fill: url(#rectv1-fgwarning1-bg25); }
-.projection[class*="material-prectv1"][class*="pfgwarning1"][class*="bg25"] { fill: url(#rectv1-fgwarning1-bg25); }
-.cut[class*="material-crectv1"][class*="cfgwarning1"][class*="bg25"] { fill: url(#rectv1-fgwarning1-bg25); }
-[class*="material-rectv1"][class*="fgdanger1"] { fill: url(#rectv1-fgdanger1); }
-.projection[class*="material-prectv1"][class*="pfgdanger1"] { fill: url(#rectv1-fgdanger1); }
-.cut[class*="material-crectv1"][class*="cfgdanger1"] { fill: url(#rectv1-fgdanger1); }
-[class*="material-rectv1"][class*="fgdanger1"][class*="bg25"] { fill: url(#rectv1-fgdanger1-bg25); }
-.projection[class*="material-prectv1"][class*="pfgdanger1"][class*="bg25"] { fill: url(#rectv1-fgdanger1-bg25); }
-.cut[class*="material-crectv1"][class*="cfgdanger1"][class*="bg25"] { fill: url(#rectv1-fgdanger1-bg25); }
-[class*="material-rectv1"][class*="fginfo1"] { fill: url(#rectv1-fginfo1); }
-.projection[class*="material-prectv1"][class*="pfginfo1"] { fill: url(#rectv1-fginfo1); }
-.cut[class*="material-crectv1"][class*="cfginfo1"] { fill: url(#rectv1-fginfo1); }
-[class*="material-rectv1"][class*="fginfo1"][class*="bg25"] { fill: url(#rectv1-fginfo1-bg25); }
-.projection[class*="material-prectv1"][class*="pfginfo1"][class*="bg25"] { fill: url(#rectv1-fginfo1-bg25); }
-.cut[class*="material-crectv1"][class*="cfginfo1"][class*="bg25"] { fill: url(#rectv1-fginfo1-bg25); }
-[class*="material-rectv1"][class*="fgaccent1"] { fill: url(#rectv1-fgaccent1); }
-.projection[class*="material-prectv1"][class*="pfgaccent1"] { fill: url(#rectv1-fgaccent1); }
-.cut[class*="material-crectv1"][class*="cfgaccent1"] { fill: url(#rectv1-fgaccent1); }
-[class*="material-rectv1"][class*="fgaccent1"][class*="bg25"] { fill: url(#rectv1-fgaccent1-bg25); }
-.projection[class*="material-prectv1"][class*="pfgaccent1"][class*="bg25"] { fill: url(#rectv1-fgaccent1-bg25); }
-.cut[class*="material-crectv1"][class*="cfgaccent1"][class*="bg25"] { fill: url(#rectv1-fgaccent1-bg25); }
-[class*="material-rectv1"][class*="fgsuccess1"] { fill: url(#rectv1-fgsuccess1); }
-.projection[class*="material-prectv1"][class*="pfgsuccess1"] { fill: url(#rectv1-fgsuccess1); }
-.cut[class*="material-crectv1"][class*="cfgsuccess1"] { fill: url(#rectv1-fgsuccess1); }
-[class*="material-rectv1"][class*="fgsuccess1"][class*="bg25"] { fill: url(#rectv1-fgsuccess1-bg25); }
-.projection[class*="material-prectv1"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#rectv1-fgsuccess1-bg25); }
-.cut[class*="material-crectv1"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#rectv1-fgsuccess1-bg25); }
-[class*="material-rectv2"][class*="fgprincipal1"] { fill: url(#rectv2-fgprincipal1); }
-.projection[class*="material-prectv2"][class*="pfgprincipal1"] { fill: url(#rectv2-fgprincipal1); }
-.cut[class*="material-crectv2"][class*="cfgprincipal1"] { fill: url(#rectv2-fgprincipal1); }
-[class*="material-rectv2"][class*="fgprincipal1"][class*="bg25"] { fill: url(#rectv2-fgprincipal1-bg25); }
-.projection[class*="material-prectv2"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#rectv2-fgprincipal1-bg25); }
-.cut[class*="material-crectv2"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#rectv2-fgprincipal1-bg25); }
-[class*="material-rectv2"][class*="fgwarning1"] { fill: url(#rectv2-fgwarning1); }
-.projection[class*="material-prectv2"][class*="pfgwarning1"] { fill: url(#rectv2-fgwarning1); }
-.cut[class*="material-crectv2"][class*="cfgwarning1"] { fill: url(#rectv2-fgwarning1); }
-[class*="material-rectv2"][class*="fgwarning1"][class*="bg25"] { fill: url(#rectv2-fgwarning1-bg25); }
-.projection[class*="material-prectv2"][class*="pfgwarning1"][class*="bg25"] { fill: url(#rectv2-fgwarning1-bg25); }
-.cut[class*="material-crectv2"][class*="cfgwarning1"][class*="bg25"] { fill: url(#rectv2-fgwarning1-bg25); }
-[class*="material-rectv2"][class*="fgdanger1"] { fill: url(#rectv2-fgdanger1); }
-.projection[class*="material-prectv2"][class*="pfgdanger1"] { fill: url(#rectv2-fgdanger1); }
-.cut[class*="material-crectv2"][class*="cfgdanger1"] { fill: url(#rectv2-fgdanger1); }
-[class*="material-rectv2"][class*="fgdanger1"][class*="bg25"] { fill: url(#rectv2-fgdanger1-bg25); }
-.projection[class*="material-prectv2"][class*="pfgdanger1"][class*="bg25"] { fill: url(#rectv2-fgdanger1-bg25); }
-.cut[class*="material-crectv2"][class*="cfgdanger1"][class*="bg25"] { fill: url(#rectv2-fgdanger1-bg25); }
-[class*="material-rectv2"][class*="fginfo1"] { fill: url(#rectv2-fginfo1); }
-.projection[class*="material-prectv2"][class*="pfginfo1"] { fill: url(#rectv2-fginfo1); }
-.cut[class*="material-crectv2"][class*="cfginfo1"] { fill: url(#rectv2-fginfo1); }
-[class*="material-rectv2"][class*="fginfo1"][class*="bg25"] { fill: url(#rectv2-fginfo1-bg25); }
-.projection[class*="material-prectv2"][class*="pfginfo1"][class*="bg25"] { fill: url(#rectv2-fginfo1-bg25); }
-.cut[class*="material-crectv2"][class*="cfginfo1"][class*="bg25"] { fill: url(#rectv2-fginfo1-bg25); }
-[class*="material-rectv2"][class*="fgaccent1"] { fill: url(#rectv2-fgaccent1); }
-.projection[class*="material-prectv2"][class*="pfgaccent1"] { fill: url(#rectv2-fgaccent1); }
-.cut[class*="material-crectv2"][class*="cfgaccent1"] { fill: url(#rectv2-fgaccent1); }
-[class*="material-rectv2"][class*="fgaccent1"][class*="bg25"] { fill: url(#rectv2-fgaccent1-bg25); }
-.projection[class*="material-prectv2"][class*="pfgaccent1"][class*="bg25"] { fill: url(#rectv2-fgaccent1-bg25); }
-.cut[class*="material-crectv2"][class*="cfgaccent1"][class*="bg25"] { fill: url(#rectv2-fgaccent1-bg25); }
-[class*="material-rectv2"][class*="fgsuccess1"] { fill: url(#rectv2-fgsuccess1); }
-.projection[class*="material-prectv2"][class*="pfgsuccess1"] { fill: url(#rectv2-fgsuccess1); }
-.cut[class*="material-crectv2"][class*="cfgsuccess1"] { fill: url(#rectv2-fgsuccess1); }
-[class*="material-rectv2"][class*="fgsuccess1"][class*="bg25"] { fill: url(#rectv2-fgsuccess1-bg25); }
-.projection[class*="material-prectv2"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#rectv2-fgsuccess1-bg25); }
-.cut[class*="material-crectv2"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#rectv2-fgsuccess1-bg25); }
-[class*="material-rectv3"][class*="fgprincipal1"] { fill: url(#rectv3-fgprincipal1); }
-.projection[class*="material-prectv3"][class*="pfgprincipal1"] { fill: url(#rectv3-fgprincipal1); }
-.cut[class*="material-crectv3"][class*="cfgprincipal1"] { fill: url(#rectv3-fgprincipal1); }
-[class*="material-rectv3"][class*="fgprincipal1"][class*="bg25"] { fill: url(#rectv3-fgprincipal1-bg25); }
-.projection[class*="material-prectv3"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#rectv3-fgprincipal1-bg25); }
-.cut[class*="material-crectv3"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#rectv3-fgprincipal1-bg25); }
-[class*="material-rectv3"][class*="fgwarning1"] { fill: url(#rectv3-fgwarning1); }
-.projection[class*="material-prectv3"][class*="pfgwarning1"] { fill: url(#rectv3-fgwarning1); }
-.cut[class*="material-crectv3"][class*="cfgwarning1"] { fill: url(#rectv3-fgwarning1); }
-[class*="material-rectv3"][class*="fgwarning1"][class*="bg25"] { fill: url(#rectv3-fgwarning1-bg25); }
-.projection[class*="material-prectv3"][class*="pfgwarning1"][class*="bg25"] { fill: url(#rectv3-fgwarning1-bg25); }
-.cut[class*="material-crectv3"][class*="cfgwarning1"][class*="bg25"] { fill: url(#rectv3-fgwarning1-bg25); }
-[class*="material-rectv3"][class*="fgdanger1"] { fill: url(#rectv3-fgdanger1); }
-.projection[class*="material-prectv3"][class*="pfgdanger1"] { fill: url(#rectv3-fgdanger1); }
-.cut[class*="material-crectv3"][class*="cfgdanger1"] { fill: url(#rectv3-fgdanger1); }
-[class*="material-rectv3"][class*="fgdanger1"][class*="bg25"] { fill: url(#rectv3-fgdanger1-bg25); }
-.projection[class*="material-prectv3"][class*="pfgdanger1"][class*="bg25"] { fill: url(#rectv3-fgdanger1-bg25); }
-.cut[class*="material-crectv3"][class*="cfgdanger1"][class*="bg25"] { fill: url(#rectv3-fgdanger1-bg25); }
-[class*="material-rectv3"][class*="fginfo1"] { fill: url(#rectv3-fginfo1); }
-.projection[class*="material-prectv3"][class*="pfginfo1"] { fill: url(#rectv3-fginfo1); }
-.cut[class*="material-crectv3"][class*="cfginfo1"] { fill: url(#rectv3-fginfo1); }
-[class*="material-rectv3"][class*="fginfo1"][class*="bg25"] { fill: url(#rectv3-fginfo1-bg25); }
-.projection[class*="material-prectv3"][class*="pfginfo1"][class*="bg25"] { fill: url(#rectv3-fginfo1-bg25); }
-.cut[class*="material-crectv3"][class*="cfginfo1"][class*="bg25"] { fill: url(#rectv3-fginfo1-bg25); }
-[class*="material-rectv3"][class*="fgaccent1"] { fill: url(#rectv3-fgaccent1); }
-.projection[class*="material-prectv3"][class*="pfgaccent1"] { fill: url(#rectv3-fgaccent1); }
-.cut[class*="material-crectv3"][class*="cfgaccent1"] { fill: url(#rectv3-fgaccent1); }
-[class*="material-rectv3"][class*="fgaccent1"][class*="bg25"] { fill: url(#rectv3-fgaccent1-bg25); }
-.projection[class*="material-prectv3"][class*="pfgaccent1"][class*="bg25"] { fill: url(#rectv3-fgaccent1-bg25); }
-.cut[class*="material-crectv3"][class*="cfgaccent1"][class*="bg25"] { fill: url(#rectv3-fgaccent1-bg25); }
-[class*="material-rectv3"][class*="fgsuccess1"] { fill: url(#rectv3-fgsuccess1); }
-.projection[class*="material-prectv3"][class*="pfgsuccess1"] { fill: url(#rectv3-fgsuccess1); }
-.cut[class*="material-crectv3"][class*="cfgsuccess1"] { fill: url(#rectv3-fgsuccess1); }
-[class*="material-rectv3"][class*="fgsuccess1"][class*="bg25"] { fill: url(#rectv3-fgsuccess1-bg25); }
-.projection[class*="material-prectv3"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#rectv3-fgsuccess1-bg25); }
-.cut[class*="material-crectv3"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#rectv3-fgsuccess1-bg25); }
 [class*="material-tile1"][class*="fgprincipal1"] { fill: url(#tile1-fgprincipal1); }
 .projection[class*="material-ptile1"][class*="pfgprincipal1"] { fill: url(#tile1-fgprincipal1); }
 .cut[class*="material-ctile1"][class*="cfgprincipal1"] { fill: url(#tile1-fgprincipal1); }
 [class*="material-tile1"][class*="fgprincipal1"][class*="bg25"] { fill: url(#tile1-fgprincipal1-bg25); }
 .projection[class*="material-ptile1"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#tile1-fgprincipal1-bg25); }
 .cut[class*="material-ctile1"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#tile1-fgprincipal1-bg25); }
+[class*="material-tile1"][class*="fgsecondary1"] { fill: url(#tile1-fgsecondary1); }
+.projection[class*="material-ptile1"][class*="pfgsecondary1"] { fill: url(#tile1-fgsecondary1); }
+.cut[class*="material-ctile1"][class*="cfgsecondary1"] { fill: url(#tile1-fgsecondary1); }
+[class*="material-tile1"][class*="fgsecondary1"][class*="bg25"] { fill: url(#tile1-fgsecondary1-bg25); }
+.projection[class*="material-ptile1"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#tile1-fgsecondary1-bg25); }
+.cut[class*="material-ctile1"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#tile1-fgsecondary1-bg25); }
+[class*="material-tile1"][class*="fgmuted1"] { fill: url(#tile1-fgmuted1); }
+.projection[class*="material-ptile1"][class*="pfgmuted1"] { fill: url(#tile1-fgmuted1); }
+.cut[class*="material-ctile1"][class*="cfgmuted1"] { fill: url(#tile1-fgmuted1); }
+[class*="material-tile1"][class*="fgmuted1"][class*="bg25"] { fill: url(#tile1-fgmuted1-bg25); }
+.projection[class*="material-ptile1"][class*="pfgmuted1"][class*="bg25"] { fill: url(#tile1-fgmuted1-bg25); }
+.cut[class*="material-ctile1"][class*="cfgmuted1"][class*="bg25"] { fill: url(#tile1-fgmuted1-bg25); }
 [class*="material-tile1"][class*="fgwarning1"] { fill: url(#tile1-fgwarning1); }
 .projection[class*="material-ptile1"][class*="pfgwarning1"] { fill: url(#tile1-fgwarning1); }
 .cut[class*="material-ctile1"][class*="cfgwarning1"] { fill: url(#tile1-fgwarning1); }
@@ -945,6 +927,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-tile2"][class*="fgprincipal1"][class*="bg25"] { fill: url(#tile2-fgprincipal1-bg25); }
 .projection[class*="material-ptile2"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#tile2-fgprincipal1-bg25); }
 .cut[class*="material-ctile2"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#tile2-fgprincipal1-bg25); }
+[class*="material-tile2"][class*="fgsecondary1"] { fill: url(#tile2-fgsecondary1); }
+.projection[class*="material-ptile2"][class*="pfgsecondary1"] { fill: url(#tile2-fgsecondary1); }
+.cut[class*="material-ctile2"][class*="cfgsecondary1"] { fill: url(#tile2-fgsecondary1); }
+[class*="material-tile2"][class*="fgsecondary1"][class*="bg25"] { fill: url(#tile2-fgsecondary1-bg25); }
+.projection[class*="material-ptile2"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#tile2-fgsecondary1-bg25); }
+.cut[class*="material-ctile2"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#tile2-fgsecondary1-bg25); }
+[class*="material-tile2"][class*="fgmuted1"] { fill: url(#tile2-fgmuted1); }
+.projection[class*="material-ptile2"][class*="pfgmuted1"] { fill: url(#tile2-fgmuted1); }
+.cut[class*="material-ctile2"][class*="cfgmuted1"] { fill: url(#tile2-fgmuted1); }
+[class*="material-tile2"][class*="fgmuted1"][class*="bg25"] { fill: url(#tile2-fgmuted1-bg25); }
+.projection[class*="material-ptile2"][class*="pfgmuted1"][class*="bg25"] { fill: url(#tile2-fgmuted1-bg25); }
+.cut[class*="material-ctile2"][class*="cfgmuted1"][class*="bg25"] { fill: url(#tile2-fgmuted1-bg25); }
 [class*="material-tile2"][class*="fgwarning1"] { fill: url(#tile2-fgwarning1); }
 .projection[class*="material-ptile2"][class*="pfgwarning1"] { fill: url(#tile2-fgwarning1); }
 .cut[class*="material-ctile2"][class*="cfgwarning1"] { fill: url(#tile2-fgwarning1); }
@@ -981,6 +975,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-tile3"][class*="fgprincipal1"][class*="bg25"] { fill: url(#tile3-fgprincipal1-bg25); }
 .projection[class*="material-ptile3"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#tile3-fgprincipal1-bg25); }
 .cut[class*="material-ctile3"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#tile3-fgprincipal1-bg25); }
+[class*="material-tile3"][class*="fgsecondary1"] { fill: url(#tile3-fgsecondary1); }
+.projection[class*="material-ptile3"][class*="pfgsecondary1"] { fill: url(#tile3-fgsecondary1); }
+.cut[class*="material-ctile3"][class*="cfgsecondary1"] { fill: url(#tile3-fgsecondary1); }
+[class*="material-tile3"][class*="fgsecondary1"][class*="bg25"] { fill: url(#tile3-fgsecondary1-bg25); }
+.projection[class*="material-ptile3"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#tile3-fgsecondary1-bg25); }
+.cut[class*="material-ctile3"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#tile3-fgsecondary1-bg25); }
+[class*="material-tile3"][class*="fgmuted1"] { fill: url(#tile3-fgmuted1); }
+.projection[class*="material-ptile3"][class*="pfgmuted1"] { fill: url(#tile3-fgmuted1); }
+.cut[class*="material-ctile3"][class*="cfgmuted1"] { fill: url(#tile3-fgmuted1); }
+[class*="material-tile3"][class*="fgmuted1"][class*="bg25"] { fill: url(#tile3-fgmuted1-bg25); }
+.projection[class*="material-ptile3"][class*="pfgmuted1"][class*="bg25"] { fill: url(#tile3-fgmuted1-bg25); }
+.cut[class*="material-ctile3"][class*="cfgmuted1"][class*="bg25"] { fill: url(#tile3-fgmuted1-bg25); }
 [class*="material-tile3"][class*="fgwarning1"] { fill: url(#tile3-fgwarning1); }
 .projection[class*="material-ptile3"][class*="pfgwarning1"] { fill: url(#tile3-fgwarning1); }
 .cut[class*="material-ctile3"][class*="cfgwarning1"] { fill: url(#tile3-fgwarning1); }
@@ -1017,6 +1023,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-board1"][class*="fgprincipal1"][class*="bg25"] { fill: url(#board1-fgprincipal1-bg25); }
 .projection[class*="material-pboard1"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#board1-fgprincipal1-bg25); }
 .cut[class*="material-cboard1"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#board1-fgprincipal1-bg25); }
+[class*="material-board1"][class*="fgsecondary1"] { fill: url(#board1-fgsecondary1); }
+.projection[class*="material-pboard1"][class*="pfgsecondary1"] { fill: url(#board1-fgsecondary1); }
+.cut[class*="material-cboard1"][class*="cfgsecondary1"] { fill: url(#board1-fgsecondary1); }
+[class*="material-board1"][class*="fgsecondary1"][class*="bg25"] { fill: url(#board1-fgsecondary1-bg25); }
+.projection[class*="material-pboard1"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#board1-fgsecondary1-bg25); }
+.cut[class*="material-cboard1"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#board1-fgsecondary1-bg25); }
+[class*="material-board1"][class*="fgmuted1"] { fill: url(#board1-fgmuted1); }
+.projection[class*="material-pboard1"][class*="pfgmuted1"] { fill: url(#board1-fgmuted1); }
+.cut[class*="material-cboard1"][class*="cfgmuted1"] { fill: url(#board1-fgmuted1); }
+[class*="material-board1"][class*="fgmuted1"][class*="bg25"] { fill: url(#board1-fgmuted1-bg25); }
+.projection[class*="material-pboard1"][class*="pfgmuted1"][class*="bg25"] { fill: url(#board1-fgmuted1-bg25); }
+.cut[class*="material-cboard1"][class*="cfgmuted1"][class*="bg25"] { fill: url(#board1-fgmuted1-bg25); }
 [class*="material-board1"][class*="fgwarning1"] { fill: url(#board1-fgwarning1); }
 .projection[class*="material-pboard1"][class*="pfgwarning1"] { fill: url(#board1-fgwarning1); }
 .cut[class*="material-cboard1"][class*="cfgwarning1"] { fill: url(#board1-fgwarning1); }
@@ -1053,6 +1071,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-board2"][class*="fgprincipal1"][class*="bg25"] { fill: url(#board2-fgprincipal1-bg25); }
 .projection[class*="material-pboard2"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#board2-fgprincipal1-bg25); }
 .cut[class*="material-cboard2"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#board2-fgprincipal1-bg25); }
+[class*="material-board2"][class*="fgsecondary1"] { fill: url(#board2-fgsecondary1); }
+.projection[class*="material-pboard2"][class*="pfgsecondary1"] { fill: url(#board2-fgsecondary1); }
+.cut[class*="material-cboard2"][class*="cfgsecondary1"] { fill: url(#board2-fgsecondary1); }
+[class*="material-board2"][class*="fgsecondary1"][class*="bg25"] { fill: url(#board2-fgsecondary1-bg25); }
+.projection[class*="material-pboard2"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#board2-fgsecondary1-bg25); }
+.cut[class*="material-cboard2"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#board2-fgsecondary1-bg25); }
+[class*="material-board2"][class*="fgmuted1"] { fill: url(#board2-fgmuted1); }
+.projection[class*="material-pboard2"][class*="pfgmuted1"] { fill: url(#board2-fgmuted1); }
+.cut[class*="material-cboard2"][class*="cfgmuted1"] { fill: url(#board2-fgmuted1); }
+[class*="material-board2"][class*="fgmuted1"][class*="bg25"] { fill: url(#board2-fgmuted1-bg25); }
+.projection[class*="material-pboard2"][class*="pfgmuted1"][class*="bg25"] { fill: url(#board2-fgmuted1-bg25); }
+.cut[class*="material-cboard2"][class*="cfgmuted1"][class*="bg25"] { fill: url(#board2-fgmuted1-bg25); }
 [class*="material-board2"][class*="fgwarning1"] { fill: url(#board2-fgwarning1); }
 .projection[class*="material-pboard2"][class*="pfgwarning1"] { fill: url(#board2-fgwarning1); }
 .cut[class*="material-cboard2"][class*="cfgwarning1"] { fill: url(#board2-fgwarning1); }
@@ -1089,6 +1119,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-board3"][class*="fgprincipal1"][class*="bg25"] { fill: url(#board3-fgprincipal1-bg25); }
 .projection[class*="material-pboard3"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#board3-fgprincipal1-bg25); }
 .cut[class*="material-cboard3"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#board3-fgprincipal1-bg25); }
+[class*="material-board3"][class*="fgsecondary1"] { fill: url(#board3-fgsecondary1); }
+.projection[class*="material-pboard3"][class*="pfgsecondary1"] { fill: url(#board3-fgsecondary1); }
+.cut[class*="material-cboard3"][class*="cfgsecondary1"] { fill: url(#board3-fgsecondary1); }
+[class*="material-board3"][class*="fgsecondary1"][class*="bg25"] { fill: url(#board3-fgsecondary1-bg25); }
+.projection[class*="material-pboard3"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#board3-fgsecondary1-bg25); }
+.cut[class*="material-cboard3"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#board3-fgsecondary1-bg25); }
+[class*="material-board3"][class*="fgmuted1"] { fill: url(#board3-fgmuted1); }
+.projection[class*="material-pboard3"][class*="pfgmuted1"] { fill: url(#board3-fgmuted1); }
+.cut[class*="material-cboard3"][class*="cfgmuted1"] { fill: url(#board3-fgmuted1); }
+[class*="material-board3"][class*="fgmuted1"][class*="bg25"] { fill: url(#board3-fgmuted1-bg25); }
+.projection[class*="material-pboard3"][class*="pfgmuted1"][class*="bg25"] { fill: url(#board3-fgmuted1-bg25); }
+.cut[class*="material-cboard3"][class*="cfgmuted1"][class*="bg25"] { fill: url(#board3-fgmuted1-bg25); }
 [class*="material-board3"][class*="fgwarning1"] { fill: url(#board3-fgwarning1); }
 .projection[class*="material-pboard3"][class*="pfgwarning1"] { fill: url(#board3-fgwarning1); }
 .cut[class*="material-cboard3"][class*="cfgwarning1"] { fill: url(#board3-fgwarning1); }
@@ -1125,6 +1167,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-crosshatch1"][class*="fgprincipal1"][class*="bg25"] { fill: url(#crosshatch1-fgprincipal1-bg25); }
 .projection[class*="material-pcrosshatch1"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#crosshatch1-fgprincipal1-bg25); }
 .cut[class*="material-ccrosshatch1"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#crosshatch1-fgprincipal1-bg25); }
+[class*="material-crosshatch1"][class*="fgsecondary1"] { fill: url(#crosshatch1-fgsecondary1); }
+.projection[class*="material-pcrosshatch1"][class*="pfgsecondary1"] { fill: url(#crosshatch1-fgsecondary1); }
+.cut[class*="material-ccrosshatch1"][class*="cfgsecondary1"] { fill: url(#crosshatch1-fgsecondary1); }
+[class*="material-crosshatch1"][class*="fgsecondary1"][class*="bg25"] { fill: url(#crosshatch1-fgsecondary1-bg25); }
+.projection[class*="material-pcrosshatch1"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#crosshatch1-fgsecondary1-bg25); }
+.cut[class*="material-ccrosshatch1"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#crosshatch1-fgsecondary1-bg25); }
+[class*="material-crosshatch1"][class*="fgmuted1"] { fill: url(#crosshatch1-fgmuted1); }
+.projection[class*="material-pcrosshatch1"][class*="pfgmuted1"] { fill: url(#crosshatch1-fgmuted1); }
+.cut[class*="material-ccrosshatch1"][class*="cfgmuted1"] { fill: url(#crosshatch1-fgmuted1); }
+[class*="material-crosshatch1"][class*="fgmuted1"][class*="bg25"] { fill: url(#crosshatch1-fgmuted1-bg25); }
+.projection[class*="material-pcrosshatch1"][class*="pfgmuted1"][class*="bg25"] { fill: url(#crosshatch1-fgmuted1-bg25); }
+.cut[class*="material-ccrosshatch1"][class*="cfgmuted1"][class*="bg25"] { fill: url(#crosshatch1-fgmuted1-bg25); }
 [class*="material-crosshatch1"][class*="fgwarning1"] { fill: url(#crosshatch1-fgwarning1); }
 .projection[class*="material-pcrosshatch1"][class*="pfgwarning1"] { fill: url(#crosshatch1-fgwarning1); }
 .cut[class*="material-ccrosshatch1"][class*="cfgwarning1"] { fill: url(#crosshatch1-fgwarning1); }
@@ -1161,6 +1215,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-crosshatch2"][class*="fgprincipal1"][class*="bg25"] { fill: url(#crosshatch2-fgprincipal1-bg25); }
 .projection[class*="material-pcrosshatch2"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#crosshatch2-fgprincipal1-bg25); }
 .cut[class*="material-ccrosshatch2"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#crosshatch2-fgprincipal1-bg25); }
+[class*="material-crosshatch2"][class*="fgsecondary1"] { fill: url(#crosshatch2-fgsecondary1); }
+.projection[class*="material-pcrosshatch2"][class*="pfgsecondary1"] { fill: url(#crosshatch2-fgsecondary1); }
+.cut[class*="material-ccrosshatch2"][class*="cfgsecondary1"] { fill: url(#crosshatch2-fgsecondary1); }
+[class*="material-crosshatch2"][class*="fgsecondary1"][class*="bg25"] { fill: url(#crosshatch2-fgsecondary1-bg25); }
+.projection[class*="material-pcrosshatch2"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#crosshatch2-fgsecondary1-bg25); }
+.cut[class*="material-ccrosshatch2"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#crosshatch2-fgsecondary1-bg25); }
+[class*="material-crosshatch2"][class*="fgmuted1"] { fill: url(#crosshatch2-fgmuted1); }
+.projection[class*="material-pcrosshatch2"][class*="pfgmuted1"] { fill: url(#crosshatch2-fgmuted1); }
+.cut[class*="material-ccrosshatch2"][class*="cfgmuted1"] { fill: url(#crosshatch2-fgmuted1); }
+[class*="material-crosshatch2"][class*="fgmuted1"][class*="bg25"] { fill: url(#crosshatch2-fgmuted1-bg25); }
+.projection[class*="material-pcrosshatch2"][class*="pfgmuted1"][class*="bg25"] { fill: url(#crosshatch2-fgmuted1-bg25); }
+.cut[class*="material-ccrosshatch2"][class*="cfgmuted1"][class*="bg25"] { fill: url(#crosshatch2-fgmuted1-bg25); }
 [class*="material-crosshatch2"][class*="fgwarning1"] { fill: url(#crosshatch2-fgwarning1); }
 .projection[class*="material-pcrosshatch2"][class*="pfgwarning1"] { fill: url(#crosshatch2-fgwarning1); }
 .cut[class*="material-ccrosshatch2"][class*="cfgwarning1"] { fill: url(#crosshatch2-fgwarning1); }
@@ -1197,6 +1263,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-crosshatch3"][class*="fgprincipal1"][class*="bg25"] { fill: url(#crosshatch3-fgprincipal1-bg25); }
 .projection[class*="material-pcrosshatch3"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#crosshatch3-fgprincipal1-bg25); }
 .cut[class*="material-ccrosshatch3"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#crosshatch3-fgprincipal1-bg25); }
+[class*="material-crosshatch3"][class*="fgsecondary1"] { fill: url(#crosshatch3-fgsecondary1); }
+.projection[class*="material-pcrosshatch3"][class*="pfgsecondary1"] { fill: url(#crosshatch3-fgsecondary1); }
+.cut[class*="material-ccrosshatch3"][class*="cfgsecondary1"] { fill: url(#crosshatch3-fgsecondary1); }
+[class*="material-crosshatch3"][class*="fgsecondary1"][class*="bg25"] { fill: url(#crosshatch3-fgsecondary1-bg25); }
+.projection[class*="material-pcrosshatch3"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#crosshatch3-fgsecondary1-bg25); }
+.cut[class*="material-ccrosshatch3"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#crosshatch3-fgsecondary1-bg25); }
+[class*="material-crosshatch3"][class*="fgmuted1"] { fill: url(#crosshatch3-fgmuted1); }
+.projection[class*="material-pcrosshatch3"][class*="pfgmuted1"] { fill: url(#crosshatch3-fgmuted1); }
+.cut[class*="material-ccrosshatch3"][class*="cfgmuted1"] { fill: url(#crosshatch3-fgmuted1); }
+[class*="material-crosshatch3"][class*="fgmuted1"][class*="bg25"] { fill: url(#crosshatch3-fgmuted1-bg25); }
+.projection[class*="material-pcrosshatch3"][class*="pfgmuted1"][class*="bg25"] { fill: url(#crosshatch3-fgmuted1-bg25); }
+.cut[class*="material-ccrosshatch3"][class*="cfgmuted1"][class*="bg25"] { fill: url(#crosshatch3-fgmuted1-bg25); }
 [class*="material-crosshatch3"][class*="fgwarning1"] { fill: url(#crosshatch3-fgwarning1); }
 .projection[class*="material-pcrosshatch3"][class*="pfgwarning1"] { fill: url(#crosshatch3-fgwarning1); }
 .cut[class*="material-ccrosshatch3"][class*="cfgwarning1"] { fill: url(#crosshatch3-fgwarning1); }
@@ -1233,6 +1311,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-brick"][class*="fgprincipal1"][class*="bg25"] { fill: url(#brick-fgprincipal1-bg25); }
 .projection[class*="material-pbrick"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#brick-fgprincipal1-bg25); }
 .cut[class*="material-cbrick"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#brick-fgprincipal1-bg25); }
+[class*="material-brick"][class*="fgsecondary1"] { fill: url(#brick-fgsecondary1); }
+.projection[class*="material-pbrick"][class*="pfgsecondary1"] { fill: url(#brick-fgsecondary1); }
+.cut[class*="material-cbrick"][class*="cfgsecondary1"] { fill: url(#brick-fgsecondary1); }
+[class*="material-brick"][class*="fgsecondary1"][class*="bg25"] { fill: url(#brick-fgsecondary1-bg25); }
+.projection[class*="material-pbrick"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#brick-fgsecondary1-bg25); }
+.cut[class*="material-cbrick"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#brick-fgsecondary1-bg25); }
+[class*="material-brick"][class*="fgmuted1"] { fill: url(#brick-fgmuted1); }
+.projection[class*="material-pbrick"][class*="pfgmuted1"] { fill: url(#brick-fgmuted1); }
+.cut[class*="material-cbrick"][class*="cfgmuted1"] { fill: url(#brick-fgmuted1); }
+[class*="material-brick"][class*="fgmuted1"][class*="bg25"] { fill: url(#brick-fgmuted1-bg25); }
+.projection[class*="material-pbrick"][class*="pfgmuted1"][class*="bg25"] { fill: url(#brick-fgmuted1-bg25); }
+.cut[class*="material-cbrick"][class*="cfgmuted1"][class*="bg25"] { fill: url(#brick-fgmuted1-bg25); }
 [class*="material-brick"][class*="fgwarning1"] { fill: url(#brick-fgwarning1); }
 .projection[class*="material-pbrick"][class*="pfgwarning1"] { fill: url(#brick-fgwarning1); }
 .cut[class*="material-cbrick"][class*="cfgwarning1"] { fill: url(#brick-fgwarning1); }
@@ -1269,6 +1359,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-earth"][class*="fgprincipal1"][class*="bg25"] { fill: url(#earth-fgprincipal1-bg25); }
 .projection[class*="material-pearth"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#earth-fgprincipal1-bg25); }
 .cut[class*="material-cearth"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#earth-fgprincipal1-bg25); }
+[class*="material-earth"][class*="fgsecondary1"] { fill: url(#earth-fgsecondary1); }
+.projection[class*="material-pearth"][class*="pfgsecondary1"] { fill: url(#earth-fgsecondary1); }
+.cut[class*="material-cearth"][class*="cfgsecondary1"] { fill: url(#earth-fgsecondary1); }
+[class*="material-earth"][class*="fgsecondary1"][class*="bg25"] { fill: url(#earth-fgsecondary1-bg25); }
+.projection[class*="material-pearth"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#earth-fgsecondary1-bg25); }
+.cut[class*="material-cearth"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#earth-fgsecondary1-bg25); }
+[class*="material-earth"][class*="fgmuted1"] { fill: url(#earth-fgmuted1); }
+.projection[class*="material-pearth"][class*="pfgmuted1"] { fill: url(#earth-fgmuted1); }
+.cut[class*="material-cearth"][class*="cfgmuted1"] { fill: url(#earth-fgmuted1); }
+[class*="material-earth"][class*="fgmuted1"][class*="bg25"] { fill: url(#earth-fgmuted1-bg25); }
+.projection[class*="material-pearth"][class*="pfgmuted1"][class*="bg25"] { fill: url(#earth-fgmuted1-bg25); }
+.cut[class*="material-cearth"][class*="cfgmuted1"][class*="bg25"] { fill: url(#earth-fgmuted1-bg25); }
 [class*="material-earth"][class*="fgwarning1"] { fill: url(#earth-fgwarning1); }
 .projection[class*="material-pearth"][class*="pfgwarning1"] { fill: url(#earth-fgwarning1); }
 .cut[class*="material-cearth"][class*="cfgwarning1"] { fill: url(#earth-fgwarning1); }
@@ -1305,6 +1407,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-glass"][class*="fgprincipal1"][class*="bg25"] { fill: url(#glass-fgprincipal1-bg25); }
 .projection[class*="material-pglass"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#glass-fgprincipal1-bg25); }
 .cut[class*="material-cglass"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#glass-fgprincipal1-bg25); }
+[class*="material-glass"][class*="fgsecondary1"] { fill: url(#glass-fgsecondary1); }
+.projection[class*="material-pglass"][class*="pfgsecondary1"] { fill: url(#glass-fgsecondary1); }
+.cut[class*="material-cglass"][class*="cfgsecondary1"] { fill: url(#glass-fgsecondary1); }
+[class*="material-glass"][class*="fgsecondary1"][class*="bg25"] { fill: url(#glass-fgsecondary1-bg25); }
+.projection[class*="material-pglass"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#glass-fgsecondary1-bg25); }
+.cut[class*="material-cglass"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#glass-fgsecondary1-bg25); }
+[class*="material-glass"][class*="fgmuted1"] { fill: url(#glass-fgmuted1); }
+.projection[class*="material-pglass"][class*="pfgmuted1"] { fill: url(#glass-fgmuted1); }
+.cut[class*="material-cglass"][class*="cfgmuted1"] { fill: url(#glass-fgmuted1); }
+[class*="material-glass"][class*="fgmuted1"][class*="bg25"] { fill: url(#glass-fgmuted1-bg25); }
+.projection[class*="material-pglass"][class*="pfgmuted1"][class*="bg25"] { fill: url(#glass-fgmuted1-bg25); }
+.cut[class*="material-cglass"][class*="cfgmuted1"][class*="bg25"] { fill: url(#glass-fgmuted1-bg25); }
 [class*="material-glass"][class*="fgwarning1"] { fill: url(#glass-fgwarning1); }
 .projection[class*="material-pglass"][class*="pfgwarning1"] { fill: url(#glass-fgwarning1); }
 .cut[class*="material-cglass"][class*="cfgwarning1"] { fill: url(#glass-fgwarning1); }
@@ -1341,6 +1455,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-liquid"][class*="fgprincipal1"][class*="bg25"] { fill: url(#liquid-fgprincipal1-bg25); }
 .projection[class*="material-pliquid"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#liquid-fgprincipal1-bg25); }
 .cut[class*="material-cliquid"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#liquid-fgprincipal1-bg25); }
+[class*="material-liquid"][class*="fgsecondary1"] { fill: url(#liquid-fgsecondary1); }
+.projection[class*="material-pliquid"][class*="pfgsecondary1"] { fill: url(#liquid-fgsecondary1); }
+.cut[class*="material-cliquid"][class*="cfgsecondary1"] { fill: url(#liquid-fgsecondary1); }
+[class*="material-liquid"][class*="fgsecondary1"][class*="bg25"] { fill: url(#liquid-fgsecondary1-bg25); }
+.projection[class*="material-pliquid"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#liquid-fgsecondary1-bg25); }
+.cut[class*="material-cliquid"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#liquid-fgsecondary1-bg25); }
+[class*="material-liquid"][class*="fgmuted1"] { fill: url(#liquid-fgmuted1); }
+.projection[class*="material-pliquid"][class*="pfgmuted1"] { fill: url(#liquid-fgmuted1); }
+.cut[class*="material-cliquid"][class*="cfgmuted1"] { fill: url(#liquid-fgmuted1); }
+[class*="material-liquid"][class*="fgmuted1"][class*="bg25"] { fill: url(#liquid-fgmuted1-bg25); }
+.projection[class*="material-pliquid"][class*="pfgmuted1"][class*="bg25"] { fill: url(#liquid-fgmuted1-bg25); }
+.cut[class*="material-cliquid"][class*="cfgmuted1"][class*="bg25"] { fill: url(#liquid-fgmuted1-bg25); }
 [class*="material-liquid"][class*="fgwarning1"] { fill: url(#liquid-fgwarning1); }
 .projection[class*="material-pliquid"][class*="pfgwarning1"] { fill: url(#liquid-fgwarning1); }
 .cut[class*="material-cliquid"][class*="cfgwarning1"] { fill: url(#liquid-fgwarning1); }
@@ -1377,6 +1503,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-grass"][class*="fgprincipal1"][class*="bg25"] { fill: url(#grass-fgprincipal1-bg25); }
 .projection[class*="material-pgrass"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#grass-fgprincipal1-bg25); }
 .cut[class*="material-cgrass"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#grass-fgprincipal1-bg25); }
+[class*="material-grass"][class*="fgsecondary1"] { fill: url(#grass-fgsecondary1); }
+.projection[class*="material-pgrass"][class*="pfgsecondary1"] { fill: url(#grass-fgsecondary1); }
+.cut[class*="material-cgrass"][class*="cfgsecondary1"] { fill: url(#grass-fgsecondary1); }
+[class*="material-grass"][class*="fgsecondary1"][class*="bg25"] { fill: url(#grass-fgsecondary1-bg25); }
+.projection[class*="material-pgrass"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#grass-fgsecondary1-bg25); }
+.cut[class*="material-cgrass"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#grass-fgsecondary1-bg25); }
+[class*="material-grass"][class*="fgmuted1"] { fill: url(#grass-fgmuted1); }
+.projection[class*="material-pgrass"][class*="pfgmuted1"] { fill: url(#grass-fgmuted1); }
+.cut[class*="material-cgrass"][class*="cfgmuted1"] { fill: url(#grass-fgmuted1); }
+[class*="material-grass"][class*="fgmuted1"][class*="bg25"] { fill: url(#grass-fgmuted1-bg25); }
+.projection[class*="material-pgrass"][class*="pfgmuted1"][class*="bg25"] { fill: url(#grass-fgmuted1-bg25); }
+.cut[class*="material-cgrass"][class*="cfgmuted1"][class*="bg25"] { fill: url(#grass-fgmuted1-bg25); }
 [class*="material-grass"][class*="fgwarning1"] { fill: url(#grass-fgwarning1); }
 .projection[class*="material-pgrass"][class*="pfgwarning1"] { fill: url(#grass-fgwarning1); }
 .cut[class*="material-cgrass"][class*="cfgwarning1"] { fill: url(#grass-fgwarning1); }
@@ -1413,6 +1551,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-honeycomb"][class*="fgprincipal1"][class*="bg25"] { fill: url(#honeycomb-fgprincipal1-bg25); }
 .projection[class*="material-phoneycomb"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#honeycomb-fgprincipal1-bg25); }
 .cut[class*="material-choneycomb"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#honeycomb-fgprincipal1-bg25); }
+[class*="material-honeycomb"][class*="fgsecondary1"] { fill: url(#honeycomb-fgsecondary1); }
+.projection[class*="material-phoneycomb"][class*="pfgsecondary1"] { fill: url(#honeycomb-fgsecondary1); }
+.cut[class*="material-choneycomb"][class*="cfgsecondary1"] { fill: url(#honeycomb-fgsecondary1); }
+[class*="material-honeycomb"][class*="fgsecondary1"][class*="bg25"] { fill: url(#honeycomb-fgsecondary1-bg25); }
+.projection[class*="material-phoneycomb"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#honeycomb-fgsecondary1-bg25); }
+.cut[class*="material-choneycomb"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#honeycomb-fgsecondary1-bg25); }
+[class*="material-honeycomb"][class*="fgmuted1"] { fill: url(#honeycomb-fgmuted1); }
+.projection[class*="material-phoneycomb"][class*="pfgmuted1"] { fill: url(#honeycomb-fgmuted1); }
+.cut[class*="material-choneycomb"][class*="cfgmuted1"] { fill: url(#honeycomb-fgmuted1); }
+[class*="material-honeycomb"][class*="fgmuted1"][class*="bg25"] { fill: url(#honeycomb-fgmuted1-bg25); }
+.projection[class*="material-phoneycomb"][class*="pfgmuted1"][class*="bg25"] { fill: url(#honeycomb-fgmuted1-bg25); }
+.cut[class*="material-choneycomb"][class*="cfgmuted1"][class*="bg25"] { fill: url(#honeycomb-fgmuted1-bg25); }
 [class*="material-honeycomb"][class*="fgwarning1"] { fill: url(#honeycomb-fgwarning1); }
 .projection[class*="material-phoneycomb"][class*="pfgwarning1"] { fill: url(#honeycomb-fgwarning1); }
 .cut[class*="material-choneycomb"][class*="cfgwarning1"] { fill: url(#honeycomb-fgwarning1); }
@@ -1443,48 +1593,24 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-honeycomb"][class*="fgsuccess1"][class*="bg25"] { fill: url(#honeycomb-fgsuccess1-bg25); }
 .projection[class*="material-phoneycomb"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#honeycomb-fgsuccess1-bg25); }
 .cut[class*="material-choneycomb"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#honeycomb-fgsuccess1-bg25); }
-[class*="material-wood"][class*="fgprincipal1"] { fill: url(#wood-fgprincipal1); }
-.projection[class*="material-pwood"][class*="pfgprincipal1"] { fill: url(#wood-fgprincipal1); }
-.cut[class*="material-cwood"][class*="cfgprincipal1"] { fill: url(#wood-fgprincipal1); }
-[class*="material-wood"][class*="fgprincipal1"][class*="bg25"] { fill: url(#wood-fgprincipal1-bg25); }
-.projection[class*="material-pwood"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#wood-fgprincipal1-bg25); }
-.cut[class*="material-cwood"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#wood-fgprincipal1-bg25); }
-[class*="material-wood"][class*="fgwarning1"] { fill: url(#wood-fgwarning1); }
-.projection[class*="material-pwood"][class*="pfgwarning1"] { fill: url(#wood-fgwarning1); }
-.cut[class*="material-cwood"][class*="cfgwarning1"] { fill: url(#wood-fgwarning1); }
-[class*="material-wood"][class*="fgwarning1"][class*="bg25"] { fill: url(#wood-fgwarning1-bg25); }
-.projection[class*="material-pwood"][class*="pfgwarning1"][class*="bg25"] { fill: url(#wood-fgwarning1-bg25); }
-.cut[class*="material-cwood"][class*="cfgwarning1"][class*="bg25"] { fill: url(#wood-fgwarning1-bg25); }
-[class*="material-wood"][class*="fgdanger1"] { fill: url(#wood-fgdanger1); }
-.projection[class*="material-pwood"][class*="pfgdanger1"] { fill: url(#wood-fgdanger1); }
-.cut[class*="material-cwood"][class*="cfgdanger1"] { fill: url(#wood-fgdanger1); }
-[class*="material-wood"][class*="fgdanger1"][class*="bg25"] { fill: url(#wood-fgdanger1-bg25); }
-.projection[class*="material-pwood"][class*="pfgdanger1"][class*="bg25"] { fill: url(#wood-fgdanger1-bg25); }
-.cut[class*="material-cwood"][class*="cfgdanger1"][class*="bg25"] { fill: url(#wood-fgdanger1-bg25); }
-[class*="material-wood"][class*="fginfo1"] { fill: url(#wood-fginfo1); }
-.projection[class*="material-pwood"][class*="pfginfo1"] { fill: url(#wood-fginfo1); }
-.cut[class*="material-cwood"][class*="cfginfo1"] { fill: url(#wood-fginfo1); }
-[class*="material-wood"][class*="fginfo1"][class*="bg25"] { fill: url(#wood-fginfo1-bg25); }
-.projection[class*="material-pwood"][class*="pfginfo1"][class*="bg25"] { fill: url(#wood-fginfo1-bg25); }
-.cut[class*="material-cwood"][class*="cfginfo1"][class*="bg25"] { fill: url(#wood-fginfo1-bg25); }
-[class*="material-wood"][class*="fgaccent1"] { fill: url(#wood-fgaccent1); }
-.projection[class*="material-pwood"][class*="pfgaccent1"] { fill: url(#wood-fgaccent1); }
-.cut[class*="material-cwood"][class*="cfgaccent1"] { fill: url(#wood-fgaccent1); }
-[class*="material-wood"][class*="fgaccent1"][class*="bg25"] { fill: url(#wood-fgaccent1-bg25); }
-.projection[class*="material-pwood"][class*="pfgaccent1"][class*="bg25"] { fill: url(#wood-fgaccent1-bg25); }
-.cut[class*="material-cwood"][class*="cfgaccent1"][class*="bg25"] { fill: url(#wood-fgaccent1-bg25); }
-[class*="material-wood"][class*="fgsuccess1"] { fill: url(#wood-fgsuccess1); }
-.projection[class*="material-pwood"][class*="pfgsuccess1"] { fill: url(#wood-fgsuccess1); }
-.cut[class*="material-cwood"][class*="cfgsuccess1"] { fill: url(#wood-fgsuccess1); }
-[class*="material-wood"][class*="fgsuccess1"][class*="bg25"] { fill: url(#wood-fgsuccess1-bg25); }
-.projection[class*="material-pwood"][class*="pfgsuccess1"][class*="bg25"] { fill: url(#wood-fgsuccess1-bg25); }
-.cut[class*="material-cwood"][class*="cfgsuccess1"][class*="bg25"] { fill: url(#wood-fgsuccess1-bg25); }
 [class*="material-sand"][class*="fgprincipal1"] { fill: url(#sand-fgprincipal1); }
 .projection[class*="material-psand"][class*="pfgprincipal1"] { fill: url(#sand-fgprincipal1); }
 .cut[class*="material-csand"][class*="cfgprincipal1"] { fill: url(#sand-fgprincipal1); }
 [class*="material-sand"][class*="fgprincipal1"][class*="bg25"] { fill: url(#sand-fgprincipal1-bg25); }
 .projection[class*="material-psand"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#sand-fgprincipal1-bg25); }
 .cut[class*="material-csand"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#sand-fgprincipal1-bg25); }
+[class*="material-sand"][class*="fgsecondary1"] { fill: url(#sand-fgsecondary1); }
+.projection[class*="material-psand"][class*="pfgsecondary1"] { fill: url(#sand-fgsecondary1); }
+.cut[class*="material-csand"][class*="cfgsecondary1"] { fill: url(#sand-fgsecondary1); }
+[class*="material-sand"][class*="fgsecondary1"][class*="bg25"] { fill: url(#sand-fgsecondary1-bg25); }
+.projection[class*="material-psand"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#sand-fgsecondary1-bg25); }
+.cut[class*="material-csand"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#sand-fgsecondary1-bg25); }
+[class*="material-sand"][class*="fgmuted1"] { fill: url(#sand-fgmuted1); }
+.projection[class*="material-psand"][class*="pfgmuted1"] { fill: url(#sand-fgmuted1); }
+.cut[class*="material-csand"][class*="cfgmuted1"] { fill: url(#sand-fgmuted1); }
+[class*="material-sand"][class*="fgmuted1"][class*="bg25"] { fill: url(#sand-fgmuted1-bg25); }
+.projection[class*="material-psand"][class*="pfgmuted1"][class*="bg25"] { fill: url(#sand-fgmuted1-bg25); }
+.cut[class*="material-csand"][class*="cfgmuted1"][class*="bg25"] { fill: url(#sand-fgmuted1-bg25); }
 [class*="material-sand"][class*="fgwarning1"] { fill: url(#sand-fgwarning1); }
 .projection[class*="material-psand"][class*="pfgwarning1"] { fill: url(#sand-fgwarning1); }
 .cut[class*="material-csand"][class*="cfgwarning1"] { fill: url(#sand-fgwarning1); }
@@ -1521,6 +1647,18 @@ text.GRID, tspan.GRID { /* 5mm */ font-size: 8.25px; }
 [class*="material-concrete"][class*="fgprincipal1"][class*="bg25"] { fill: url(#concrete-fgprincipal1-bg25); }
 .projection[class*="material-pconcrete"][class*="pfgprincipal1"][class*="bg25"] { fill: url(#concrete-fgprincipal1-bg25); }
 .cut[class*="material-cconcrete"][class*="cfgprincipal1"][class*="bg25"] { fill: url(#concrete-fgprincipal1-bg25); }
+[class*="material-concrete"][class*="fgsecondary1"] { fill: url(#concrete-fgsecondary1); }
+.projection[class*="material-pconcrete"][class*="pfgsecondary1"] { fill: url(#concrete-fgsecondary1); }
+.cut[class*="material-cconcrete"][class*="cfgsecondary1"] { fill: url(#concrete-fgsecondary1); }
+[class*="material-concrete"][class*="fgsecondary1"][class*="bg25"] { fill: url(#concrete-fgsecondary1-bg25); }
+.projection[class*="material-pconcrete"][class*="pfgsecondary1"][class*="bg25"] { fill: url(#concrete-fgsecondary1-bg25); }
+.cut[class*="material-cconcrete"][class*="cfgsecondary1"][class*="bg25"] { fill: url(#concrete-fgsecondary1-bg25); }
+[class*="material-concrete"][class*="fgmuted1"] { fill: url(#concrete-fgmuted1); }
+.projection[class*="material-pconcrete"][class*="pfgmuted1"] { fill: url(#concrete-fgmuted1); }
+.cut[class*="material-cconcrete"][class*="cfgmuted1"] { fill: url(#concrete-fgmuted1); }
+[class*="material-concrete"][class*="fgmuted1"][class*="bg25"] { fill: url(#concrete-fgmuted1-bg25); }
+.projection[class*="material-pconcrete"][class*="pfgmuted1"][class*="bg25"] { fill: url(#concrete-fgmuted1-bg25); }
+.cut[class*="material-cconcrete"][class*="cfgmuted1"][class*="bg25"] { fill: url(#concrete-fgmuted1-bg25); }
 [class*="material-concrete"][class*="fgwarning1"] { fill: url(#concrete-fgwarning1); }
 .projection[class*="material-pconcrete"][class*="pfgwarning1"] { fill: url(#concrete-fgwarning1); }
 .cut[class*="material-cconcrete"][class*="cfgwarning1"] { fill: url(#concrete-fgwarning1); }

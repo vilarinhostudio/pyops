@@ -36,10 +36,9 @@ workflows/       uso via MCP e projetos reais — não é o addon; sai para outr
 
 drawing-bonsai/assets/   estilização SVG das plantas/cortes exportados pelo Bonsai
   patterns-source.svg   as 32 hachuras, desenhadas uma vez — fonte, não gerado
-  patterns.svg          hachuras + variantes de cor, GERADO
-  generate_hatches.py   gera patterns.svg + hatches.css a partir do source
-  build_themes.py       monta os theme-*.css a partir de paletas + hatches.css
-  theme-*.css           6 temas prontos (default/flatly/gruvbox × light/dark)
+  build_themes.py       única fonte dos temas: paletas (dataclass Theme) + source → patterns-*.svg e theme-*.css
+  patterns-<tema>.svg   GERADO, cores em hex literal dentro de cada pattern
+  theme-<tema>.css      GERADO, hex literais, sem var() (6 temas: default/flatly/gruvbox × light/dark)
 ```
 
 ## Como o CSS funciona (resumo — ver [Estilização SVG por CSS](../vault-ifc/06-presentation/svg-css-styling.md) para o raciocínio completo)
@@ -51,7 +50,15 @@ Regras de nomenclatura que **não podem ser quebradas** sem regenerar tudo:
 - cor fixa sem nível termina em `0` — `blue0`
 - prefixo `p` = só projeção, `c` = só corte, sem prefixo = ambos; regras sem prefixo levam `:not()` contra as prefixadas, senão vazam
 
-`generate_hatches.py` lê de `patterns-source.svg` e escreve em `patterns.svg` — **nunca aponte os dois para o mesmo arquivo**, isso já causou reprocessamento acidental da própria saída (32 hachuras viraram 1952, arquivo foi a 38 MB).
+`build_themes.py` (`python build_themes.py`, dentro de `drawing-bonsai/assets/`) lê só `patterns-source.svg` (geometria sem cor) e escreve `patterns-<tema>.svg` + `theme-<tema>.css` — **nunca aponte entrada e saída para o mesmo arquivo**, isso já causou reprocessamento da própria saída no gerador antigo (32 hachuras viraram 1952, 38 MB). Não edite os gerados à mão: mude um `Theme(...)` no script e rode de novo.
+
+Por que sem `var()`: Inkscape e Affinity não resolvem custom properties declaradas dentro de `<style>` de SVG. Por isso a cor da hachura mora dentro do `<pattern>` (CSS não recolore pattern), e o arquivo de patterns é um por tema, não um compartilhado.
+
+Cores e hachuras:
+- cada cor-base do tema (`principal`, `secondary`, `accent`, `bg`, `surface`, `warning`, `success`, `info`, `danger`, `muted`) vira 3 níveis, misturando com o `bg` do tema: 0%, 33%, 66% (`LEVELS`). Por isso o mesmo nome clareia no tema claro e escurece no escuro
+- só `principal1`, `secondary1`, `muted1`, `warning1`, `danger1`, `info1`, `accent1`, `success1` geram hachura (`HATCH_FOREGROUNDS`); as demais servem a fill e stroke
+- nome do pattern: `<hachura>-fg<cor>[-bg25]`; `-bg25` põe véu de `principal1` a 25% sobre o fundo da página, sem sufixo o fundo é a cor da página
+- penas `pen005`…`pen100` (`PENS`) e escopos `p`/`c` (`SCOPES`) também vêm do script
 
 ## Fase atual
 
@@ -104,7 +111,7 @@ Os demais itens do roadmap anterior (Qto_*, Pset_PyOps de proveniência, util.se
 
 **Nomenclatura de atributo do Blender:** domínio explícito na descrição do campo (`"Storey Attr (face int)"`), nunca ambíguo sobre em qual domínio (ponto/aresta/face) o atributo deve ser pintado.
 
-**Nunca decida silenciosamente uma convenção nova de nomenclatura CSS** sem atualizar este arquivo e regenerar `patterns.svg`/`hatches.css`/`theme-*.css` juntos — os três precisam ficar em sincronia.
+**Nunca decida silenciosamente uma convenção nova de nomenclatura CSS** sem atualizar este arquivo e rodar `build_themes.py` — ele regenera `patterns-*.svg` e `theme-*.css` juntos, e os dois precisam ficar em sincronia.
 
 ## Releases
 
