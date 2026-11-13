@@ -1982,17 +1982,22 @@ def find_type_by_layers(ifc_file, ifc_class, layers, precision=4):
 # --- CLEANUP ---
 
 
-def cleanup_family(ifc_file, ifc_classes, key):
+def cleanup_family(ifc_file, ifc_classes, key, match_prefix=False):
     """Remove every element this container produced on a previous run. Driven by
     the IFC pset rather than by Blender objects, so entities orphaned by a
-    deleted object are collected too."""
+    deleted object are collected too.
+
+    match_prefix sweeps every family starting with `key` — how Bundle to PyOps
+    clears the output of a bundle that no longer exists, whose exact key nobody
+    will ask for again."""
     if isinstance(ifc_classes, str):
         ifc_classes = (ifc_classes,)
     removed = 0
     for ifc_class in ifc_classes:
         for element in list(ifc_file.by_type(ifc_class)):
             psets = ifcopenshell.util.element.get_psets(element)
-            if psets.get(FAMILY_PSET, {}).get("Family") != key:
+            family = psets.get(FAMILY_PSET, {}).get("Family")
+            if not _family_matches(family, key, match_prefix):
                 continue
             obj = tool.Ifc.get_object(element)
             try:
@@ -2064,12 +2069,18 @@ def tag_object(obj, key):
     obj[OWNER_KEY] = key
 
 
-def cleanup_tagged_objects(key):
+def _family_matches(family, key, match_prefix):
+    if match_prefix:
+        return isinstance(family, str) and family.startswith(key)
+    return family == key
+
+
+def cleanup_tagged_objects(key, match_prefix=False):
     """Remove the non-IFC objects a previous run of this container produced."""
     removed = 0
     for obj in list(bpy.data.objects):
         try:
-            if obj.get(OWNER_KEY) != key:
+            if not _family_matches(obj.get(OWNER_KEY), key, match_prefix):
                 continue
         except ReferenceError:
             continue

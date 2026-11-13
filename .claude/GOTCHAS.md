@@ -85,6 +85,10 @@ Solução: não recentrar. A geometria do type vai no espaço local do objeto de
 Causa: a saída da árvore são **instâncias**, não malha. `modifier_apply` não realiza instância nenhuma, então não há o que assar — e o container do PyOps fica sem malha, o que derruba qualquer operação que leia dele.
 Solução: um nó *Realize Instances* no fim da árvore. Para separar o que era cada instância depois disso, pintar um atributo inteiro **de ponto** e agrupar por ele (é o que `op_bim_type_geometry` faz no modo Multiple) — instância realizada perde a identidade, atributo não. Ponto e não face porque o mesmo atributo agrupa os símbolos 2D, que são wireframe e não têm face para pintar.
 
+**O Python não acha os valores de um bundle do Geometry Nodes — nem item, nem field, nem a geometria dentro dele.**
+Causa: no 5.3 o `GeometrySet` só expõe mesh/curves/pointcloud/volume/grease pencil/instâncias; não há acesso a bundle avaliado. E field nunca é dado: só vira valor avaliado sobre uma geometria, dentro do GN.
+Solução: ler o bundle como **declaração na árvore** (`bundle_reader.py` percorre Store Bundle Item/Combine Bundle até a saída e resolve os valores estaticamente); fields saem do GN como atributo gravado (*Store Named Attribute* `<prefixo><chave>`), e a geometria de referência tem que chegar à **saída** do modificador (Join Geometry), não só ao bundle.
+
 **Criar uma layer de atributo (`bm.verts.layers.bool.new(...)` etc.) depois de já ter construído geometria invalida toda referência Python a `BMFace`/`BMVert` seguradas antes — `ReferenceError: BMesh data ... has been removed` numa linha que só lê a lista.**
 Causa: não documentado na API do Blender; parece que adicionar uma layer realoca o bloco de custom data de todos os elementos existentes, e as referências Python antigas ficam apontando pro que foi liberado.
 Solução: criar TODAS as layers de atributo antes de construir qualquer vértice/face no bmesh, nunca depois.

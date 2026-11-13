@@ -51,7 +51,7 @@ class BonsaiWall:
                 "name": "Type Mode",
                 "items": [
                     ("C", "Object Type (Pointer)", "Use wall type object pointer"),
-                    ("W", "Collection (Weighted)", "Pick a type per element by weight"),
+                    ("W", "Collection (Index)", "Pick a type per element by integer index"),
                 ],
                 "default": "C",
             },
@@ -64,10 +64,11 @@ class BonsaiWall:
             "Collection",
             {"name": "Type Collection", "show_if": ("enum_wall_mode", {"W"})},
         ),
-        "type_weight_attr": (
+        "type_index_attr": (
             "String",
             {
-                "name": "Type Weight Attr",
+                "name": "Type Index Attr (face int)",
+                "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
                 "show_if": ("enum_wall_mode", {"W"}),
             },
@@ -199,30 +200,19 @@ class BonsaiWall:
             )
 
         type_objects = prof.ordered_objects(data_holder.type_collection)
-        type_weight_layer = (
-            bm.faces.layers.float.get(data_holder.type_weight_attr)
-            if data_holder.type_weight_attr
-            else None
-        )
-        type_range = None
-        if type_weight_layer:
-            values = [face[type_weight_layer] for face in wall_faces]
-            type_range = (min(values), max(values))
+        type_index_layer = int_layer(data_holder.type_index_attr)
 
         def face_align(face):
             return int(face[align_layer]) if align_layer else 0
 
         def face_type_index(face):
-            """The RESOLVED index, never the raw weight: two faces differing in
-            the sixth decimal pick the same type and must stay one wall."""
-            if data_holder.enum_wall_mode != "W" or not type_weight_layer:
+            """The CLAMPED index, never the raw value: -3 and 0 pick the same
+            type and must stay one wall."""
+            if data_holder.enum_wall_mode != "W" or type_index_layer is None:
                 return None
-            if not type_range or not type_objects:
+            if not type_objects:
                 return None
-            low, high = type_range
-            return prof.weight_to_index(
-                face[type_weight_layer], low, high, len(type_objects)
-            )
+            return max(0, min(len(type_objects) - 1, int(face[type_index_layer])))
 
         def face_storey(face):
             if data_holder.enum_storey != "ATTRIBUTE" or storey_layer is None:
@@ -395,7 +385,7 @@ class BonsaiWall:
         source of thickness. Nothing here creates a type any more, so a file
         with no IfcWallType produces no walls — by design."""
         if mode == "W":
-            # Picked per element by weight, the same mapping the profile
+            # Picked per element by index, the same mapping the profile
             # components use. The collection is the catalogue.
             if picked is None:
                 print("[PyOps] Nenhum tipo na collection para este elemento.")

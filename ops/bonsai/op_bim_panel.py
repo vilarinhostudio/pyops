@@ -56,7 +56,7 @@ class BonsaiPanel:
                 "name": "Profile From",
                 "items": [
                     ("OBJECT", "Object", "One mesh object"),
-                    ("COLLECTION", "Collection", "Pick per face by weight attribute"),
+                    ("COLLECTION", "Collection", "Pick per face by integer index attribute"),
                 ],
                 "default": "OBJECT",
                 "show_if": ("enum_frame", {"BOTH", "PROFILE"}),
@@ -70,10 +70,11 @@ class BonsaiPanel:
             "Collection",
             {"name": "Profile Collection", "show_if": ("enum_profile_source", {"COLLECTION"})},
         ),
-        "profile_weight_attr": (
+        "profile_index_attr": (
             "String",
             {
-                "name": "Profile Weight Attr",
+                "name": "Profile Index Attr (face int)",
+                "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
                 "show_if": ("enum_profile_source", {"COLLECTION"}),
             },
@@ -172,23 +173,18 @@ class BonsaiPanel:
         inset_layer = layer(data_holder.inset_attr)
         extrude_layer = layer(data_holder.extrude_attr)
         offset_layer = layer(data_holder.offset_attr)
-        weight_layer = layer(data_holder.profile_weight_attr)
 
         def int_layer(name):
             return bm.faces.layers.int.get(name) if name else None
 
         storey_layer = int_layer(data_holder.storey_attr)
         material_layer = int_layer(data_holder.material_attr)
+        index_layer = int_layer(data_holder.profile_index_attr)
 
         faces = [f for f in bm.faces if f[select]]
         if not faces:
             bm.free()
             return False
-
-        weight_range = None
-        if weight_layer:
-            values = [f[weight_layer] for f in faces]
-            weight_range = (min(values), max(values))
 
         precision = data_holder.precision
         wants_panel = data_holder.enum_frame in {"PANEL", "BOTH"}
@@ -204,7 +200,7 @@ class BonsaiPanel:
             profile_obj = None
             if wants_profile:
                 profile_obj = cls._profile_object(
-                    face, weight_layer, weight_range, data_holder
+                    face, index_layer, data_holder
                 )
                 if not profile_obj:
                     print("[PyOps] Nenhum perfil resolvido para esta face.")
@@ -254,17 +250,13 @@ class BonsaiPanel:
     # --- INPUT RESOLUTION ---
 
     @classmethod
-    def _profile_object(cls, face, weight_layer, weight_range, data_holder):
+    def _profile_object(cls, face, index_layer, data_holder):
         if data_holder.enum_profile_source == "OBJECT":
             return data_holder.profile_object
-        objects = prof.ordered_objects(data_holder.profile_collection)
-        if not objects:
-            return None
-        if not weight_layer or not weight_range:
-            return objects[0]
-        low, high = weight_range
-        index = prof.weight_to_index(face[weight_layer], low, high, len(objects))
-        return objects[index] if index is not None else None
+        return prof.pick_by_index(
+            prof.ordered_objects(data_holder.profile_collection),
+            face[index_layer] if index_layer else 0,
+        )
 
     # --- BUILD ---
 

@@ -104,7 +104,7 @@ class BonsaiDistributeOnPoints:
                 "name": "Source",
                 "items": [
                     ("OBJECT", "Object", "One element, repeated"),
-                    ("COLLECTION", "Collection", "Picked per point by weight"),
+                    ("COLLECTION", "Collection", "Picked per point by integer index"),
                 ],
                 "default": "OBJECT",
             },
@@ -117,10 +117,11 @@ class BonsaiDistributeOnPoints:
             "Collection",
             {"name": "Source Collection", "show_if": ("enum_source", {"COLLECTION"})},
         ),
-        "weight_attr": (
+        "index_attr": (
             "String",
             {
-                "name": "Weight Attr (vert float)",
+                "name": "Index Attr (vert int)",
+                "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
                 "show_if": ("enum_source", {"COLLECTION"}),
             },
@@ -375,11 +376,6 @@ class BonsaiDistributeOnPoints:
             print("[PyOps] Nenhum vértice marcado.")
             return False
 
-        weight_range = None
-        if layers["weight"]:
-            values = [vert[layers["weight"]] for vert in points]
-            weight_range = (min(values), max(values))
-
         created = []
         for vert in points:
             if drawing is not None:
@@ -387,7 +383,6 @@ class BonsaiDistributeOnPoints:
                     ifc_file,
                     vert=vert,
                     layers=layers,
-                    weight_range=weight_range,
                     source=source,
                     data_holder=data_holder,
                     drawing=drawing,
@@ -398,7 +393,6 @@ class BonsaiDistributeOnPoints:
                     ifc_file,
                     vert=vert,
                     layers=layers,
-                    weight_range=weight_range,
                     source=source,
                     data_holder=data_holder,
                     storey=storey,
@@ -408,7 +402,6 @@ class BonsaiDistributeOnPoints:
                 placed = cls._place_plain(
                     vert=vert,
                     layers=layers,
-                    weight_range=weight_range,
                     source=source,
                     data_holder=data_holder,
                     key=key,
@@ -442,7 +435,7 @@ class BonsaiDistributeOnPoints:
             "select": select,
             "align": vert_int(data_holder.align_attr),
             "flip": vert_bool(data_holder.flip_attr),
-            "weight": vert_float(data_holder.weight_attr),
+            "index": vert_int(data_holder.index_attr),
             "angle": vert_float(data_holder.angle_attr),
             "storey": vert_int(data_holder.storey_attr),
             "vector": (
@@ -460,25 +453,22 @@ class BonsaiDistributeOnPoints:
     # --- SOURCE ---
 
     @classmethod
-    def _pick_source(cls, vert, layers, weight_range, data_holder):
+    def _pick_source(cls, vert, layers, data_holder):
         if data_holder.enum_source == "OBJECT":
             return data_holder.source_object
-        objects = prof.ordered_objects(data_holder.source_collection)
-        if not objects:
-            return None
-        if not layers["weight"] or not weight_range:
-            return objects[0]
-        low, high = weight_range
-        index = prof.weight_to_index(vert[layers["weight"]], low, high, len(objects))
-        return objects[index] if index is not None else None
+        layer = layers["index"]
+        return prof.pick_by_index(
+            prof.ordered_objects(data_holder.source_collection),
+            vert[layer] if layer else 0,
+        )
 
     # --- PLACEMENT ---
 
     @classmethod
     def _place(
-        cls, ifc_file, vert, layers, weight_range, source, data_holder, storey, key
+        cls, ifc_file, vert, layers, source, data_holder, storey, key
     ):
-        template = cls._pick_source(vert, layers, weight_range, data_holder)
+        template = cls._pick_source(vert, layers, data_holder)
         if template is None:
             print("[PyOps] Nenhum objeto de origem para este ponto.")
             return None
@@ -587,14 +577,14 @@ class BonsaiDistributeOnPoints:
 
     @classmethod
     def _place_annotation(
-        cls, ifc_file, vert, layers, weight_range, source, data_holder, drawing, key
+        cls, ifc_file, vert, layers, source, data_holder, drawing, key
     ):
         """One copy of an annotation, assigned to the drawing and laid in its plane.
 
         Bonsai's own Copy to Drawing is not called: it skips annotations already
         in the target drawing, and a source living there is a normal case here.
         The same steps are repeated instead."""
-        template = cls._pick_source(vert, layers, weight_range, data_holder)
+        template = cls._pick_source(vert, layers, data_holder)
         entity = bim.entity(template) if template is not None else None
         if entity is None or not entity.is_a("IfcAnnotation"):
             print("[PyOps] A fonte deste ponto não é um IfcAnnotation.")
@@ -812,13 +802,13 @@ class BonsaiDistributeOnPoints:
         return obj
 
     @classmethod
-    def _place_plain(cls, vert, layers, weight_range, source, data_holder, key):
+    def _place_plain(cls, vert, layers, source, data_holder, key):
         """One plain Blender duplicate on the point.
 
         The placement maths is shared with the BIM path — a matrix does not care
         whether an occurrence or a copy lands on it. What is skipped is every
         IFC step: no type, no storey, no void cut into the host."""
-        template = cls._pick_source(vert, layers, weight_range, data_holder)
+        template = cls._pick_source(vert, layers, data_holder)
         if template is None:
             print("[PyOps] Nenhum objeto de origem para este ponto.")
             return None

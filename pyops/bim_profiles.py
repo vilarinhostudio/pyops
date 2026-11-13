@@ -55,19 +55,17 @@ def cardinal_offset(cardinal, half_x, half_y):
     return (1 - column) * half_x, (1 - row) * half_y
 
 
-def weight_to_index(value, low, high, count):
-    """Maps an arbitrary float range onto a list of N objects by proximity.
+def pick_by_index(objects, value):
+    """The object at an integer index into the ordered collection, clamped.
 
-    Works with any N: two profiles and random values in 0..1 split at the
-    midpoint, because the weight is scaled to N-1 and rounded. A degenerate
-    range (every edge carrying the same value) has no ranking to express, so
-    everything lands on the first object."""
-    if count <= 0:
+    Replaces the old min/max weight mapping: there the type an element got
+    depended on every OTHER value in the run, so repainting one face could
+    reshuffle the rest. An index means the same thing anywhere. Below zero
+    takes the first object, past the end takes the last — a stray value still
+    builds something instead of silently dropping the element."""
+    if not objects:
         return None
-    if count == 1 or high - low < TOL:
-        return 0
-    weight = (value - low) / (high - low)
-    return max(0, min(count - 1, int(round(weight * (count - 1)))))
+    return objects[max(0, min(len(objects) - 1, int(value)))]
 
 
 def ordered_objects(collection):
@@ -203,8 +201,8 @@ class EdgeComponent:
                     ("TYPE", "Object Type (Pointer)", "Use the type object pointer"),
                     (
                         "COLLECTION",
-                        "Collection (Weighted)",
-                        "Pick a type per edge by weight",
+                        "Collection (Index)",
+                        "Pick a type per edge by integer index into the collection",
                     ),
                 ],
                 "default": "TYPE",
@@ -218,10 +216,11 @@ class EdgeComponent:
             "Collection",
             {"name": "Type Collection", "show_if": ("enum_profile", {"COLLECTION"})},
         ),
-        "type_weight_attr": (
+        "type_index_attr": (
             "String",
             {
-                "name": "Type Weight Attr",
+                "name": "Type Index Attr (edge int)",
+                "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
                 "show_if": ("enum_profile", {"COLLECTION"}),
             },
@@ -429,7 +428,6 @@ class EdgeComponent:
                 edges, source.matrix_world, layers["vertex_split"]
             )
 
-        weight_range = cls._weight_range(edges, layers)
         created = []  # (IFC element, type index)
         types = bim.TypeIndexer()
         for edge in edges:
@@ -437,7 +435,6 @@ class EdgeComponent:
                 ifc_file,
                 edge=edge,
                 layers=layers,
-                weight_range=weight_range,
                 source=source,
                 data_holder=data_holder,
                 storey=storey_pointer,
@@ -561,7 +558,7 @@ class EdgeComponent:
                 if data_holder.vertex_split_attr
                 else None
             ),
-            "type_weight": edge_float(data_holder.type_weight_attr),
+            "type_index": edge_int(data_holder.type_index_attr),
             "orient": (
                 bm.edges.layers.float_vector.get(data_holder.orient_attr)
                 if data_holder.orient_attr
@@ -583,26 +580,11 @@ class EdgeComponent:
             return default
 
     @classmethod
-    def _weight_range(cls, edges, layers):
-        """min/max of the type weight across the whole selection — the mapping
-        only means anything relative to the set."""
-        layer = layers["type_weight"]
-        if not layer:
-            return None
-        values = [e[layer] for e in edges]
-        return (min(values), max(values)) if values else (0.0, 0.0)
-
-    @classmethod
-    def _pick(cls, edge, layers, weight_range, collection):
-        objects = ordered_objects(collection)
-        if not objects:
-            return None
-        layer = layers["type_weight"]
-        if not layer or weight_range is None:
-            return objects[0]
-        low, high = weight_range
-        index = weight_to_index(edge[layer], low, high, len(objects))
-        return objects[index] if index is not None else None
+    def _pick(cls, edge, layers, collection):
+        layer = layers["type_index"]
+        return pick_by_index(
+            ordered_objects(collection), edge[layer] if layer else 0
+        )
 
     # --- PLACEMENT ---
 
@@ -669,7 +651,7 @@ class EdgeComponent:
     # --- PROFILE ---
 
     @classmethod
-    def _resolve_type(cls, edge, layers, weight_range, data_holder, type_class):
+    def _resolve_type(cls, edge, layers, data_holder, type_class):
         """The type for one edge — pointed at, or picked from a collection.
 
         Nothing here creates a type any more. The section used to be built from
@@ -677,9 +659,7 @@ class EdgeComponent:
         is the input and the section is read out of its IfcMaterialProfileSet,
         so an attribute can no longer disagree with the model."""
         if data_holder.enum_profile == "COLLECTION":
-            picked = cls._pick(
-                edge, layers, weight_range, data_holder.type_collection
-            )
+            picked = cls._pick(edge, layers, data_holder.type_collection)
             if picked is None:
                 print("[PyOps] Nenhum tipo na collection para esta aresta.")
                 return None
@@ -718,7 +698,6 @@ class EdgeComponent:
         ifc_file,
         edge,
         layers,
-        weight_range,
         source,
         data_holder,
         storey,
@@ -746,7 +725,7 @@ class EdgeComponent:
             )
         )
 
-        comp_type = cls._resolve_type(edge, layers, weight_range, data_holder, type_class)
+        comp_type = cls._resolve_type(edge, layers, data_holder, type_class)
         if comp_type is None:
             return None
 

@@ -55,7 +55,7 @@ class BonsaiSlab:
                 "name": "Type Mode",
                 "items": [
                     ("C", "Object Type (Pointer)", "Use slab type object pointer"),
-                    ("W", "Collection (Weighted)", "Pick a type per element by weight"),
+                    ("W", "Collection (Index)", "Pick a type per element by integer index"),
                 ],
                 "default": "C",
             },
@@ -81,10 +81,11 @@ class BonsaiSlab:
             "Collection",
             {"name": "Type Collection", "show_if": ("enum_slab_mode", {"W"})},
         ),
-        "type_weight_attr": (
+        "type_index_attr": (
             "String",
             {
-                "name": "Type Weight Attr",
+                "name": "Type Index Attr (face int)",
+                "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
                 "show_if": ("enum_slab_mode", {"W"}),
             },
@@ -193,15 +194,11 @@ class BonsaiSlab:
         # Plane only — see the wall operator: attributes painted on
         # part of a subdivided face must not fragment the element.
         type_objects = prof.ordered_objects(data_holder.type_collection)
-        type_weight_layer = (
-            bm.faces.layers.float.get(data_holder.type_weight_attr)
-            if data_holder.type_weight_attr
+        type_index_layer = (
+            bm.faces.layers.int.get(data_holder.type_index_attr)
+            if data_holder.type_index_attr
             else None
         )
-        type_range = None
-        if type_weight_layer:
-            values = [face[type_weight_layer] for face in slab_faces]
-            type_range = (min(values), max(values))
 
         def int_layer(name):
             return bm.faces.layers.int.get(name) if name else None
@@ -231,7 +228,7 @@ class BonsaiSlab:
                 group, align_layer, default=ALIGN_TOP, cast=int
             )
 
-            picked = cls._pick_type(group, type_objects, type_weight_layer, type_range)
+            picked = cls._pick_type(group, type_objects, type_index_layer)
             slab_type = cls._resolve_slab_type(
                 data_holder.enum_slab_mode,
                 data_holder.slab_type_pointer,
@@ -363,7 +360,7 @@ class BonsaiSlab:
         generator. The thickness now comes from the type's layer set, so there
         is nothing left to build a type out of."""
         if mode == "W":
-            # Picked per element by weight, the same mapping the profile
+            # Picked per element by index, the same mapping the profile
             # components use. The collection is the catalogue.
             if picked is None:
                 print("[PyOps] Nenhum tipo na collection para esta laje.")
@@ -386,21 +383,20 @@ class BonsaiSlab:
     # --- FINISHING ---
 
     @classmethod
-    def _pick_type(cls, faces, objects, layer, weight_range):
-        """One type per element, chosen by the group's own weight.
+    def _pick_type(cls, faces, objects, layer):
+        """One type per element, chosen by the group's area-weighted majority.
 
-        The weight is averaged over the group rather than read from one face —
-        a coplanar run is a single element and one stray value should not decide
-        for the whole of it."""
-        if not objects:
-            return None
-        if not layer or not weight_range:
-            return objects[0]
-        total = sum(face[layer] * face.calc_area() for face in faces)
-        area = sum(face.calc_area() for face in faces) or 1.0
-        low, high = weight_range
-        index = prof.weight_to_index(total / area, low, high, len(objects))
-        return objects[index] if index is not None else None
+        Voted rather than read from one face — a coplanar run is a single
+        element and one stray value should not decide for the whole of it. Not
+        bim.dominant: that one skips zeros, and 0 is a real index here."""
+        if not layer:
+            return prof.pick_by_index(objects, 0)
+        votes = {}
+        for face in faces:
+            index = int(face[layer])
+            votes[index] = votes.get(index, 0.0) + face.calc_area()
+        winner = max(votes.items(), key=lambda item: item[1])[0] if votes else 0
+        return prof.pick_by_index(objects, winner)
 
     @classmethod
     def _face_storey(cls, ifc_file, face, layer, pointer, data_holder):
