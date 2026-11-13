@@ -2,6 +2,15 @@
 
 Each version becomes a GitHub Release whose notes are its section below. To publish: bump `version` in `pyops/blender_manifest.toml` (and `bl_info`), write the section here, commit, and push a `vX.Y.Z` tag.
 
+## [1.8.0] - 2026-11-13
+
+### Added
+- Bundle to PyOps (`PYOPS_BUNDLE`): runs every PyOps operation declared as a bundle in the reference's Geometry Nodes, with no fields of its own. Each bundle carries `<prefix>pyops_id` and the operation's props as `<prefix><key>`; fields reach the operation as named attributes `<prefix><key>` stored by the generator group. Bundles are read from the node tree, not evaluated — Blender exposes no evaluated bundle to Python.
+- Before running, Bundle to PyOps removes everything its container produced last time, so a bundle deleted from the tree leaves nothing behind in the IFC.
+
+### Changed
+- Collection mode (wall, slab, panel, distribute, column, beam, profile component) picks the type by an integer index into the collection — 0 is the first object by name, values outside the range clamp to the first/last — instead of mapping a float weight between its minimum and maximum. The attribute is now an int and the fields were renamed: `type_index_attr`, `profile_index_attr`, `index_attr`. Saved setups in Collection mode need the attribute set again.
+
 ## [1.7.3] - 2026-10-24
 
 ### Fixed

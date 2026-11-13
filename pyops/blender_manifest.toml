@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "pyops"
-version = "1.7.3"
+version = "1.8.0"
 name = "PyOps"
 tagline = "Mesh attributes become real IFC elements"
 maintainer = "Arthur Vilarinho"
