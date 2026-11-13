@@ -11,3 +11,5 @@ desktop.ini
 /pyops.zip
 
 /dist/
+# output of tools/build_bundle_groups.py — copied into the user's own asset library
+assets/

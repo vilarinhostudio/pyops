@@ -351,6 +351,8 @@ def main():
             g.name = name
         else:
             g = build(op_cls)
+        g.default_group_node_width = 220
+        g.color_tag = "NONE"
         g.asset_mark()
         g.asset_data.description = g.description or op_cls.label
         built.append(g)
