@@ -2,6 +2,14 @@
 
 Each version becomes a GitHub Release whose notes are its section below. To publish: bump `version` in `pyops/blender_manifest.toml` (and `bl_info`), write the section here, commit, and push a `vX.Y.Z` tag.
 
+## [1.8.1] - 2026-11-13
+
+### Added
+- Attribute fields declare their domain and data type in `props_definition` (`"attr": ("FACE", "BOOLEAN")`), read from each operator's own layer access. Used by `tools/build_bundle_groups.py`, which builds one Geometry Nodes bundle group per operation into `assets/pyops_bundle_groups.blend`.
+
+### Changed
+- Attribute field names now state domain and type wherever they did not (e.g. `Wall Select Attr (face bool)`, `Inset Attr (face float)`, `Walls (face bool)`), following the add-on's naming rule.
+
 ## [1.8.0] - 2026-11-13
 
 ### Added

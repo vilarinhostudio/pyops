@@ -91,7 +91,7 @@ class BonsaiDistributeOnPoints:
         "lbl_points": ("Label", {"text": "Points", "icon": "VERTEXSEL"}),
         "point_attr": (
             "String",
-            {"name": "Point Attr (vert bool)", "search": "attribute"},
+            {"name": "Point Attr (vert bool)", "search": "attribute", "attr": ("POINT", "BOOLEAN")},
         ),
         "sep1": ("Separator", {}),
         "lbl_source": (
@@ -123,6 +123,7 @@ class BonsaiDistributeOnPoints:
                 "name": "Index Attr (vert int)",
                 "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
+                "attr": ("POINT", "INT"),
                 "show_if": ("enum_source", {"COLLECTION"}),
             },
         ),
@@ -161,6 +162,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Align Attr (vert int 1-9)",
                 "search": "attribute",
+                "attr": ("POINT", "INT"),
                 "description": (
                     "Numpad layout: which point of the element's bounding box "
                     "is placed on the vertex. 2 its bottom centre, 8 its top"
@@ -176,6 +178,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Face Align Attr (face bool) — optional",
                 "search": "attribute",
+                "attr": ("FACE", "BOOLEAN"),
                 "description": (
                     "Rarely needed: the wall plane comes from the horizontal "
                     "edges through the point. Use only where those cannot "
@@ -189,6 +192,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Flip Attr (vert bool)",
                 "search": "attribute",
+                "attr": ("POINT", "BOOLEAN"),
                 "description": (
                     "Off, the element faces the way the reference face's "
                     "normal points; on, the other way"
@@ -247,6 +251,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Angle Attr (vert float, degrees)",
                 "search": "attribute",
+                "attr": ("POINT", "FLOAT"),
                 "description": (
                     "Rotation about the up axis, in degrees; for an annotation, "
                     "about the drawing's view normal"
@@ -262,6 +267,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Vector Attr (vert vector)",
                 "search": "attribute",
+                "attr": ("POINT", "FLOAT_VECTOR"),
                 "show_if": [
                     ("enum_output", {"ELEMENT", "BLENDER"}),
                     ("enum_orientation", {"VECTOR"}),
@@ -303,6 +309,7 @@ class BonsaiDistributeOnPoints:
             {
                 "name": "Storey Attr (vert int)",
                 "search": "attribute",
+                "attr": ("POINT", "INT"),
                 "description": "Index into the storeys ordered by height, 0 at the ground",
                 "show_if": [
                     ("enum_output", {"FILLING", "ELEMENT"}),

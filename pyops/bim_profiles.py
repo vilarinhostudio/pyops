@@ -189,7 +189,7 @@ class EdgeComponent:
         "lbl_sel": ("Label", {"text": "Edge Selection", "icon": "RESTRICT_SELECT_OFF"}),
         "bool_attr": (
             "String",
-            {"name": "Select Attr (edge bool)", "search": "attribute"},
+            {"name": "Select Attr (edge bool)", "search": "attribute", "attr": ("EDGE", "BOOLEAN")},
         ),
         "sep1": ("Separator", {}),
         "lbl_profile": ("Label", {"text": "Profile", "icon": "MOD_THICKNESS"}),
@@ -222,6 +222,7 @@ class EdgeComponent:
                 "name": "Type Index Attr (edge int)",
                 "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
+                "attr": ("EDGE", "INT"),
                 "show_if": ("enum_profile", {"COLLECTION"}),
             },
         ),
@@ -253,8 +254,9 @@ class EdgeComponent:
         "orient_attr": (
             "String",
             {
-                "name": "Vector Attr",
+                "name": "Vector Attr (edge vector)",
                 "search": "attribute",
+                "attr": ("EDGE", "FLOAT_VECTOR"),
                 "show_if": ("enum_orientation", {"VECTOR"}),
             },
         ),
@@ -274,13 +276,14 @@ class EdgeComponent:
             {
                 "name": "Split Attr (vert bool)",
                 "search": "attribute",
+                "attr": ("POINT", "BOOLEAN"),
                 "description": "Vertices a merged run may not pass through",
                 "show_if": ("merge_collinear", {True}),
             },
         ),
         "cardinal_attr": (
             "String",
-            {"name": "Cardinal Attr (edge int 1-9)", "search": "attribute"},
+            {"name": "Cardinal Attr (edge int 1-9)", "search": "attribute", "attr": ("EDGE", "INT")},
         ),
         "sep3": ("Separator", {}),
         "enum_offsets": (
@@ -297,24 +300,27 @@ class EdgeComponent:
         "offset_start_attr": (
             "String",
             {
-                "name": "Start Offset Attr",
+                "name": "Start Offset Attr (edge float)",
                 "search": "attribute",
+                "attr": ("EDGE", "FLOAT"),
                 "show_if": ("enum_offsets", {"ATTRS"}),
             },
         ),
         "offset_end_attr": (
             "String",
             {
-                "name": "End Offset Attr",
+                "name": "End Offset Attr (edge float)",
                 "search": "attribute",
+                "attr": ("EDGE", "FLOAT"),
                 "show_if": ("enum_offsets", {"ATTRS"}),
             },
         ),
         "offset_invert_attr": (
             "String",
             {
-                "name": "Invert Attr (bool)",
+                "name": "Invert Attr (edge bool)",
                 "search": "attribute",
+                "attr": ("EDGE", "BOOLEAN"),
                 "show_if": ("enum_offsets", {"ATTRS"}),
             },
         ),
@@ -343,6 +349,7 @@ class EdgeComponent:
             {
                 "name": "Storey Attr (edge int)",
                 "search": "attribute",
+                "attr": ("EDGE", "INT"),
                 "description": (
                     "Index into the storeys ordered by height, 0 at the ground"
                 ),

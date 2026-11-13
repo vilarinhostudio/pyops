@@ -34,13 +34,14 @@ class BonsaiSlab:
             "Label",
             {"text": "Principal", "icon": "RESTRICT_SELECT_OFF"},
         ),
-        "bool_attr": ("String", {"name": "Slab Select Attr", "search": "attribute"}),
-        "align_attr": ("String", {"name": "Align Attr (int)", "search": "attribute"}),
+        "bool_attr": ("String", {"name": "Slab Select Attr (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN")}),
+        "align_attr": ("String", {"name": "Align Attr (face int)", "search": "attribute", "attr": ("FACE", "INT")}),
         "split_edge_attr": (
             "String",
             {
                 "name": "Split Attr (edge bool) — optional",
                 "search": "attribute",
+                "attr": ("EDGE", "BOOLEAN"),
                 "description": (
                     "Edges an element may not cross. Marked edges cut a "
                     "coplanar run into separate elements"
@@ -87,6 +88,7 @@ class BonsaiSlab:
                 "name": "Type Index Attr (face int)",
                 "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "show_if": ("enum_slab_mode", {"W"}),
             },
         ),
@@ -126,6 +128,7 @@ class BonsaiSlab:
             {
                 "name": "Storey Attr (face int)",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "description": "Index into the storeys ordered by height, 0 at the ground",
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },

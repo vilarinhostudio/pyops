@@ -87,6 +87,7 @@ class BonsaiTypeGeometry:
             {
                 "name": "Group Attr (point int)",
                 "search": "attribute",
+                "attr": ("POINT", "INT"),
                 "description": (
                     "Integer painted on vertices: everything carrying the same "
                     "value becomes one type, islands included, named "
@@ -146,6 +147,7 @@ class BonsaiTypeGeometry:
             {
                 "name": "Material Attr (point int)",
                 "search": "attribute",
+                "attr": ("POINT", "INT"),
                 "description": (
                     "Index into the reference object's vertex groups, painted "
                     "on vertices like the grouping one; the group's name is "
@@ -159,6 +161,7 @@ class BonsaiTypeGeometry:
             {
                 "name": "Style Attr (point int)",
                 "search": "attribute",
+                "attr": ("POINT", "INT"),
                 "description": (
                     "Index into the reference object's vertex groups, painted "
                     "on vertices; the group's name becomes a material slot on "

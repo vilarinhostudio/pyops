@@ -30,12 +30,12 @@ class BonsaiPanel:
 
     props_definition = {
         "lbl_sel": ("Label", {"text": "Face Selection", "icon": "RESTRICT_SELECT_OFF"}),
-        "bool_attr": ("String", {"name": "Select Attr (face bool)", "search": "attribute"}),
+        "bool_attr": ("String", {"name": "Select Attr (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN")}),
         "sep1": ("Separator", {}),
         "lbl_shape": ("Label", {"text": "Panel Shape", "icon": "MOD_SOLIDIFY"}),
-        "inset_attr": ("String", {"name": "Inset Attr", "search": "attribute"}),
-        "extrude_attr": ("String", {"name": "Thickness Attr", "search": "attribute"}),
-        "offset_attr": ("String", {"name": "Normal Offset Attr", "search": "attribute"}),
+        "inset_attr": ("String", {"name": "Inset Attr (face float)", "search": "attribute", "attr": ("FACE", "FLOAT")}),
+        "extrude_attr": ("String", {"name": "Thickness Attr (face float)", "search": "attribute", "attr": ("FACE", "FLOAT")}),
+        "offset_attr": ("String", {"name": "Normal Offset Attr (face float)", "search": "attribute", "attr": ("FACE", "FLOAT")}),
         "sep2": ("Separator", {}),
         "lbl_frame": ("Label", {"text": "Perimeter Profile", "icon": "MOD_THICKNESS"}),
         "enum_frame": (
@@ -76,6 +76,7 @@ class BonsaiPanel:
                 "name": "Profile Index Attr (face int)",
                 "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "show_if": ("enum_profile_source", {"COLLECTION"}),
             },
         ),
@@ -105,6 +106,7 @@ class BonsaiPanel:
             {
                 "name": "Storey Attr (face int)",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "description": "Index into the storeys ordered by height, 0 at the ground",
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },

@@ -1865,6 +1865,7 @@ def material_props(domain="face"):
             {
                 "name": f"Material Attr ({domain} int)",
                 "search": "attribute",
+                "attr": ({"vert": "POINT"}.get(domain, domain.upper()), "INT"),
                 "description": (
                     "Index into the reference object's vertex groups; the "
                     "group's name becomes the material of the new type"

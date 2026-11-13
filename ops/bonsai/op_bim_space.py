@@ -52,22 +52,22 @@ class BonsaiSpace:
         ),
         "wall_attribute": (
             "String",
-            {"name": "Walls", "search": "attribute",
+            {"name": "Walls (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"),
              "show_if": ("face_source", {"CONSTRUCTION"})},
         ),
         "slab_attribute": (
             "String",
-            {"name": "Slabs", "search": "attribute",
+            {"name": "Slabs (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"),
              "show_if": ("face_source", {"CONSTRUCTION"})},
         ),
         "roof_attribute": (
             "String",
-            {"name": "Roofs", "search": "attribute",
+            {"name": "Roofs (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"),
              "show_if": ("face_source", {"CONSTRUCTION"})},
         ),
         "extra_attribute": (
             "String",
-            {"name": "Other Elements", "search": "attribute",
+            {"name": "Other Elements (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"),
              "show_if": ("face_source", {"CONSTRUCTION"})},
         ),
         "min_volume": (
@@ -84,6 +84,7 @@ class BonsaiSpace:
             {
                 "name": "Room Id Attr (face int)",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "description": "Optional: names each room; blank numbers them by volume",
             },
         ),
@@ -127,6 +128,7 @@ class BonsaiSpace:
             {
                 "name": "Storey Attr (face int)",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "description": (
                     "Index into the storeys ordered by height. A space takes "
                     "the LOWEST index among its faces, so a double-height room "

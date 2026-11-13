@@ -140,11 +140,11 @@ class HoneybeeRadiance:
                 "show_if": ("enum_model", {"CONSTRUCTION"}),
             },
         ),
-        "wall_attribute": ("String", {"name": "Walls", "search": "attribute", "show_if": ("enum_model", {"ATTRIBUTES"})}),
-        "floor_attribute": ("String", {"name": "Floors", "search": "attribute", "show_if": ("enum_model", {"ATTRIBUTES"})}),
-        "roof_attribute": ("String", {"name": "Roofs", "search": "attribute", "show_if": ("enum_model", {"ATTRIBUTES"})}),
-        "opening_attribute": ("String", {"name": "Apertures", "search": "attribute", "show_if": ("enum_model", {"ATTRIBUTES"})}),
-        "door_attribute": ("String", {"name": "Doors", "search": "attribute", "show_if": ("enum_model", {"ATTRIBUTES"})}),
+        "wall_attribute": ("String", {"name": "Walls (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"), "show_if": ("enum_model", {"ATTRIBUTES"})}),
+        "floor_attribute": ("String", {"name": "Floors (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"), "show_if": ("enum_model", {"ATTRIBUTES"})}),
+        "roof_attribute": ("String", {"name": "Roofs (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"), "show_if": ("enum_model", {"ATTRIBUTES"})}),
+        "opening_attribute": ("String", {"name": "Apertures (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"), "show_if": ("enum_model", {"ATTRIBUTES"})}),
+        "door_attribute": ("String", {"name": "Doors (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN"), "show_if": ("enum_model", {"ATTRIBUTES"})}),
         "sep2": ("Separator", {}),
         "lbl_context": ("Label", {"text": "Context", "icon": "OUTLINER_COLLECTION"}),
         "context_mode": (
@@ -320,8 +320,9 @@ class HoneybeeRadiance:
         "analysis_face_attribute": (
             "String",
             {
-                "name": "Face Selector (bool)",
+                "name": "Face Selector (face bool)",
                 "search": "attribute",
+                "attr": ("FACE", "BOOLEAN"),
                 "show_if": [("result_geometry_mode", {"SELF"}),
                             ("result_face_mode", {"SELECTED_FACES"})],
             },

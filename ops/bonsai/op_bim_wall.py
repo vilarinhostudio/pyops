@@ -30,13 +30,14 @@ class BonsaiWall:
 
     props_definition = {
         "lbl_filter": ("Label", {"text": "Principal", "icon": "RESTRICT_SELECT_OFF"}),
-        "bool_attr": ("String", {"name": "Wall Select Attr", "search": "attribute"}),
-        "align_attr": ("String", {"name": "Align Attr (int)", "search": "attribute"}),
+        "bool_attr": ("String", {"name": "Wall Select Attr (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN")}),
+        "align_attr": ("String", {"name": "Align Attr (face int)", "search": "attribute", "attr": ("FACE", "INT")}),
         "split_edge_attr": (
             "String",
             {
                 "name": "Split Attr (edge bool) — optional",
                 "search": "attribute",
+                "attr": ("EDGE", "BOOLEAN"),
                 "description": (
                     "Edges a wall may not cross. Mark the slab lines and each "
                     "storey becomes its own wall"
@@ -70,6 +71,7 @@ class BonsaiWall:
                 "name": "Type Index Attr (face int)",
                 "description": "0 = first object of the collection by name; clamped to the ends",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "show_if": ("enum_wall_mode", {"W"}),
             },
         ),
@@ -109,6 +111,7 @@ class BonsaiWall:
             {
                 "name": "Storey Attr (face int)",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "description": "Index into the storeys ordered by height, 0 at the ground",
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },

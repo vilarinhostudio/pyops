@@ -7,7 +7,7 @@ class ProceduralExtrude:
     data_type = 'MESH'
 
     props_definition = {
-        "proc_attr": ("String", {"name": "Attribute", "search": "attribute"}),
+        "proc_attr": ("String", {"name": "Attribute (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN")}),
         "extrude_value": ("Float", {"name": "Distance", "default": 0.5}),
     }
 

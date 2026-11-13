@@ -79,8 +79,9 @@ class LadybugAnalysis:
         "analysis_face_attribute": (
             "String",
             {
-                "name": "Face Selector (bool)",
+                "name": "Face Selector (face bool)",
                 "search": "attribute",
+                "attr": ("FACE", "BOOLEAN"),
                 "description": "Face BOOL attribute; only True faces receive results",
                 "show_if": [("result_geometry_mode", {"SELF"}),
                             ("result_face_mode", {"SELECTED_FACES"})],

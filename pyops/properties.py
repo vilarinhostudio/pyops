@@ -75,6 +75,9 @@ def resolve_alias(prop_type, prop_args):
 def _build_prop(prop_type, prop_args):
     prop_type, args = resolve_alias(prop_type, prop_args)
     args.pop("show_if", None)
+    # (domain, data_type) of an attribute field: read by the bundle group
+    # generator, meaningless to Blender's property constructor.
+    args.pop("attr", None)
     search_source = args.pop("search", None)
     if args.pop("attribute_search", False) and not search_source:
         search_source = "attribute"

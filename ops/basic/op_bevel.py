@@ -7,7 +7,7 @@ class ProceduralBevel:
     data_type = 'MESH'
 
     props_definition = {
-        "proc_attr": ("String", {"name": "Attribute", "search": "attribute"}),
+        "proc_attr": ("String", {"name": "Attribute (edge bool)", "search": "attribute", "attr": ("EDGE", "BOOLEAN")}),
         "sep1": ("Separator", {}),
         "bevel_offset": ("Float", {"name": "Offset", "default": 0.2, "min": 0.0}),
         "bevel_segments": ("Int", {"name": "Segments", "default": 3, "min": 1}),

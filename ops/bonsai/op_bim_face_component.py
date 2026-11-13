@@ -38,12 +38,13 @@ class BonsaiFaceComponent:
 
     props_definition = {
         "lbl_filter": ("Label", {"text": "Face Selection", "icon": "RESTRICT_SELECT_OFF"}),
-        "bool_attr": ("String", {"name": "Select Attr (face bool)", "search": "attribute"}),
+        "bool_attr": ("String", {"name": "Select Attr (face bool)", "search": "attribute", "attr": ("FACE", "BOOLEAN")}),
         "split_edge_attr": (
             "String",
             {
                 "name": "Split Attr (edge bool) — optional",
                 "search": "attribute",
+                "attr": ("EDGE", "BOOLEAN"),
                 "description": (
                     "Edges an element may not cross. Marked edges cut a "
                     "connected run into separate elements"
@@ -67,8 +68,9 @@ class BonsaiFaceComponent:
         "vertex_attr": (
             "String",
             {
-                "name": "Vertex Attr",
+                "name": "Vertex Attr (vert float)",
                 "search": "attribute",
+                "attr": ("POINT", "FLOAT"),
                 "show_if": ("enum_source", {"VERTEX"}),
             },
         ),
@@ -92,8 +94,9 @@ class BonsaiFaceComponent:
         "face_attr": (
             "String",
             {
-                "name": "Face Attr",
+                "name": "Face Attr (face float)",
                 "search": "attribute",
+                "attr": ("FACE", "FLOAT"),
                 "show_if": ("enum_source", {"FACE"}),
             },
         ),
@@ -153,6 +156,7 @@ class BonsaiFaceComponent:
             {
                 "name": "Storey Attr (face int)",
                 "search": "attribute",
+                "attr": ("FACE", "INT"),
                 "description": "Index into the storeys ordered by height, 0 at the ground",
                 "show_if": ("enum_storey", {"ATTRIBUTE"}),
             },
